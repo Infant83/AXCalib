@@ -1,0 +1,641 @@
+---
+document_type: project_work_specification
+project_title: AXCalib
+expanded_name: AX Certification Agent Library
+project_code: AXCALIB
+workspace: C:/Users/angpa/myProjects/Daily_Work/AX_Calib
+created_at: 2026-07-12
+updated_at: 2026-07-12
+timezone: Asia/Seoul
+status: draft_for_alignment
+baseline: v0.2
+harness_status: planning_contract_created; executable_harness_not_built
+git_status: untracked in parent repository; no commit made
+openproject_status: not_registered
+---
+
+# AXCalib 작업명세서
+
+## 1. 문서 목적
+
+이 문서는 AXCalib의 제품·기술·데이터·검증 범위를 정의하고 이후 구현의 기준선으로 사용한다.
+
+AXCalib의 개념과 명명 철학은 AXCalib_Concept_Overview.md, 구현 Target과 단계별 수용기준은 GOAL.md, architecture와 Web App design은 DESIGN.md, Agent 작업규칙은 AGENTS.md를 따른다.
+
+이 문서에 없는 요구는 자동으로 포함되지 않는다. 새 요구는 영향분석과 명시적 변경결정 뒤 baseline에 반영한다.
+
+## 2. 제품 정의
+
+AXCalib는 **AX 역량 평가, 평가 보정, 수준 판정 및 인증을 위한 Agent Library**다.
+
+첫 번째 구체 사용 사례는 AX 인증 과제의 전 생명주기다.
+
+~~~text
+등록심의
+→ 과제 수행
+→ 진행·멘토링·산출물·KPI 증거 누적
+→ 완료평가
+→ 선택적 AX Level/인증 결정
+~~~
+
+초기 구현은 Python Library와 CLI로 시작하고, API, async/batch worker, on-prem Web App으로 확장한다.
+
+## 3. 배경과 문제정의
+
+평가 대상이 증가하면 사람이 PPTX와 원시트, 수행기록, KPI, 멘토 의견을 찾아 읽고 기준 및 과거 사례와 비교하는 절차가 병목이 된다.
+
+핵심 문제:
+
+- 등록심의와 완료평가 자료가 서로 다른 파일과 시스템에 흩어져 있다.
+- 등록 당시 약속과 최종 수행결과를 일관되게 연결하기 어렵다.
+- 제출 형식과 슬라이드 순서가 일정하지 않다.
+- 평가 기준, checklist, 과거 사례, 질의응답, 시연결과가 분산돼 있다.
+- 평가자·모델별 편차와 Level 경계 오류를 통제하기 어렵다.
+- LLM이 만든 문서를 LLM이 평가할 때 문서 최적화 game이 생길 수 있다.
+- 어떤 revision, 기준, 모델, corpus, 증거로 판단했는지 재현해야 한다.
+- 사내 원문과 개인정보를 승인되지 않은 외부 모델로 보낼 수 없다.
+
+AXCalib는 단일 자동점수 대신 **근거, 불확실성, 유사사례, 모델 편차, 사람의 최종결정**을 함께 기록한다.
+
+## 4. 제품 목표와 비목표
+
+### 4.1 1차 목표
+
+- 과제마다 고유 UUID와 단일 canonical dossier 발급
+- 등록심의·수행·완료평가를 명시적 state machine으로 연결
+- 평가 요청 시 대상 revision을 immutable snapshot으로 고정
+- PPTX 등 evidence를 구조화하고 source locator 생성
+- versioned rubric/checklist 적용
+- 과거 사례를 embedding/index하고 유사점·차이점 검색
+- criterion별 근거 포함 평가초안 생성
+- Qwen3.5 기반 on-prem model과 다른 model을 같은 gateway로 실행
+- 다중 모델 편차와 반복 안정성 측정
+- 사람의 수정·수용·반려·추가자료 요청 기록
+- offline synthetic evaluation과 비식별 pilot 지표 측정
+
+### 4.2 비목표
+
+- LLM의 단독 최종 합격·불합격·인증
+- 모든 산업·직무에 통용되는 AX Level 표준의 즉시 확정
+- 초기 단계의 전사 운영시스템 직접 변경
+- 모든 PPTX, image, video, 시연의 완전 자동평가
+- 승인 없는 실제 사내 원문·개인정보 외부전송
+- 최초 MVP에서 전사 SSO, HA, DR, 운영 SLA
+- score 하나로 모든 평가를 환원
+- Deep Agents, Qdrant, 특정 LLM에 domain model 종속
+
+## 5. 사용자와 책임
+
+| 사용자 | 필요 |
+|---|---|
+| 제출자/과제 Owner | dossier 작성, 증거 누적, 보완요청 이해 |
+| Mentor | 멘토링 내용, follow-up, 수행 evidence 기록 |
+| 평가자 | 기준·원문·유사사례·모델 편차를 비교하고 판단 |
+| 인증 책임자 | 완료평가와 별도로 Level/인증정책 적용 |
+| 운영담당자 | 과제 상태, queue, blocker, batch, 비용 추적 |
+| 정책·감사 담당 | 기준·revision·모델·근거·수정이력 재현 |
+| 개발·운영팀 | 장애, 성능, 비용, 보안, data lifecycle 관리 |
+
+모델과 Agent는 책임자가 아니다. 사람의 reviewer/certification decision을 별도 object로 기록한다.
+
+## 6. Domain Lifecycle
+
+### 6.1 주요 단계
+
+| Stage | 핵심 상태 |
+|---|---|
+| Draft | draft, registration_ready |
+| Registration | registration_under_review, registration_needs_changes, registration_rejected, registration_approved |
+| Execution | in_progress, execution_paused |
+| Completion | completion_ready, completion_under_review, completion_needs_changes, completion_not_accepted, completion_accepted |
+| Certification | certification_review, certification_on_hold, certified |
+| Terminal | withdrawn, cancelled |
+
+### 6.2 핵심 규칙
+
+- registration_approved 전에는 in_progress로 전이할 수 없다.
+- completion 평가에는 approved registration baseline을 반드시 포함한다.
+- 등록 이후 목표·범위·KPI 변경은 change request와 승인기록으로 남긴다.
+- 모델은 approved, accepted, certified 상태를 직접 확정할 수 없다.
+- 모든 mutating command는 expected_revision을 요구한다.
+- 허용 전이는 한 state machine에서 관리한다.
+
+상세 전이는 DESIGN.md를 따른다.
+
+## 7. Canonical Dossier 명세
+
+### 7.1 단일 파일 원칙
+
+사용자가 관리하는 과제 기준 파일은 project_id별 AXC-{project_id}.axc.yaml 하나다.
+
+포함:
+
+- 과제 정체성과 상태
+- 등록 proposal, rubric, 평가 요약, 사람 decision
+- 수행 진행내용, mentor note, 산출물, risk/change, KPI 관측
+- 완료 summary, rubric, 평가 요약, 사람 decision
+- 선택적 Level/인증 결과
+- artifact, snapshot, run, audit reference
+
+미포함:
+
+- PPTX/PDF/image/code/log binary 본문
+- raw chain-of-thought
+- API key와 secret
+- 허용되지 않은 개인정보 원문
+
+대용량 원문과 full report는 content-addressed artifact로 저장하고 dossier에서 reference한다.
+
+### 7.2 Revision과 snapshot
+
+- project_id는 UUID4이며 불변이다.
+- mutation 성공마다 revision을 1 증가시킨다.
+- dossier는 canonical representation의 SHA-256 content_hash를 가진다.
+- 평가 요청은 revision, content_hash, rubric, artifact hash를 snapshot으로 고정한다.
+- 결과는 base snapshot과 연결한다.
+- 평가 중 dossier가 바뀌면 stale result로 두고 자동 merge하지 않는다.
+- 파일 갱신은 full validation 뒤 atomic replace한다.
+
+### 7.3 최소 top-level field
+
+~~~text
+schema_version
+project_id
+display_id
+revision
+updated_at
+identity
+lifecycle
+registration
+execution
+completion
+certification
+artifact_refs
+audit
+extensions
+~~~
+
+정식 schema는 Pydantic model에서 JSON Schema Draft 2020-12로 export한다.
+
+## 8. 기능 요구사항
+
+| ID | 기능 | 요구사항 | 우선순위 |
+|---|---|---|---|
+| FR-001 | Project ID | 신규 과제에 UUID4 project_id와 display_id 발급 | Must |
+| FR-002 | Dossier | 한 .axc.yaml에서 전 생명주기 관리 | Must |
+| FR-003 | Schema | versioned Pydantic/JSON Schema validation과 migration | Must |
+| FR-004 | State | 허용 전이, 역할, Gate 검증 | Must |
+| FR-005 | Snapshot | 평가 대상 revision과 artifact/rubric hash 고정 | Must |
+| FR-006 | Registration | 등록심의 제출, 평가초안, 사람 decision | Must |
+| FR-007 | Execution | progress, mentor note, deliverable, KPI, change 누적 | Must |
+| FR-008 | Completion | 등록 baseline 대비 완료평가 | Must |
+| FR-009 | Evidence ingest | PPTX/문서에서 구조와 locator 추출 | Must |
+| FR-010 | Visual analysis | slide rendering과 multimodal 분석 | Should |
+| FR-011 | Rubric registry | 기준/checklist version과 효력일 관리 | Must |
+| FR-012 | Deterministic checks | 필수필드, 수치, 정책조건 검사 | Must |
+| FR-013 | Model evaluation | criterion별 structured assessment | Must |
+| FR-014 | Similar cases | 과거 사례 검색, 유사점·차이·한계 기록 | Must |
+| FR-015 | Case embedding | parse/chunk/embed/index/reindex routine | Must |
+| FR-016 | Model gateway | BASE_URL/API_KEY/model profile 주입 | Must |
+| FR-017 | Multi-model | 독립 panel, disagreement, adjudication | Should |
+| FR-018 | Human review | 수용·수정·반려·추가자료 요청 | Must |
+| FR-019 | Audit | 입력·기준·model·prompt·corpus·출력·수정 연결 | Must |
+| FR-020 | Sync/async | 같은 의미의 sync/async Library API | Must |
+| FR-021 | Batch | idempotency, checkpoint, resume, 부분 실패 | Should |
+| FR-022 | Report | dossier 요약 + Markdown/JSON, 향후 PDF | Must |
+| FR-023 | CLI/API | Library와 같은 service를 호출 | Should |
+| FR-024 | Web process | Gate, checklist, evidence, blocker visualization | Later |
+| FR-025 | Calibration | model/rubric/retrieval 편차와 경계 오류 측정 | Should |
+| FR-026 | Certification | 완료평가와 분리된 policy/Level decision | Later |
+
+## 9. 등록심의와 완료평가 공통 Pipeline
+
+~~~text
+preflight
+→ snapshot freeze
+→ parse/normalize
+→ rubric/checklist load
+→ historical case retrieval
+→ deterministic checks
+→ model evaluation
+→ multi-model calibration
+→ evidence-backed draft report
+→ human review decision
+→ dossier/audit update
+~~~
+
+완료평가는 위 흐름에 approved registration baseline과 approved change diff를 추가한다.
+
+## 10. 리뷰 리포트 최소 형식
+
+criterion별:
+
+| 필드 | 설명 |
+|---|---|
+| criterion_id/version | 적용한 기준 |
+| assessment | met, partially_met, not_met, insufficient_evidence, not_applicable |
+| observation | 제출자료에서 확인한 사실 |
+| evidence_refs | page/slide/object/field locator |
+| deterministic_checks | 규칙 결과 |
+| model_findings | model별 독립 결과 |
+| similar_case_refs | 사례, score, corpus snapshot |
+| commonalities/differences | 사례 비교 |
+| evidence_adequacy | coverage와 reliability |
+| disagreement | model/규칙/사례 충돌 |
+| risk_flags | 오판·누락·정책 위험 |
+| follow_up_questions | 평가자 확인 질문 |
+| reviewer_action | 수용·수정·반려·추가자료 |
+| audit_ref | run manifest |
+
+근거가 없으면 insufficient_evidence로 처리한다. confidence는 evidence coverage, reliability, model agreement, rule consistency를 분리해 표시한다.
+
+## 11. 과거 사례와 Vector DB
+
+### 11.1 Ingestion
+
+~~~text
+원본 등록
+→ 접근등급/비식별
+→ parse/normalize
+→ registration/completion semantic section
+→ chunk + provenance
+→ dense/sparse embedding
+→ vector upsert
+→ corpus manifest
+→ retrieval evaluation
+~~~
+
+### 11.2 기본 선택
+
+- embedding 후보: Qwen3-Embedding-0.6B
+- reranker 후보: Qwen3-Reranker-0.6B
+- vector store: Qdrant adapter
+- test: in-memory fake
+- 검색: metadata filter + lexical/dense hybrid + rerank + case aggregation
+- collection/corpus는 stage, rubric, access classification을 구분
+
+### 11.3 필수 기록
+
+- source hash/revision
+- parser/chunker/embedding version
+- corpus_snapshot_id
+- case/stage/criterion/rubric metadata
+- access classification
+- query와 retrieval/rerank version
+
+과거 outcome을 새 과제의 정답으로 복사하지 않는다. 유사사례는 일관성 점검과 follow-up 질문의 근거다.
+
+## 12. Model과 Agent
+
+### 12.1 Model profile
+
+~~~text
+provider
+model
+base_url
+api_key_env
+capabilities
+timeout
+max_concurrency
+generation_profile
+~~~
+
+기본 logical profile은 Qwen3.5 multimodal이다. 첫 deployment 후보는 Qwen/Qwen3.5-9B지만 hardware와 evaluation 전 운영 기본으로 확정하지 않는다.
+
+### 12.2 OpenAI-compatible
+
+- base_url은 /v1까지 포함하는 API base로 표준화
+- HTTP client와 curl로 base_url + /chat/completions 최소계약 확인
+- startup capability probe
+- endpoint별 vision, structured output, tool calling, streaming 차이를 기록
+- API key는 env/secret manager로만 주입
+- vLLM 또는 승인된 compatible server 사용 가능
+
+### 12.3 실행모드
+
+- single: primary model
+- panel: 2개 이상 model 독립평가
+- adjudicated: disagreement가 큰 항목 재검토
+- repeatability: 동일 model 반복편차 측정
+
+model들은 첫 pass에서 서로의 결과를 보지 않는다. 평균점수보다 criterion별 분포와 evidence 차이를 먼저 보고한다.
+
+### 12.4 Deep Agents
+
+deepagents integration은 optional extra다. read-only evidence 탐색, 분석계획, criterion subtask에 활용할 수 있다. dossier 직접 write, final transition, rubric 변경권한을 주지 않는다.
+
+## 13. 비정형 문서 분석
+
+PPTX 분석은 네 층으로 구성한다.
+
+1. Docling 구조 추출
+2. slide image rendering
+3. Qwen3.5 등 VLM visual analysis
+4. typed domain evidence와 rubric mapping
+
+정량:
+
+- slide/page 처리율
+- text/table/chart/image 추출수
+- object coverage와 parse warning
+- KPI value/unit/period/measurement 완전성
+- locator 없는 숫자와 상충 숫자
+- criterion별 evidence coverage
+
+정성:
+
+- 문제-해결안 연결
+- 목표-수행-KPI 인과성
+- 주장과 증거 정합성
+- 재현성, 위험, 한계
+- 등록계획 대비 변화와 결과
+
+문서 design 품질을 과제 성과로 간주하지 않는다.
+
+## 14. Async와 Batch
+
+- sync/async API는 같은 input/output/error contract를 가진다.
+- artifact, model panel, dossier item 단위 병렬성을 지원한다.
+- capacity limit와 endpoint별 concurrency limit를 둔다.
+- retry는 transient error에만 적용한다.
+- batch는 JSONL manifest, item_id, idempotency_key, expected_revision을 가진다.
+- 상태는 queued/running/succeeded/retryable/terminal/stale/cancelled로 구분한다.
+- resume은 성공항목을 중복 실행하지 않는다.
+- long job API는 202 + run_id, SSE/poll progress를 사용한다.
+
+## 15. 기술 Architecture
+
+~~~text
+Python Library / CLI / FastAPI / Worker
+                  |
+       Application Workflows
+                  |
+ Dossier + Rubric + Evidence + Evaluation Domain
+        /          |          \
+ Parser Ports  Retrieval Ports  Model Ports
+ Docling       Qdrant            OpenAI-compatible
+                  |
+ FS/S3 + SQLite/PostgreSQL + Audit
+~~~
+
+### 15.1 baseline stack
+
+| 계층 | 선택 |
+|---|---|
+| Runtime | Python 3.12+ |
+| Packaging | uv + hatchling |
+| Schema | Pydantic v2, JSON Schema 2020-12 |
+| Dossier | YAML 1.2, ruamel.yaml |
+| CLI | Typer + Rich |
+| API | FastAPI/OpenAPI 3.1 |
+| Async/HTTP | AnyIO + HTTPX |
+| Parser | Docling optional extra |
+| Embedding | Qwen3 Embedding 후보 |
+| Vector | Qdrant |
+| Metadata | SQLite dev / PostgreSQL pilot |
+| Artifact | filesystem dev / MinIO pilot |
+| Model server | vLLM 또는 compatible on-prem |
+| Agent | Deep Agents optional |
+| Test | pytest + Hypothesis |
+| Quality | Ruff + Pyright |
+| Observability | structlog + OpenTelemetry |
+| Frontend | Next.js + TypeScript |
+
+exact version은 scaffold 시 spike 후 lockfile에 고정한다.
+
+## 16. Web App 요구사항
+
+Web App은 process와 evidence를 중심으로 한다.
+
+필수 view:
+
+- Portfolio와 registration/completion queue
+- Project overview와 5단계 stepper
+- registration review workbench
+- execution timeline과 KPI
+- completion review workbench
+- evidence viewer와 source locator
+- similar case comparison
+- model disagreement/calibration dashboard
+- audit timeline
+- rubric/model/corpus administration
+
+각 과제는 단계별 checklist, blocker, 담당자, 대상 revision, next action을 보여야 한다.
+
+Frontend는 Next.js/TypeScript, backend는 Python FastAPI를 기본으로 한다. OpenAPI-generated client를 사용하며 long job progress는 SSE를 우선한다.
+
+LG 기반 design은 Active Red #FD312E, Heritage Red #A50034, Warm Grey #F0ECE4, White, Black을 token으로 사용한다. 공식 logo/font/asset은 권한 확인 전 사용하지 않는다. 상세 UI 원칙은 DESIGN.md를 따른다.
+
+## 17. 비기능 요구사항
+
+| 영역 | 요구사항 |
+|---|---|
+| 보안 | 최소권한, secret 분리, endpoint allowlist, malware/type 검사 |
+| 개인정보 | pseudonymous ID, 최소수집, 보존/삭제, 외부전송 통제 |
+| 재현성 | dossier/rubric/model/prompt/corpus/code version 연결 |
+| 신뢰성 | atomic write, idempotency, retry, stale/partial failure 표시 |
+| 설명가능성 | 결론보다 evidence, 기준, 불확실성 우선 |
+| 관찰성 | run, latency, token/compute/cost, error, reviewer 상태 |
+| 테스트성 | synthetic fixture, mock model, fixed evaluation set |
+| 이식성 | parser/vector/model/storage를 interface로 교체 |
+| 접근성 | Web App WCAG 2.2 AA 목표 |
+| 성능 | 초기에는 처리량보다 품질·근거·재현성 우선 |
+| 확장성 | single item에서 bounded async/batch로 확장 |
+
+## 18. 데이터 명세
+
+### 18.1 필수 metadata
+
+~~~text
+project_id
+display_id
+participant_id_pseudonymized
+project_type
+organization_ref
+review_stage
+dossier_revision
+dossier_hash
+snapshot_id
+source_file_id/version/hash
+rubric_id/version
+criterion_ids
+reviewer_decision
+access_classification
+corpus_snapshot_id
+model_profile/run_id
+~~~
+
+### 18.2 데이터 원칙
+
+- 초기 개발은 synthetic fixture만 사용한다.
+- 실제 자료는 승인, 최소권한, 비식별, 보존정책 후 반입한다.
+- 원문, 파생 text, embedding, model output을 모두 data inventory에 넣는다.
+- 실패·경계·자료부족 사례를 포함한다.
+- tuning, calibration, final evaluation set을 혼합하지 않는다.
+- 삭제 시 원문, 파생물, vector, cache, report까지 추적한다.
+
+## 19. Evaluation 계획
+
+### 19.1 지표
+
+| 지표 | 정의 |
+|---|---|
+| Parser coverage | required field와 object 추출률 |
+| Evidence traceability | criterion 결과가 source locator로 재현되는 비율 |
+| Unsupported claim | 근거 없이 충족 판단한 비율 |
+| Retrieval Recall/nDCG | 유사사례 후보와 순위 품질 |
+| Stage leakage | registration에 completion outcome이 부당 노출된 비율 |
+| Human agreement | expert와 model/reviewer 결과 일치도 |
+| Model disagreement | model별 criterion 분산 |
+| Calibration | confidence와 실제 오류의 정렬 |
+| Boundary error | 합격선/Level 경계 오판 |
+| Review time | 기존 대비 사람 검토시간 |
+| Reproducibility | 동일 version/config의 구조적 재생성 |
+| Cost/latency | 건당 GPU/API 비용과 처리시간 |
+
+### 19.2 제안 성공기준
+
+제안값은 GOAL.md를 따른다. Product Owner와 평가책임자가 Gate 0에서 승인하기 전에는 실험 목표이며 공식 성공판정 기준이 아니다.
+
+## 20. 역할과 책임경계
+
+| 역할 | 최종 책임 |
+|---|---|
+| Sponsor | 우선순위, 공수·예산, Go/No-Go |
+| Product Owner | 범위, rubric, 수용기준, 업무 검수 |
+| Evaluation Owner | 평가정책, 합격선, Level, 위험오판 |
+| Delivery Lead | 계획, 상태, 결정·변경·의존성 |
+| Tech Lead | architecture, code/model/parser/retrieval 품질 |
+| Developer | 합의된 구현·테스트·증빙 |
+| Data Owner | sample, 권한, 기준결과, data dictionary |
+| Governance | 개인정보·보안·인프라 승인 |
+| Operations | 배포·rollback·운영·인수 |
+| Reviewer | 개별 평가의 사람 최종결정 |
+
+위험 제기자와 Risk Owner를 자동으로 동일시하지 않는다. 새 요구와 사후 수용기준은 Change Request로 처리한다.
+
+## 21. Gate와 산출물
+
+| Gate | 산출물 | 통과조건 |
+|---|---|---|
+| G0 Alignment | WORK_SPEC/GOAL/DESIGN, RACI, 성공기준 | Owner와 첫 use case 결정 |
+| G1 Harness | package scaffold, prep, state/decision/risk | status/validate read-only |
+| G2 Domain MVP | dossier, state, snapshot, synthetic flow | offline vertical slice 통과 |
+| G3 Intelligence | parser, retrieval, model, report | evidence/retrieval baseline |
+| G4 Interfaces | CLI/API/async/batch | contract/E2E 통과 |
+| G5 Web Review | process/review/calibration UI | 핵심 사용자 flow 검증 |
+| G6 Pilot | 50 paired sample 결과 | 위험·시간·편차·보안 검토 |
+| G7 Go/No-Go | Continue/Narrow/Stop memo | Sponsor 명시적 결정 |
+| G8 Integration | 운영 API, SSO, backup, rollback | 별도 승인과 인수 |
+
+## 22. Codex Harness 계약
+
+### 22.1 목표
+
+다음 Agent가 현재 baseline과 Gate를 즉시 파악하고 작은 변경을 구현·검증하며 근거 없는 완료 선언을 하지 못하게 한다.
+
+### 22.2 계획 명령
+
+~~~powershell
+.\prep.ps1 status
+.\prep.ps1 next
+.\prep.ps1 validate
+.\prep.ps1 test
+.\prep.ps1 eval
+~~~
+
+- status와 validate는 read-only다.
+- test는 network/GPU/API key 없이 기본 suite를 실행한다.
+- live model evaluation은 별도 opt-in이다.
+- 완료 선언에는 file, command, test/eval evidence가 필요하다.
+- 실제 data, token, secret, output은 Git에 넣지 않는다.
+
+현재 prep.ps1과 executable harness는 아직 없다. P1에서 구현한다.
+
+## 23. 기준정보 우선순위
+
+1. 사용자의 최신 명시적 지시
+2. 승인된 WORK_SPEC baseline
+3. GOAL의 Target/Acceptance Criteria
+4. DESIGN의 architecture/UX
+5. 승인된 ADR/Change Request
+6. AXCalib_Concept_Overview
+7. test/evaluation이 보여 주는 실제 동작
+
+## 24. 초기 Risk와 의존성
+
+| ID | 위험·의존성 | 대응/필요결정 |
+|---|---|---|
+| R-001 | Product/Evaluation Owner 미정 | G0에서 A 지정 |
+| R-002 | AX Level/합격선 미정 | policy registry 외부화 |
+| R-003 | 실제 평가량·시간 미검증 | baseline 측정 |
+| R-004 | data 권한·format 편차 | synthetic 우선, Data Owner |
+| R-005 | 단일 파일 충돌 | revision/snapshot/atomic write |
+| R-006 | 자동 최종판정 범위확대 | Human decision 분리 |
+| R-007 | 과거사례 편향 | outcome-blind retrieval와 evaluation |
+| R-008 | 외부 model data 전송 | on-prem 기본, endpoint policy |
+| R-009 | Qwen endpoint capability 차이 | capability probe |
+| R-010 | PPTX visual 의미 누락 | Docling + render + VLM |
+| R-011 | 다중 모델 평균의 false confidence | disagreement 중심 report |
+| R-012 | batch 중복·부분실패 | idempotency/checkpoint |
+| R-013 | LG brand asset 권한 | public color token만, 승인 Gate |
+| R-014 | 운영시스템 조기통합 | G7 이후 별도 승인 |
+
+## 25. Open Questions
+
+1. 첫 실제 AX 과제 유형과 공식 Product/Evaluation Owner는 누구인가?
+2. 등록심의·완료평가 rubric 원본과 version owner는 누구인가?
+3. AX Level, 필수역량, 합격선, 재평가·인증 유효기간은 무엇인가?
+4. 실제 PPTX/원시트 형식과 등록-완료 연결 ID가 있는가?
+5. on-prem GPU, vLLM/Qwen endpoint, 허용 model 목록은 무엇인가?
+6. 실제 사례의 이용근거, 비식별 수준, 보존기간은 무엇인가?
+7. retrieval relevance와 expert gold label을 누가 작성하는가?
+8. PostgreSQL, Qdrant, MinIO, queue 운영 Owner는 누구인가?
+9. SSO/RBAC와 reviewer/certification 권한은 어떻게 연결하는가?
+10. 공식 LG design asset과 font 사용권한이 있는가?
+11. 내부 package registry와 공개/내부 license는 무엇인가?
+12. 파일럿의 위험한 오판 허용한도와 time-saving target을 승인할 것인가?
+
+## 26. 사용자 요구 추적표
+
+| 요구 | 반영 위치 | 상태 |
+|---|---|---|
+| 1. Library에서 API/CLI/App/Web으로 확장 | FR-020~024, GOAL P1~P8, DESIGN 3/16/17 | Specified |
+| 2. 등록심의와 완료평가 이원화 | Domain Lifecycle, FR-006/008, DESIGN 6~9 | Specified |
+| 3. 단일 파일의 지속갱신과 완료평가 요청 | Canonical Dossier, revision/snapshot, FR-002/005/007 | Specified |
+| 4. checklist evaluation과 과거 유사사례 report | FR-011~014, Report schema, DESIGN 7/9/10 | Specified |
+| 5. 기존 명세와 AXCalib naming 철학 | 문서 우선순위, README, Concept 문서 연결 | Specified |
+| 6. 과거 과제 embedding과 Vector DB | FR-015, Vector DB section, GOAL WP-04 | Specified |
+| 7. on-prem Qwen3.5, BASE_URL/API_KEY, curl, Deep Agents, multi-model | FR-016/017, Model/Agent section, DESIGN 12 | Specified |
+| 8. async와 batch | FR-020/021, Async/Batch section, GOAL WP-06 | Specified |
+| 9. Docling PPTX와 정량·정성 비정형 분석 | FR-009/010, Unstructured section, DESIGN 14 | Specified |
+| 10. Web App의 프로세스별 check/visualization | FR-024, Web App section, DESIGN 17 | Specified |
+| 11. 과제 고유 UUID | FR-001, Dossier section | Specified |
+| 12. 추가 체계화 | calibration, audit, security, Gate, ADR, evaluation | Specified |
+| 13. frontend/backend와 LG design | Web App section, DESIGN 16~19 | Specified |
+
+Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
+
+## 27. 현재 완료상태
+
+- [x] 독립 작업공간 생성
+- [x] AXCalib 개념과 naming 정의
+- [x] WORK_SPEC v0.2 정렬
+- [x] AGENTS.md 작업계약 작성
+- [x] GOAL.md Target/Gate 작성
+- [x] DESIGN.md architecture/UX baseline 작성
+- [x] 두 단계 lifecycle과 dossier snapshot 원칙 정의
+- [x] Vector DB/model/async/batch/Web 확장계획 정의
+- [ ] Sponsor/Product/Evaluation Owner 승인
+- [ ] executable Codex harness
+- [ ] package scaffold와 synthetic fixture
+- [ ] parser/retrieval/model spike
+- [ ] data/security 승인
+- [ ] pilot 시작
+
+## 28. 변경 기록
+
+| 날짜 | Baseline | 변경 |
+|---|---|---|
+| 2026-07-12 | v0.1 | AI 교육과정 평가 플랫폼 초기 초안 |
+| 2026-07-12 | v0.2 | AXCalib로 명명 통일, 두 Gate/dossier/vector/model/async/Web 명세 반영 |
