@@ -1,10 +1,11 @@
 ---
 document_type: architecture_and_product_design
 project: AXCalib
-baseline: v0.2-planning
+baseline: v0.3-p1
 created_at: 2026-07-12
+updated_at: 2026-07-14
 timezone: Asia/Seoul
-status: proposed_for_alignment
+status: p1_harness_ready_for_review
 ---
 
 # AXCalib Architecture와 App Design
@@ -25,10 +26,14 @@ Core Domain은 나머지 층 없이도 실행되고 테스트되어야 한다.
 ## 2. 핵심 설계 원칙
 
 - Library first: 모든 인터페이스는 같은 application service를 호출한다.
+- Composable pipelines: 요소 모듈을 국소 pipeline으로 완결하고 전체 workflow는 이를 연결한다.
+- Thin delivery: working script, CLI, API, worker, Web에는 domain 로직을 복제하지 않는다.
 - One dossier, many immutable revisions: 사용자 기준 파일은 하나지만 평가 입력은 고정한다.
 - Deterministic gates around probabilistic models: 상태·스키마·정책은 코드가, 의미 평가는 모델과 사람이 담당한다.
 - Evidence before score: 점수보다 locator와 증거 충분성을 먼저 만든다.
 - Human decision is a distinct object: 모델 평가와 최종 검토를 같은 필드에 덮어쓰지 않는다.
+- Mandatory HITL notification: 관리자 승인요청이 기록되지 않으면 review pending으로 전이하지 않는다.
+- Optional mentor, conditional guard: 멘토는 선택이지만 배정 후 완료 제출에는 mentor 승인이 필요하다.
 - Stage-aware retrieval: 등록심의와 완료평가의 유사성 의미를 분리한다.
 - Provider and framework independence: Qwen3.5, Deep Agents, Qdrant를 교체 가능한 adapter로 둔다.
 - Async by contract, bounded by policy: 병렬성은 허용하되 무제한 fan-out은 금지한다.
@@ -40,7 +45,8 @@ Core Domain은 나머지 층 없이도 실행되고 테스트되어야 한다.
 ~~~text
                          ┌─────────────────────────┐
                          │ Reviewer / Operator UI  │
-                         │ Next.js + LG UI tokens  │
+                         │ FE selection pending    │
+                         │ Enterprise workbench    │
                          └───────────┬─────────────┘
                                      │ OpenAPI + SSE
 ┌───────────────┐          ┌─────────▼─────────┐          ┌─────────────────┐
@@ -51,8 +57,8 @@ Core Domain은 나머지 층 없이도 실행되고 테스트되어야 한다.
         └────────────────────────────┼──────────────────────────────┘
                                      ▼
                           ┌─────────────────────┐
-                          │ Application/Domain  │
-                          │ workflows + ports   │
+                          │ Total Workflows     │
+                          │ + Local Pipelines   │
                           └───┬────┬────┬───────┘
                               │    │    │
                ┌──────────────┘    │    └────────────────┐
@@ -68,26 +74,25 @@ API, CLI, worker는 domain model을 복제하지 않는다. Web App의 상태도
 ## 4. 모듈 경계
 
 ~~~text
-core
-  ├── schemas
-  └── dossier
-        ▲
-        │
-rubrics ├── evidence
-        │      ▲
-        │      └── ingest adapters
-        │
-evaluation ◄── retrieval ports ◄── qdrant adapter
-     ▲
-     ├── model ports ◄── openai-compatible / deepagents adapters
-     └── calibration
+core / schemas
+       │
+       ├── dossier + state machine
+       ├── ingest / evidence ◄── Docling adapters
+       ├── retrieval ports ◄── lexical / qdrant adapters
+       ├── evaluation ◄── model ports / calibration
+       ├── reports
+       ├── notification ports ◄── recording / GitLab MR / email
+       └── audit
              ▲
-             │
-        workflows
-        ├── registration
-        └── completion
+             │ compose capability modules
+      reusable local pipelines
+      freeze / prepare / retrieve / evaluate / review
              ▲
-       CLI / API / worker
+             │ connect branch / wait / resume
+      versioned total workflows
+      registration / execution / completion
+             ▲
+    scripts / CLI / API / worker / Web client
 ~~~
 
 의존성 규칙:
@@ -96,8 +101,50 @@ evaluation ◄── retrieval ports ◄── qdrant adapter
 - ingest는 EvidenceDocument를 반환하고 evaluation의 정책을 알지 못한다.
 - retrieval은 case와 chunk를 찾지만 assessment를 확정하지 않는다.
 - models는 구조화된 후보 판단을 반환하고 dossier를 직접 저장하지 않는다.
-- workflows만 여러 port를 조합한다.
+- local pipelines만 하나의 use case를 위해 여러 domain module과 port를 조합한다.
+- total workflows는 검증된 pipeline id/version만 연결하고 domain invariant를 정의하지 않는다.
+- working script, CLI, API, worker는 같은 pipeline/workflow facade를 호출한다.
 - UI는 dossier file을 직접 수정하지 않고 revision-aware command를 호출한다.
+
+### 4.1 Element Module → Local Pipeline → Total Workflow
+
+요소 모듈은 capability, 국소 pipeline은 완결된 업무 목적, total workflow는 lifecycle 조합을
+책임진다. 이 구분을 사용하면 등록심의 평가, 완료평가, 유사사례 검색을 독립 실행하면서도
+표준 two-gate workflow에서 같은 구현을 재사용할 수 있다.
+
+국소 pipeline의 공통 계약은 다음을 포함한다.
+
+- typed request와 output
+- immutable PipelineContext
+- pipeline_id와 pipeline_version
+- sync `run`과 async `arun`의 의미 일치
+- succeeded, waiting_human, blocked, stale, retryable/terminal failure, cancelled 상태
+- evidence/artifact/event/checkpoint/audit reference
+- port를 통한 side effect와 mutation의 expected_revision/idempotency
+
+total workflow는 local pipeline, 조건 분기, 관리자/mentor wait, durable checkpoint와 resume을
+연결한다. workflow recipe로 mandatory HITL, notification, mentor guard, snapshot 검증을 끌 수
+없다. 초기에는 명시적 Python composition과 allowlisted registry를 사용하고 arbitrary graph나
+import path 실행은 허용하지 않는다.
+
+working Python script는 argument parsing, runtime profile 생성, pipeline 호출, 결과 직렬화만
+담당한다. FastAPI/CLI/worker는 script subprocess가 아니라 같은 library object를 직접 사용한다.
+상세 catalog, interface 적용, WP별 납품 순서는
+`docs/architecture/composable-pipeline-plan.md`, 결정 근거는 ADR-013을 따른다.
+
+### 4.2 Visual Blueprint와 Module Control
+
+architecture는 다음 세 view를 함께 유지한다.
+
+- `workflow-blueprint.md`: 계층, 공식 two-gate, sequence, pipeline anatomy, module dependency,
+  failure/resume, Delivery Wave의 Mermaid 원문
+- `module-delivery-plan.md`: M00~M13의 상태, 입력·출력, 직접 선행조건, 첫 slice, test와 Exit Evidence
+- `diagrams/workflow-at-a-glance.svg`: 비기술 이해관계자용 한 장 요약
+
+Mermaid를 정확한 구조 기준으로, SVG를 커뮤니케이션 요약으로 사용한다. module/pipeline ID,
+상태전이, dependency 또는 현재 구현상태가 바뀌면 세 view와 `PROJECT_STATE.md`를 같은 change
+set에서 갱신한다. 구현되지 않은 node를 완료색으로 표시하지 않으며 다이어그램이 domain state
+machine을 대신하지 않는다.
 
 ## 5. Canonical Project Dossier
 
@@ -245,18 +292,30 @@ registration_ready
   │ freeze + start
   ▼
 registration_under_review
+  │ publish Agent draft + notification
+  ▼
+registration_hitl_pending
   ├──► registration_needs_changes ──revise/resubmit──► registration_ready
-  ├──► registration_rejected
+  ├──► registration_rejected ──► process terminated
   └──► registration_approved
                  │ start execution
                  ▼
              in_progress
-                 │ submit completion
+                 │ completion submission report
                  ▼
           completion_ready
-                 │ freeze + start
+                 │ request mentor/owner approval
+                 ▼
+      completion_approval_pending
+                 │ approve and register
+                 ▼
+        completion_registered
+                 │ freeze + evaluate
                  ▼
        completion_under_review
+                 │ publish Agent draft + notification
+                 ▼
+          completion_hitl_pending
           ├──► completion_needs_changes ──revise/resubmit──► completion_ready
           ├──► completion_not_accepted
           └──► completion_accepted
@@ -275,14 +334,22 @@ withdrawn과 cancelled는 정책에 따라 여러 pre-final 상태에서 갈 수
 |---|---:|---:|
 | draft → registration_ready | 예, schema/checklist 충족 시 | 아니오 |
 | registration_ready → under_review | 예, snapshot 생성 후 | 아니오 |
-| under_review → needs_changes/rejected/approved | 아니오 | 예 |
+| registration_under_review → registration_hitl_pending | Agent draft 후 가능 | notification 필수 |
+| registration_hitl_pending → needs_changes/rejected/approved | 아니오 | 관리자 필수 |
 | approved → in_progress | 정책에 따라 | 시작 승인 권장 |
 | in_progress → completion_ready | 예, 최소 제출요건 충족 시 | 제출자 확인 |
-| completion_ready → under_review | 예, snapshot 생성 후 | 아니오 |
-| under_review → needs_changes/not_accepted/accepted | 아니오 | 예 |
+| completion_ready → completion_registered | 아니오 | mentor 배정 시 mentor, 미배정 시 owner/admin |
+| completion_registered → under_review | 예, snapshot 생성 후 | 아니오 |
+| completion_under_review → completion_hitl_pending | Agent draft 후 가능 | notification 필수 |
+| completion_hitl_pending → needs_changes/not_accepted/accepted | 아니오 | 관리자 필수 |
 | accepted → certified | 아니오 | 인증권자 필요 |
 
 Agent와 LLM에는 final transition repository 권한을 주지 않는다.
+
+notification adapter가 실패하면 `*_hitl_pending` 전이를 완료하지 않는다. 서비스 구현에서는
+review request와 outbox event를 같은 transaction에 기록하고 idempotent worker가 GitLab MR
+또는 email delivery를 처리한다. P1 reference workflow는 RecordingNotifier로 이 fail-closed
+계약만 검증한다.
 
 ## 7. 등록심의 Pipeline
 
@@ -294,7 +361,7 @@ Agent와 LLM에는 final transition repository 권한을 주지 않는다.
 3. Parse and Normalize
    Docling structure + slide rendering + evidence locators
 4. Retrieve
-   registration-stage historical cases and criterion references
+   registration-stage historical cases, adapter/corpus/portion 기록
 5. Deterministic Evaluation
    completeness, type, numeric consistency, mandatory conditions
 6. Semantic Evaluation
@@ -305,9 +372,17 @@ Agent와 LLM에는 final transition repository 권한을 주지 않는다.
    disagreement, missing evidence, historical consistency, confidence diagnostics
 9. Draft Report
    criterion findings, similar cases, risks, questions
-10. Human Review
-   approve, reject, request changes, record rationale
+10. Approval Notification
+   GitLab MR, email 또는 offline recording event
+11. Administrator HITL
+   hallucination, bias, evidence, RAG/weight 검토
+12. Final Decision
+   approve, reject, request changes, override, record rationale
 ~~~
+
+위 total flow는 `dossier.freeze`, `evidence.prepare`, `cases.retrieve`,
+`registration.evaluate`, `report.render`, `review.request`, `registration.decide` 국소 pipeline의
+조합으로 구현한다. 관리자 decision은 evaluation pipeline 안에 넣지 않는다.
 
 등록심의의 핵심 비교 단위:
 
@@ -333,23 +408,32 @@ Agent와 LLM에는 final transition repository 권한을 주지 않는다.
 
 등록 당시 approved baseline을 직접 덮어쓰지 않는다. 변경이 필요하면 change request와 승인기록을 만들고 완료평가에서 original baseline, approved change, final result를 함께 비교한다.
 
+멘토 배정은 registration approval 뒤 선택적으로 수행한다. mentor가 없으면 project owner가
+계속 수행할 수 있다. mentor_ref가 있으면 완료 제출 등록 전에 해당 mentor의 approval event가
+필수이며 owner가 이를 우회할 수 없다.
+
 ## 9. 완료평가 Pipeline
 
 ~~~text
-1. Completion preflight
-2. Freeze final dossier revision
-3. Load approved registration baseline
-4. Parse final artifacts and KPI evidence
-5. Build baseline-to-result diff
-6. Retrieve completion-stage historical cases
-7. Deterministic checks
-8. Semantic and multimodal evaluation
-9. Independent model panel
-10. Calibration and boundary analysis
-11. Draft completion report
-12. Human completion decision
-13. Optional AX Level/certification policy
+1. Draft completion submission report
+2. Mentor approval when assigned; otherwise owner/admin confirmation
+3. Register completion submission
+4. Completion preflight and final dossier revision freeze
+5. Load approved registration baseline
+6. Parse final artifacts and KPI evidence
+7. Build baseline-to-result diff
+8. Retrieve completion-stage historical cases and record portion
+9. Deterministic, semantic, multimodal evaluation
+10. Independent model panel and calibration
+11. Draft completion evaluation report
+12. Administrator approval notification
+13. Administrator HITL and final completion decision
+14. Optional AX Level/certification policy
 ~~~
+
+완료 흐름은 `completion.submit`, `dossier.freeze`, `evidence.prepare`, `cases.retrieve`,
+`completion.evaluate`, `report.render`, `review.request`, `completion.decide`를 연결한다. 등록
+baseline loading과 mentor guard는 workflow option이 아니라 domain precondition이다.
 
 완료평가의 핵심 비교 단위:
 
@@ -374,11 +458,16 @@ criterion별 최소 결과:
 | model_findings | 모델별 독립 결과 |
 | similar_case_refs | 과거 사례와 score |
 | commonalities/differences | 사례 비교 |
+| retrieval_status/adapter | not_configured, empty, completed와 구현체 |
+| similarity_portion | historical-consistency contribution과 계산근거 |
 | evidence_adequacy | 근거의 양·출처·직접성 |
 | disagreement | 모델·규칙·사례 간 충돌 |
 | risk_flags | 오판·누락·정책 위험 |
 | follow_up_questions | 사람이 확인할 질문 |
 | reviewer_action | accept/edit/reject/request_evidence |
+| agent_recommendation | Agent의 통과·미통과·자료부족 제안 |
+| administrator_decision | 관리자 actor, 시각, 사유를 포함한 최종결정 |
+| notification_ref | 승인요청 delivery/outbox reference |
 | audit_ref | run manifest |
 
 confidence를 모델의 막연한 자기확신 숫자로 사용하지 않는다. 최소한 다음을 분리한다.
@@ -461,6 +550,16 @@ score의 의미와 범위는 backend별로 다르므로 raw score를 합격 임�
 - stage leakage: completion outcome이 registration 판단에 부당하게 노출되는가
 - subgroup bias: 유형·조직·문서길이에 따른 검색 편차
 - citation validity: 결과가 실제 source locator로 열리는가
+
+### 11.6 Embedding model이 없는 P1/P2 mode
+
+- `NullRetriever`는 검색 미구성을 `not_configured`로 명시한다.
+- `LexicalRetriever`는 synthetic corpus에서 stage filter와 deterministic ranking을 검증한다.
+- stage별 `similarity_portion` 기본값은 0.0이며 retrieval 결과를 리포트 참고자료로만 넣는다.
+- vector/hybrid adapter는 같은 port를 구현하고 새 corpus/index namespace로 추가한다.
+- raw similarity는 점수가 아니라 공통점·차이점·한계를 만드는 입력이다.
+- portion은 `0.0..1.0`; 0.25 초과는 policy warning과 Evaluation Owner 승인을 요구한다.
+- portion이 양수인데 retrieval이 unavailable이면 다른 항목에 조용히 재분배하지 않는다.
 
 ## 12. Model Gateway와 Agent
 
@@ -553,13 +652,33 @@ Deep Agents는 axcalib[deepagent] optional extra로 둔다. 적합한 용도:
 
 Agent tool은 domain command를 감싼 좁은 interface만 제공하고, 모든 write는 expected_revision과 사람 권한을 통과한다.
 
+### 12.6 HITL Review Request와 Notification
+
+평가초안이 완성되면 다음 객체를 분리해 기록한다.
+
+- evaluation report: Agent recommendation, evidence, uncertainty, retrieval context
+- review request: project/stage/revision, required administrator, due/status
+- notification event: adapter, idempotency key, delivery status, retry/audit reference
+- administrator decision: accept/edit/override/reject/request evidence와 rationale
+
+NotificationPort의 우선 adapter는 다음과 같다.
+
+- recording: offline test 전용
+- GitLab Merge Request: versioned report/checklist review와 comment/approval 연계 후보
+- email: 승인요청 요약과 review URL 전달 후보
+
+운영 구현은 outbox pattern을 사용한다. secret과 원문 전체는 notification payload에 넣지 않는다.
+
 ## 13. Async와 Batch
 
 ### 13.1 Library API
 
 - sync: evaluate_registration, evaluate_completion, ingest_cases
 - async: aevaluate_registration, aevaluate_completion, aingest_cases
+- local pipeline: `run(request, context=...)` / `arun(request, context=...)`
+- total workflow: start, inspect, resume를 versioned workflow facade로 제공
 - 두 API의 input/output schema와 오류 의미는 같다.
+- CLI/API/worker는 같은 pipeline/workflow registry를 공유한다.
 - async implementation은 AnyIO task group과 capacity limiter를 사용한다.
 - sync wrapper가 event loop 안에서 중첩 실행되지 않도록 별도 Client를 제공한다.
 
@@ -578,6 +697,8 @@ Agent tool은 domain command를 감싼 좁은 interface만 제공하고, 모든 
 - parse 완료 이전 retrieval query 구성
 - 독립 model call 완료 이전 disagreement
 - reviewer decision 이전 final transition
+- notification event 기록 이전 HITL pending transition
+- mentor가 배정된 과제의 mentor approval 이전 completion registration
 
 ### 13.3 Batch manifest
 
@@ -683,11 +804,12 @@ storage port:
 ### 16.1 계층
 
 - FastAPI route: HTTP validation, auth context, status code
-- Application service: use case, transaction, idempotency
+- Workflow facade: versioned graph, branch, wait/resume, checkpoint
+- Local pipeline: use case, transaction boundary, idempotency, typed result
 - Domain: state/policy/schema
 - Adapter: DB, object store, vector, model, parser
 
-route에서 model call이나 file parse를 직접 수행하지 않는다.
+route와 working script에서 model call, file parse, 상태판정을 직접 수행하지 않는다.
 
 ### 16.2 API 처리 패턴
 
@@ -932,15 +1054,16 @@ Active Red는 밝기 때문에 작은 흰색 글자 배경으로 쓰지 않는�
 - animation은 prefers-reduced-motion 준수
 - decision dialog는 결과와 영향, 대상 revision을 읽어 준다
 
-## 19. Frontend 구현 구조
+## 19. Frontend 선택 전 논리 구조
 
 ~~~text
 apps/web/
-  app/
-    (portfolio)/
-    projects/[projectId]/
-    calibration/
-    admin/
+  src/
+    routes/
+      portfolio/
+      projects/
+      calibration/
+      admin/
   components/
     axcalib/
     evidence/
@@ -959,7 +1082,9 @@ apps/web/
 
 전략:
 
-- Next.js App Router와 TypeScript strict
+- framework 선택은 Open이며 React + Vite + React Router Data Mode를 현재 권장안으로 둔다.
+- Next.js, SvelteKit, Nuxt를 대안으로 유지하고 사용자 선택 전 scaffold하지 않는다.
+- TypeScript strict와 framework-neutral design token/component contract를 사용한다.
 - OpenAPI-generated client를 API boundary로 사용
 - TanStack Query로 server state, URL로 filter state
 - form은 dossier command schema에서 생성하되 중요한 review form은 명시적 UI
@@ -1069,22 +1194,29 @@ P1에서 다음 ADR을 만든다.
 7. ADR-007 SQLite dev / PostgreSQL pilot
 8. ADR-008 Docling + slide VLM dual pipeline
 9. ADR-009 Async/batch execution and queue adapter
-10. ADR-010 Next.js frontend and LG token governance
+10. ADR-010 Frontend selection and LG token governance (Open)
+11. ADR-011 Mandatory HITL approval notification (Accepted, 문서 생성)
+12. ADR-012 Stage retrieval and similarity portion (Accepted, 문서 생성)
+13. ADR-013 Composable local pipelines and total workflow (Accepted, 문서 생성)
 
 ## 24. 검증 계획
 
 설계 검증 순서:
 
-1. dossier schema와 state transition property test
-2. synthetic PPTX 3종의 Docling/slide extraction spike
-3. mock model structured output contract
-4. Qwen3.5 endpoint capability probe
-5. 20 synthetic cases의 retrieval baseline
-6. 2-model panel의 disagreement report
-7. CLI end-to-end vertical slice
-8. FastAPI async job and revision conflict test
-9. static Web App prototype usability review
-10. 50 paired de-identified pilot
+1. two-gate state transition, mandatory notification, mentor guard smoke
+2. PipelineContext/Result/Registry와 import boundary contract
+3. workflow blueprint/module board/SVG drift와 link validation
+4. dossier.freeze local pipeline과 working script parity test
+5. dossier schema와 state transition property test
+6. synthetic PPTX 3종의 Docling/slide extraction spike
+7. mock model structured output contract
+8. Qwen3.5 endpoint capability probe
+9. 20 synthetic cases의 retrieval baseline
+10. 2-model panel의 disagreement report
+11. total workflow wait/resume/idempotency scenario
+12. CLI/API interface parity와 revision conflict test
+13. selected Web App prototype usability review
+14. 50 paired de-identified pilot
 
 각 단계가 실패해도 다음 기술을 무조건 추가하지 않는다. 실패 원인이 data, rubric, parser, model, workflow, UX 중 어디에 있는지 분리한 뒤 Narrow/Change/Stop을 결정한다.
 

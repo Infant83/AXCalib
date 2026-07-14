@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+  <title id="title">AXCalib 모듈형 워크플로 한 장 구조도</title>
+  <desc id="desc">전달 인터페이스, 전체 워크플로, 국소 파이프라인, 도메인 모듈, 공급자 어댑터의 계층과 불변조건, 개발 Wave를 보여주는 인포그래픽</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#172033" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#556176"/>
+    </marker>
+    <style>
+      .title { font: 700 34px Arial, 'Noto Sans KR', sans-serif; fill: #172033; }
+      .subtitle { font: 400 17px Arial, 'Noto Sans KR', sans-serif; fill: #5B6578; }
+      .lane-title { font: 700 18px Arial, 'Noto Sans KR', sans-serif; fill: #172033; }
+      .box-title { font: 700 16px Arial, 'Noto Sans KR', sans-serif; fill: #172033; text-anchor: middle; }
+      .box-note { font: 400 13px Arial, 'Noto Sans KR', sans-serif; fill: #5B6578; text-anchor: middle; }
+      .panel-title { font: 700 21px Arial, 'Noto Sans KR', sans-serif; fill: #FFFFFF; }
+      .panel-text { font: 400 15px Arial, 'Noto Sans KR', sans-serif; fill: #F7F8FA; }
+      .wave-title { font: 700 15px Arial, 'Noto Sans KR', sans-serif; fill: #172033; text-anchor: middle; }
+      .wave-note { font: 400 12px Arial, 'Noto Sans KR', sans-serif; fill: #5B6578; text-anchor: middle; }
+      .arrow { stroke: #556176; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1050" fill="#F7F8FA"/>
+  <text x="60" y="56" class="title">AXCalib — Composable Workflow Architecture</text>
+  <text x="60" y="86" class="subtitle">요소 모듈 → 국소 Pipeline → Versioned Total Workflow → Thin Interfaces</text>
+  <rect x="1330" y="42" width="210" height="36" rx="18" fill="#172033"/>
+  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">v0.3-p1 · PLAN</text>
+
+  <!-- Delivery lane -->
+  <rect x="60" y="120" width="1080" height="100" rx="18" fill="#EEF4FF" stroke="#BFD2FF" filter="url(#shadow)"/>
+  <text x="80" y="154" class="lane-title">1. Delivery</text>
+  <text x="80" y="178" class="subtitle">업무 로직 없음</text>
+  <g>
+    <rect x="245" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
+    <text x="317" y="166" class="box-title">Python Script</text>
+    <text x="317" y="186" class="box-note">working entrypoint</text>
+    <rect x="405" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
+    <text x="477" y="176" class="box-title">CLI</text>
+    <rect x="565" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
+    <text x="637" y="176" class="box-title">FastAPI</text>
+    <rect x="725" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
+    <text x="797" y="166" class="box-title">Worker</text>
+    <text x="797" y="186" class="box-note">async / batch</text>
+    <rect x="885" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
+    <text x="957" y="166" class="box-title">Web App</text>
+    <text x="957" y="186" class="box-note">review cockpit</text>
+  </g>
+
+  <path class="arrow" d="M 600 220 L 600 246"/>
+
+  <!-- Workflow lane -->
+  <rect x="60" y="250" width="1080" height="115" rx="18" fill="#FFF3E4" stroke="#E5BC7A" filter="url(#shadow)"/>
+  <text x="80" y="285" class="lane-title">2. Total Workflow</text>
+  <text x="80" y="309" class="subtitle">분기 · 대기 · 재개</text>
+  <g>
+    <rect x="245" y="273" width="160" height="70" rx="12" fill="#FFFFFF" stroke="#B36B00"/>
+    <text x="325" y="301" class="box-title">Two Gate</text>
+    <text x="325" y="323" class="box-note">standard/v1</text>
+    <rect x="420" y="273" width="160" height="70" rx="12" fill="#FFFFFF" stroke="#B36B00"/>
+    <text x="500" y="301" class="box-title">Readiness</text>
+    <text x="500" y="323" class="box-note">registration</text>
+    <rect x="595" y="273" width="160" height="70" rx="12" fill="#FFFFFF" stroke="#B36B00"/>
+    <text x="675" y="301" class="box-title">Reassessment</text>
+    <text x="675" y="323" class="box-note">completion</text>
+    <rect x="770" y="273" width="160" height="70" rx="12" fill="#FFFFFF" stroke="#B36B00"/>
+    <text x="850" y="301" class="box-title">Portfolio Batch</text>
+    <text x="850" y="323" class="box-note">draft only</text>
+    <rect x="945" y="273" width="160" height="70" rx="12" fill="#FFFFFF" stroke="#B36B00"/>
+    <text x="1025" y="301" class="box-title">Benchmark</text>
+    <text x="1025" y="323" class="box-note">retrieval</text>
+  </g>
+
+  <path class="arrow" d="M 600 365 L 600 391"/>
+
+  <!-- Pipeline lane -->
+  <rect x="60" y="395" width="1080" height="125" rx="18" fill="#EAF8F4" stroke="#9CCFBE" filter="url(#shadow)"/>
+  <text x="80" y="432" class="lane-title">3. Local Pipelines</text>
+  <text x="80" y="456" class="subtitle">typed 업무 단위</text>
+  <g>
+    <rect x="245" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
+    <text x="325" y="451" class="box-title">Dossier</text>
+    <text x="325" y="474" class="box-note">init · update · freeze</text>
+    <rect x="420" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
+    <text x="500" y="451" class="box-title">Evidence</text>
+    <text x="500" y="474" class="box-note">prepare</text>
+    <rect x="595" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
+    <text x="675" y="451" class="box-title">Cases</text>
+    <text x="675" y="474" class="box-note">retrieve</text>
+    <rect x="770" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
+    <text x="850" y="451" class="box-title">Evaluation</text>
+    <text x="850" y="474" class="box-note">registration · completion</text>
+    <rect x="945" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
+    <text x="1025" y="451" class="box-title">Review</text>
+    <text x="1025" y="474" class="box-note">report · request · decide</text>
+  </g>
+
+  <path class="arrow" d="M 600 520 L 600 546"/>
+
+  <!-- Module lane -->
+  <rect x="60" y="550" width="1080" height="125" rx="18" fill="#F2F3F5" stroke="#C4C9D1" filter="url(#shadow)"/>
+  <text x="80" y="587" class="lane-title">4. Domain Modules</text>
+  <text x="80" y="611" class="subtitle">불변조건과 Ports</text>
+  <g>
+    <rect x="245" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
+    <text x="325" y="606" class="box-title">Core / Schema</text>
+    <text x="325" y="629" class="box-note">state machine</text>
+    <rect x="420" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
+    <text x="500" y="606" class="box-title">Dossier / Ingest</text>
+    <text x="500" y="629" class="box-note">revision · evidence</text>
+    <rect x="595" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
+    <text x="675" y="606" class="box-title">Retrieval</text>
+    <text x="675" y="629" class="box-note">stage-aware</text>
+    <rect x="770" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
+    <text x="850" y="606" class="box-title">Evaluation</text>
+    <text x="850" y="629" class="box-note">rubric · calibration</text>
+    <rect x="945" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
+    <text x="1025" y="606" class="box-title">Audit / Notice</text>
+    <text x="1025" y="629" class="box-note">report · outbox</text>
+  </g>
+
+  <path class="arrow" d="M 600 675 L 600 701"/>
+
+  <!-- Adapter lane -->
+  <rect x="60" y="705" width="1080" height="100" rx="18" fill="#F8EDF2" stroke="#D8A7B8" filter="url(#shadow)"/>
+  <text x="80" y="740" class="lane-title">5. Adapters</text>
+  <text x="80" y="764" class="subtitle">교체 가능한 구현</text>
+  <g>
+    <rect x="245" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
+    <text x="325" y="751" class="box-title">Storage</text>
+    <text x="325" y="771" class="box-note">FS · DB · MinIO</text>
+    <rect x="420" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
+    <text x="500" y="751" class="box-title">Parser</text>
+    <text x="500" y="771" class="box-note">Docling · Render</text>
+    <rect x="595" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
+    <text x="675" y="751" class="box-title">Search</text>
+    <text x="675" y="771" class="box-note">Lexical · Qdrant</text>
+    <rect x="770" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
+    <text x="850" y="751" class="box-title">Model</text>
+    <text x="850" y="771" class="box-note">Mock · Qwen</text>
+    <rect x="945" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
+    <text x="1025" y="751" class="box-title">Notification</text>
+    <text x="1025" y="771" class="box-note">Recording · MR · Email</text>
+  </g>
+
+  <!-- Invariant panel -->
+  <rect x="1180" y="120" width="360" height="685" rx="20" fill="#172033" filter="url(#shadow)"/>
+  <rect x="1180" y="120" width="10" height="685" rx="5" fill="#A50034"/>
+  <text x="1215" y="165" class="panel-title">절대 불변조건</text>
+  <line x1="1215" y1="184" x2="1505" y2="184" stroke="#465066"/>
+  <g class="panel-text">
+    <circle cx="1222" cy="222" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="227">관리자 HITL 없이 final 전이 금지</text>
+    <circle cx="1222" cy="274" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="279">승인요청 알림 실패 시 fail closed</text>
+    <circle cx="1222" cy="326" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="331">등록 승인 전 수행 시작 금지</text>
+    <circle cx="1222" cy="378" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="383">배정 mentor 승인 우회 금지</text>
+    <circle cx="1222" cy="430" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="435">revision · snapshot · stale 검증</text>
+    <circle cx="1222" cy="482" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="487">evidence 없으면 insufficient</text>
+    <circle cx="1222" cy="534" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="539">등록/완료 RAG stage 분리</text>
+    <circle cx="1222" cy="586" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="591">Agent는 추천만, 결정권 없음</text>
+    <circle cx="1222" cy="638" r="5" fill="#FD6C6A"/>
+    <text x="1240" y="643">API/Web에 domain 로직 복제 금지</text>
+  </g>
+  <rect x="1215" y="687" width="290" height="78" rx="12" fill="#252F45" stroke="#465066"/>
+  <text x="1360" y="716" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">현재 구현 상태</text>
+  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">P1 offline reference · G1 review</text>
+  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Pipeline kernel은 아직 미구현</text>
+
+  <!-- Delivery waves -->
+  <text x="60" y="848" class="lane-title">Delivery Waves — 날짜가 아니라 dependency Gate</text>
+  <g>
+    <rect x="60" y="870" width="280" height="120" rx="16" fill="#EAF8F4" stroke="#1E8A75" filter="url(#shadow)"/>
+    <text x="200" y="906" class="wave-title">Wave 0 · P1</text>
+    <text x="200" y="931" class="wave-note">Harness + Architecture</text>
+    <text x="200" y="956" class="wave-note">완료 · G1 review</text>
+
+    <path class="arrow" d="M 340 930 L 362 930"/>
+    <rect x="370" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
+    <text x="510" y="906" class="wave-title">Wave 1 · WP-01</text>
+    <text x="510" y="931" class="wave-note">Kernel + Dossier + Freeze</text>
+    <text x="510" y="956" class="wave-note">NEXT</text>
+
+    <path class="arrow" d="M 650 930 L 672 930"/>
+    <rect x="680" y="870" width="280" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>
+    <text x="820" y="906" class="wave-title">Wave 2/3 · WP-02~05</text>
+    <text x="820" y="931" class="wave-note">Evidence · Evaluation</text>
+    <text x="820" y="956" class="wave-note">Retrieval · Model</text>
+
+    <path class="arrow" d="M 960 930 L 982 930"/>
+    <rect x="990" y="870" width="250" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>
+    <text x="1115" y="906" class="wave-title">Wave 4 · WP-06</text>
+    <text x="1115" y="931" class="wave-note">Workflow Runtime</text>
+    <text x="1115" y="956" class="wave-note">CLI · API · Worker</text>
+
+    <path class="arrow" d="M 1240 930 L 1262 930"/>
+    <rect x="1270" y="870" width="270" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>
+    <text x="1405" y="906" class="wave-title">Wave 5 · WP-07/08</text>
+    <text x="1405" y="931" class="wave-note">Web Review + Pilot</text>
+    <text x="1405" y="956" class="wave-note">정책·보안 승인 필요</text>
+  </g>
+
+  <text x="60" y="1025" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#7A8495">Source: docs/architecture/workflow-blueprint.md · Detailed plan: module-delivery-plan.md · No official LG logo/font asset used.</text>
+</svg>

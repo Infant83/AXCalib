@@ -14,7 +14,10 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 4. Human Review Web App
 5. 기존 인증시스템 연동
 
-현재 작업공간은 **기획 baseline 수립 단계**다. 제품 패키지, prep.ps1, 테스트, 평가 데이터셋은 아직 구현되지 않았다. 존재하지 않는 명령이나 테스트를 실행된 것처럼 기록하지 않는다.
+현재 작업공간은 **P1 실행 하네스 구축 완료, G1 검토 단계**다. `src/axcalib`의 reference
+workflow, `prep.ps1`, offline 테스트와 synthetic workflow dataset은 존재한다. dossier schema,
+영속 저장, 실제 evaluator, Vector DB, 운영 알림 adapter, API/Web은 아직 구현되지 않았다.
+reference contract를 제품 MVP 전체가 완료된 것으로 기록하지 않는다.
 
 ## 2. 기준정보 우선순위
 
@@ -45,6 +48,9 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 - 등록심의를 통과하기 전에는 수행 단계로 전이할 수 없다.
 - 완료평가는 등록심의 당시의 목표·KPI·범위와 수행 중 누적된 증거를 함께 비교한다.
 - 등록심의 결과와 완료평가 결과는 평가와 인증결정을 분리하여 기록한다.
+- Agent는 등록과 완료에서 통과·미통과 **제안** 및 리포트만 생성한다.
+- 등록 승인·반려와 완료 수용·미수용은 관리자 HITL 이후에만 확정한다.
+- 멘토 배정은 선택이지만 배정된 경우 완료평가 제출 등록 전에 mentor 승인이 필요하다.
 
 ### 3.3 단일 과제 dossier
 
@@ -64,8 +70,20 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 - 모델의 숨은 chain-of-thought는 저장하거나 요구하지 않는다. 짧은 판단요약, 인용 근거, 구조화된 점검 결과만 보존한다.
 - 과거 사례 유사도는 일관성 점검 자료이지 정답이나 자동 판정 근거가 아니다.
 - 평가자 수정, 수용, 보류, 반려, 추가자료 요청은 모델 출력과 구분해 감사 이력에 남긴다.
+- 관리자 HITL은 `docs/rubrics/hitl_review_checklist.md`로 hallucination, unsupported claim,
+  편향, RAG leakage, 가중치 계산을 확인한다.
+- 관리자 승인요청 알림이 기록 또는 전달되지 않으면 HITL pending 전이를 완료하지 않는다.
 
-### 3.5 On-prem 및 공급자 독립성
+### 3.5 승인요청 알림
+
+- 등록심의와 완료평가의 HITL 진입에는 각각 notification event가 필수다.
+- 운영 adapter 후보는 GitLab Merge Request와 email이며 `NotificationPort` 뒤에 둔다.
+- offline test는 외부 메시지를 보내지 않는 recording adapter만 사용한다.
+- 알림에는 secret이나 원문 전체를 넣지 않고 project_id, stage, revision, report reference,
+  요청 역할을 기록한다.
+- 운영 구현은 idempotency, outbox, retry, delivery status와 감사 이력을 가져야 한다.
+
+### 3.6 On-prem 및 공급자 독립성
 
 - 기본 모델 프로필은 Qwen3.5 계열의 multimodal 배포를 가리키되 실제 model ID는 설정으로 주입한다.
 - 모든 모델 연결은 base_url, api_key_env, model, capability로 표현한다.
@@ -74,7 +92,7 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 - Deep Agents 연동은 optional extra다. deterministic pipeline과 domain state machine을 대체하지 않는다.
 - 단일 모델, 다중 모델 독립평가, 합의, adjudication을 동일한 인터페이스로 선택할 수 있어야 한다.
 
-### 3.6 재현성과 보안
+### 3.7 재현성과 보안
 
 - dossier schema, rubric, criterion, prompt template, parser, embedding model, corpus snapshot, evaluator model, code version을 실행기록에 연결한다.
 - 실제 사내 데이터와 개인정보는 승인 전 fixtures/synthetic 밖에 두지 않는다.
@@ -120,6 +138,10 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 - 동일 idempotency key의 재시도는 새 평가를 중복 생성하지 않는다.
 - 실패, 취소, stale 결과는 성공 상태로 승격하지 않는다.
 - 사람 승인 없이 registration_approved, completion_accepted, certified로 전이하지 않는다.
+- registration/completion 평가초안은 반드시 `*_hitl_pending`을 거치며 알림 실패 시 전이를
+  fail closed한다.
+- registration_rejected는 관리자 결정 뒤 해당 수행 프로세스를 종료한다.
+- mentor가 배정됐다면 project owner가 mentor 승인 없이 completion_registered로 전이할 수 없다.
 
 ### 5.4 검색과 임베딩
 
@@ -128,27 +150,65 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 - dense similarity 하나만 보고 유사 사례를 확정하지 않는다. lexical/dense 후보 검색, rerank, case-level aggregation을 분리한다.
 - 결과에는 similarity score뿐 아니라 공통점, 차이점, 적용 한계, corpus snapshot을 기록한다.
 - embedding model 또는 chunking version이 바뀌면 새 index namespace를 만들고 evaluation 후 승격한다.
+- registration과 completion retrieval adapter와 corpus는 독립적으로 설정한다.
+- similarity portion은 stage/rubric별 설정으로 노출하되 raw similarity를 직접 합격점수로
+  사용하지 않는다.
+- portion이 0보다 큰데 adapter/corpus가 없으면 가중치를 조용히 재분배하지 않는다.
+- offline baseline은 lexical adapter와 portion 0.0이며 실제 retrieval 품질을 주장하지 않는다.
+
+### 5.5 요소 모듈, 국소 Pipeline, 전체 Workflow
+
+- 구현 순서는 domain schema/port → 요소 모듈 → 국소 pipeline class → 실행 가능한 synthetic
+  Python script → test/eval → CLI/API/worker 노출 순으로 한다.
+- 요소 모듈은 dossier, ingest, retrieval, evaluation처럼 한 capability를 제공하며 전체 업무
+  순서를 결정하지 않는다.
+- 국소 pipeline은 하나의 독립적인 업무 목적, typed input/output, 명시적 status와 audit
+  metadata를 갖는 application service다.
+- 전체 workflow는 versioned local pipeline, branch, human wait/resume, checkpoint를 연결하되
+  domain state machine과 관리자 HITL 불변조건을 대체하거나 우회하지 않는다.
+- working script는 argument/file 입출력과 library 호출만 담당한다. domain 판정, 상태전이,
+  retry 규칙을 script에 복사하지 않는다.
+- CLI, API, worker는 script를 subprocess로 호출하지 않고 같은 library pipeline/workflow를
+  직접 호출한다. Web App은 API가 제공하는 상태와 allowed command를 소비한다.
+- `run`/`arun` 또는 동등한 sync/async API는 같은 input/output/error 의미를 가져야 한다.
+- pipeline result는 succeeded, waiting_human, blocked, stale, retryable/terminal failure,
+  cancelled를 성공과 구분한다.
+- workflow/pipeline은 allowlisted id와 version으로 registry에 등록한다. MVP에서 config로 임의
+  Python import path, expression 또는 arbitrary graph를 실행하지 않는다.
+- 상세 계약은 `docs/architecture/composable-pipeline-plan.md`와 ADR-013을 따른다.
+- module/pipeline/state/dependency가 바뀌면 `workflow-blueprint.md`, `module-delivery-plan.md`,
+  SVG 인포그래픽과 `PROJECT_STATE.md`를 같은 change set에서 갱신한다.
+- Mermaid는 정확한 구조 기준, SVG는 이해관계자용 요약이다. 구현되지 않은 node를 완료색으로
+  표시하지 않고 module 상태는 Exit Evidence가 있을 때만 승격한다.
 
 ## 6. 목표 디렉터리 계약
 
 아래 구조는 구현 Target이다. 아직 없는 경로를 현재 구현으로 간주하지 않는다.
 
 ~~~text
-AX_Calib/
+AXCalib/
   AGENTS.md
   GOAL.md
   DESIGN.md
   README.md
   WORK_SPEC.md
   AXCalib_Concept_Overview.md
+  PROJECT_STATE.md
+  DECISIONS.md
+  RISK_REGISTER.md
   pyproject.toml
+  uv.lock
   prep.ps1
   config/
+  harness/
   docs/
+    architecture/
+      diagrams/
     adr/
     schemas/
     rubrics/
     evaluation/
+    workflows/
   src/axcalib/
     core/
     schemas/
@@ -161,8 +221,17 @@ AX_Calib/
     workflows/
     reports/
     audit/
+    notifications/
+    pipelines/
+    runtime/
     cli/
     api/
+  scripts/
+    pipelines/
+  apps/
+    api/
+    worker/
+    web/
   fixtures/synthetic/
   tests/
     unit/
@@ -176,7 +245,8 @@ AX_Calib/
 
 ### 7.1 작업 하네스
 
-다음 명령은 WP-00에서 구현할 계약이다. prep.ps1이 생기기 전에는 실행 가능하다고 표시하지 않는다.
+다음 명령은 WP-00에서 구현되어 있다. 새 명령이나 live 동작은 실제 구현·검증 전에는
+실행 가능하다고 표시하지 않는다.
 
 ~~~powershell
 .\prep.ps1 status
@@ -227,11 +297,17 @@ CLI와 API는 동일한 schema 및 application service를 사용해야 한다.
 - revision freeze와 stale write 거부
 - criterion별 evidence locator 보존
 - 등록심의 결과와 완료평가 입력 연결
+- Agent가 관리자 전용 최종 상태로 직접 전이하지 못함
+- 두 HITL Gate의 승인요청 notification event
+- mentor 배정 시 completion submission 승인 guard
 - 비밀정보 redaction
 - retrieval metadata filter와 corpus version
+- registration/completion stage leakage 방지와 similarity portion validation
 - 단일/다중 모델 structured output validation
 - batch 일부 실패·재시도·resume
 - 동일 fixture와 동일 mock 설정의 재현성
+- architecture 문서의 local link, Mermaid 필수 view, SVG XML/title/desc와 M00~M13 control board
+- 코드/상태 변경 시 workflow 구조도와 module 상태의 drift 방지
 
 ### 8.3 품질 지표
 
@@ -254,6 +330,7 @@ CLI와 API는 동일한 schema 및 application service를 사용해야 한다.
 4. 핵심 결과와 실패 여부
 5. 실행하지 못한 검증과 이유
 6. 새로 생긴 결정, 위험, 후속 작업
+7. 구조·상태·dependency를 바꿨다면 갱신한 diagram과 module control 항목
 
 문서만 작성한 단계에서는 제품 기능이 완료됐다고 표현하지 않는다. 테스트가 없으면 없다고 말하고, live model을 호출하지 않았으면 모델 품질이 검증됐다고 말하지 않는다.
 

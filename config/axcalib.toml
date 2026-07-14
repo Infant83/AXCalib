@@ -1,0 +1,43 @@
+[project]
+baseline = "v0.3-p1"
+environment = "offline"
+synthetic_only = true
+
+[workflow]
+admin_approval_required = true
+approval_notification_required = true
+mentor_assignment = "optional"
+assigned_mentor_completion_approval_required = true
+registration_rejection_terminates = true
+
+[retrieval.registration]
+adapter = "lexical"
+stage = "registration"
+similarity_portion = 0.0
+required_for_decision = false
+corpus_snapshot = "synthetic-registration-v1"
+
+[retrieval.completion]
+adapter = "lexical"
+stage = "completion"
+similarity_portion = 0.0
+required_for_decision = false
+corpus_snapshot = "synthetic-completion-v1"
+
+[notifications.offline]
+enabled = true
+adapter = "recording"
+
+[notifications.gitlab_merge_request]
+enabled = false
+base_url_env = "AXCALIB_GITLAB_BASE_URL"
+project_id_env = "AXCALIB_GITLAB_PROJECT_ID"
+token_env = "AXCALIB_GITLAB_TOKEN"
+
+[notifications.email]
+enabled = false
+smtp_host_env = "AXCALIB_SMTP_HOST"
+smtp_user_env = "AXCALIB_SMTP_USER"
+smtp_password_env = "AXCALIB_SMTP_PASSWORD"
+from_address_env = "AXCALIB_EMAIL_FROM"
+

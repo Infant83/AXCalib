@@ -1,0 +1,342 @@
+---
+document_type: workflow_blueprint
+project: AXCalib
+baseline: v0.3-p1
+updated_at: 2026-07-14
+status: architecture_contract_implementation_pending
+---
+
+# AXCalib Workflow Blueprint
+
+이 문서는 AXCalib의 전체 workflow, 국소 pipeline, module dependency, 사람 승인과 실패·재개
+경로를 시각적으로 고정한다. 다이어그램은 구현 Target이며 현재 P1 reference code가 모든
+노드를 구현했다는 뜻은 아니다.
+
+![AXCalib workflow 한 장 구조도](diagrams/workflow-at-a-glance.svg)
+
+## 1. 전체 계층
+
+```mermaid
+flowchart TB
+    subgraph D["Delivery Interfaces — 업무 로직 없음"]
+        PY["Working Python Script"]
+        CLI["CLI"]
+        API["FastAPI"]
+        WORKER["Worker / Batch"]
+        WEB["Web App"]
+    end
+
+    subgraph W["Versioned Total Workflows"]
+        TGS["two-gate-standard/v1"]
+        READY["registration-readiness/v1"]
+        RECHECK["completion-reassessment/v1"]
+        BATCH["portfolio-draft-batch/v1"]
+        RETEVAL["retrieval-benchmark/v1"]
+    end
+
+    subgraph P["Reusable Local Pipelines"]
+        DOSP["dossier.initialize / update / freeze"]
+        EVIDP["evidence.prepare"]
+        CASEP["cases.retrieve"]
+        REGP["registration.evaluate / decide"]
+        COMPP["completion.submit / evaluate / decide"]
+        REVIEWP["review.request / report.render"]
+    end
+
+    subgraph M["Element Modules + Domain Invariants"]
+        CORE["core / schemas / state machine"]
+        DOS["dossier"]
+        ING["ingest"]
+        RET["retrieval"]
+        EVAL["evaluation / calibration"]
+        RPT["reports / notifications / audit"]
+    end
+
+    subgraph A["Provider Adapters"]
+        STORE["Filesystem / SQLite / PostgreSQL / MinIO"]
+        PARSER["Docling / slide renderer"]
+        VECTOR["Null / Lexical / Qdrant"]
+        MODEL["Mock / OpenAI-compatible / Qwen"]
+        NOTICE["Recording / GitLab MR / Email"]
+    end
+
+    D --> W
+    W --> P
+    P --> M
+    M --> A
+
+    classDef delivery fill:#EEF4FF,stroke:#2F6BFF,color:#172033;
+    classDef workflow fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef pipeline fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef module fill:#F2F3F5,stroke:#5B6578,color:#172033;
+    classDef adapter fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class PY,CLI,API,WORKER,WEB delivery;
+    class TGS,READY,RECHECK,BATCH,RETEVAL workflow;
+    class DOSP,EVIDP,CASEP,REGP,COMPP,REVIEWP pipeline;
+    class CORE,DOS,ING,RET,EVAL,RPT module;
+    class STORE,PARSER,VECTOR,MODEL,NOTICE adapter;
+```
+
+의존 방향은 위에서 아래다. Module 또는 pipeline이 FastAPI, Web framework, GitLab/SMTP 구현을
+직접 import하지 않는다. interface는 workflow/pipeline facade를 호출할 뿐 다음 상태나 평가
+판정을 계산하지 않는다.
+
+## 2. 공식 Two-Gate workflow
+
+```mermaid
+flowchart TD
+    START(["과제 dossier 작성"])
+    RSUB["등록자료 제출"]
+    RFREEZE["dossier.freeze — registration snapshot"]
+    REVAL["registration.evaluate — evidence / RAG / rubric"]
+    RREPORT["registration report.render"]
+    RREQ["review.request + notification outbox"]
+    RWAIT{{"WAIT — 관리자 등록 HITL"}}
+    RDEC{"관리자 결정"}
+    RREJECT(["registration_rejected — 프로세스 종료"])
+    RCHANGE["registration_needs_changes"]
+    RAPPROVE["registration_approved"]
+
+    MENTOR{"멘토 배정?"}
+    EXEC["in_progress — progress / KPI / artifact update"]
+    CSUB["completion.submit — 완료 제출 리포트"]
+    CAPPROVE{"완료 제출 승인"}
+    CBLOCK["blocked — mentor/owner 승인 대기"]
+
+    CFREEZE["dossier.freeze — completion snapshot"]
+    CEVAL["completion.evaluate — baseline diff / evidence / RAG"]
+    CREPORT["completion report.render"]
+    CREQ["review.request + notification outbox"]
+    CWAIT{{"WAIT — 관리자 완료 HITL"}}
+    CDEC{"관리자 결정"}
+    CCHANGE["completion_needs_changes"]
+    CNO(["completion_not_accepted"])
+    CYES(["completion_accepted"])
+    CERT["선택적 certification policy"]
+
+    START --> RSUB --> RFREEZE --> REVAL --> RREPORT --> RREQ --> RWAIT --> RDEC
+    RREQ -. "알림 기록 실패" .-> RBLOCK["blocked / retryable"]
+    RBLOCK --> RREQ
+    RDEC -->|반려| RREJECT
+    RDEC -->|보완| RCHANGE --> RSUB
+    RDEC -->|승인| RAPPROVE --> MENTOR
+    MENTOR -->|배정| EXEC
+    MENTOR -->|미배정| EXEC
+    EXEC --> CSUB --> CAPPROVE
+    CAPPROVE -->|미승인| CBLOCK --> CAPPROVE
+    CAPPROVE -->|승인| CFREEZE --> CEVAL --> CREPORT --> CREQ --> CWAIT --> CDEC
+    CREQ -. "알림 기록 실패" .-> CNOTIFY["blocked / retryable"]
+    CNOTIFY --> CREQ
+    CDEC -->|보완| CCHANGE --> CSUB
+    CDEC -->|미통과| CNO
+    CDEC -->|통과| CYES --> CERT
+
+    classDef human fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
+    classDef stop fill:#FDECEF,stroke:#A50034,color:#172033;
+    classDef pipeline fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef state fill:#EEF4FF,stroke:#2F6BFF,color:#172033;
+    class RWAIT,RDEC,MENTOR,CAPPROVE,CWAIT,CDEC human;
+    class RREJECT,CNO stop;
+    class RFREEZE,REVAL,RREPORT,RREQ,CSUB,CFREEZE,CEVAL,CREPORT,CREQ pipeline;
+    class RCHANGE,RAPPROVE,EXEC,CCHANGE,CYES state;
+```
+
+두 `WAIT` 노드는 외부 모델이나 Agent가 해제할 수 없다. 권한이 있는 관리자 command와 대상
+revision/snapshot 검증이 있어야 재개된다.
+
+## 3. 등록심의 실행 Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Submitter as 과제 수행자
+    participant Interface as Script / CLI / API
+    participant Workflow as Workflow Runtime
+    participant Dossier as Dossier Pipeline
+    participant Evidence as Evidence Pipeline
+    participant Retrieval as Retrieval Pipeline
+    participant Evaluation as Evaluation Pipeline
+    participant Review as Report / Review Pipeline
+    actor Admin as 관리자
+
+    Submitter->>Interface: registration command + expected_revision
+    Interface->>Workflow: start(two-gate-standard/v1)
+    Workflow->>Dossier: freeze(registration)
+    Dossier-->>Workflow: snapshot_id + SHA-256
+    Workflow->>Evidence: prepare(snapshot artifacts)
+    Evidence-->>Workflow: EvidenceBundle + locators/warnings
+    Workflow->>Retrieval: search(stage=registration)
+    Retrieval-->>Workflow: RetrievalResult + corpus snapshot
+    Workflow->>Evaluation: evaluate(snapshot, rubric, evidence, cases)
+    Evaluation-->>Workflow: Agent recommendation + criterion findings
+    Workflow->>Review: render report + create review request/outbox
+    Review-->>Workflow: waiting_human + notification_ref
+    Workflow-->>Interface: run_id + waiting_human
+    Interface-->>Submitter: 관리자 승인 대기
+    Admin->>Workflow: approve/reject/request_changes + rationale
+    Workflow->>Dossier: authorized domain transition
+    Dossier-->>Workflow: new revision + audit_ref
+```
+
+notification delivery는 outbox commit 이후 별도 worker가 처리할 수 있지만, 승인요청 event가
+원자적으로 기록되지 않으면 `waiting_human`으로 진입하지 않는다.
+
+## 4. 국소 Pipeline 내부 구조
+
+```mermaid
+flowchart LR
+    REQ["Typed Request"] --> PREFLIGHT["Preflight / Policy"]
+    CTX["Immutable PipelineContext"] --> PREFLIGHT
+    PREFLIGHT --> STEPS["Deterministic Steps + Port Calls"]
+    PORTS["Constructor-injected Ports"] --> STEPS
+    STEPS --> RESULT["Typed PipelineRun"]
+    RESULT --> STATUS["status"]
+    RESULT --> OUTPUT["output / evidence / artifacts"]
+    RESULT --> EVENTS["events / checkpoint / audit"]
+
+    STATUS --> OK["succeeded"]
+    STATUS --> WAIT["waiting_human"]
+    STATUS --> BLOCK["blocked / stale"]
+    STATUS --> FAIL["retryable / terminal / cancelled"]
+
+    classDef input fill:#EEF4FF,stroke:#2F6BFF,color:#172033;
+    classDef work fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef result fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    class REQ,CTX,PORTS input;
+    class PREFLIGHT,STEPS work;
+    class RESULT,STATUS,OUTPUT,EVENTS,OK,WAIT,BLOCK,FAIL result;
+```
+
+Pipeline은 숨은 global service locator를 쓰지 않는다. Port 구현은 runtime container가 생성자에
+주입하고, context에는 실행·권한·version·revision 식별자만 둔다.
+
+## 5. Module dependency
+
+```mermaid
+flowchart TB
+    subgraph F["Foundation Contracts"]
+        direction LR
+        M00["M00 Pipeline Kernel"]
+        M01["M01 Dossier / Snapshot"] --> M02["M02 State / Approval"]
+    end
+
+    subgraph C["Capability Modules"]
+        direction LR
+        M03["M03 Evidence Ingest"] --> M04["M04 Retrieval"]
+        M01 --> M05["M05 Evaluation / Rubric"]
+        M03 --> M05
+        M04 --> M05
+        M05 --> M06["M06 Calibration"]
+        M05 --> M07["M07 Reports"]
+        M02 --> M08["M08 Review / Notification"]
+        M07 --> M08
+    end
+
+    subgraph O["Composition"]
+        direction LR
+        PC["Verified Local Pipeline Contracts"] --> M09["M09 Workflow Runtime"]
+        AP["Validated Adapter Port Contracts"] --> M10["M10 Runtime Profiles"]
+    end
+
+    subgraph I["Delivery Interfaces"]
+        direction LR
+        M11["M11 Script / CLI"]
+        M12["M12 API / Worker"] --> M13["M13 Web Review"]
+    end
+
+    M00 --> PC
+    M01 --> PC
+    M02 --> PC
+    M03 --> PC
+    M04 --> PC
+    M05 --> PC
+    M06 --> PC
+    M07 --> PC
+    M08 --> PC
+
+    M00 --> AP
+    M01 --> AP
+    M03 --> AP
+    M04 --> AP
+    M05 --> AP
+    M08 --> AP
+
+    M09 --> M11
+    M10 --> M11
+    M09 --> M12
+    M10 --> M12
+
+    classDef foundation fill:#EEF4FF,stroke:#2F6BFF,color:#172033;
+    classDef domain fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef orchestration fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef interface fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class M00,M10,AP foundation;
+    class M01,M02,M03,M04,M05,M06,M07,M08 domain;
+    class M09,PC orchestration;
+    class M11,M12,M13 interface;
+```
+
+화살표는 선행계약 또는 조립 의존성을 뜻하며 Python import 방향과 구분해 해석한다. 요소
+모듈은 pipeline/runtime package를 import하지 않는다. M03~M08은 공유 schema가 안정된 뒤 일부
+병렬 개발할 수 있지만, M09 total workflow integration은 필요한 local pipeline contract가
+검증된 뒤 수행한다.
+
+## 6. 실패·대기·재개
+
+```mermaid
+stateDiagram-v2
+    [*] --> running
+    running --> succeeded: output committed
+    running --> waiting_human: review request + outbox committed
+    running --> blocked: policy/input prerequisite missing
+    running --> stale: dossier revision changed
+    running --> failed_retryable: transient dependency failure
+    running --> failed_terminal: invalid input/policy violation
+    running --> cancelled: explicit cancellation/deadline
+    waiting_human --> running: authorized resume command
+    failed_retryable --> running: same idempotency key
+    blocked --> running: prerequisite supplied
+    stale --> [*]
+    succeeded --> [*]
+    failed_terminal --> [*]
+    cancelled --> [*]
+```
+
+`stale`은 현재 dossier에 자동 병합하지 않는다. `failed_retryable` 재시도는 같은 idempotency
+key를 사용하고 새 평가·알림·결정을 중복 생성하지 않는다.
+
+## 7. Delivery Wave
+
+```mermaid
+flowchart LR
+    W0["Wave 0 — P1\nHarness + Architecture"]
+    W1["Wave 1 — WP-01\nKernel + Dossier + Freeze Script"]
+    W2["Wave 2 — WP-02/03\nEvidence + Deterministic Evaluation + Report"]
+    W3["Wave 3 — WP-04/05\nRetrieval + Model + Calibration"]
+    W4["Wave 4 — WP-06\nWorkflow Runtime + CLI/API/Worker"]
+    W5["Wave 5 — WP-07/08\nWeb Review + Pilot"]
+
+    W0 --> W1 --> W2 --> W3 --> W4 --> W5
+
+    classDef done fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef next fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
+    classDef future fill:#F2F3F5,stroke:#7A8495,color:#172033;
+    class W0 done;
+    class W1 next;
+    class W2,W3,W4,W5 future;
+```
+
+Wave는 달력 일정이 아니라 dependency Gate다. Owner, 인력과 운영환경이 확정되지 않았으므로
+날짜를 임의로 약속하지 않는다. 각 Wave는 `module-delivery-plan.md`의 Exit Evidence가 모두
+확인될 때만 다음 상태로 이동한다.
+
+## 8. 다이어그램 변경 체크리스트
+
+- [ ] pipeline/module ID가 module delivery plan과 일치한다.
+- [ ] domain state machine과 다른 transition이 없다.
+- [ ] 관리자 HITL과 notification fail-closed 경로가 유지된다.
+- [ ] mentor 배정 시 completion 승인 guard가 유지된다.
+- [ ] registration/completion retrieval stage가 섞이지 않는다.
+- [ ] waiting, stale, retryable, terminal failure가 success와 구분된다.
+- [ ] 현재 구현상태와 완료색이 일치한다.
+- [ ] SVG 인포그래픽과 문서 인덱스를 함께 갱신했다.

@@ -1,0 +1,58 @@
+{
+  "schema_version": "axcalib.workflow-scenarios/v1alpha1",
+  "synthetic": true,
+  "scenarios": [
+    {
+      "id": "registration-approved-completion-accepted-no-mentor",
+      "project_id": "synthetic-project-001",
+      "events": [
+        {"trigger": "submit_registration", "actor": "submitter"},
+        {"trigger": "start_registration_evaluation", "actor": "system"},
+        {"trigger": "publish_registration_draft", "actor": "system"},
+        {"trigger": "approve_registration", "actor": "administrator"},
+        {"trigger": "start_execution", "actor": "project_owner"},
+        {"trigger": "request_completion", "actor": "project_owner"},
+        {"trigger": "request_completion_submission_approval", "actor": "project_owner"},
+        {"trigger": "approve_completion_submission", "actor": "project_owner"},
+        {"trigger": "start_completion_evaluation", "actor": "system"},
+        {"trigger": "publish_completion_draft", "actor": "system"},
+        {"trigger": "accept_completion", "actor": "administrator"}
+      ],
+      "expected_status": "completion_accepted",
+      "expected_notifications": 2
+    },
+    {
+      "id": "registration-rejected",
+      "project_id": "synthetic-project-002",
+      "events": [
+        {"trigger": "submit_registration", "actor": "submitter"},
+        {"trigger": "start_registration_evaluation", "actor": "system"},
+        {"trigger": "publish_registration_draft", "actor": "system"},
+        {"trigger": "reject_registration", "actor": "administrator"}
+      ],
+      "expected_status": "registration_rejected",
+      "expected_notifications": 1
+    },
+    {
+      "id": "mentor-approved-completion",
+      "project_id": "synthetic-project-003",
+      "events": [
+        {"trigger": "submit_registration", "actor": "project_owner"},
+        {"trigger": "start_registration_evaluation", "actor": "system"},
+        {"trigger": "publish_registration_draft", "actor": "system"},
+        {"trigger": "approve_registration", "actor": "administrator"},
+        {"trigger": "assign_mentor", "actor": "administrator", "mentor_ref": "mentor:synthetic-001"},
+        {"trigger": "start_execution", "actor": "project_owner"},
+        {"trigger": "request_completion", "actor": "project_owner"},
+        {"trigger": "request_completion_submission_approval", "actor": "project_owner"},
+        {"trigger": "approve_completion_submission", "actor": "mentor"},
+        {"trigger": "start_completion_evaluation", "actor": "system"},
+        {"trigger": "publish_completion_draft", "actor": "system"},
+        {"trigger": "decline_completion", "actor": "administrator"}
+      ],
+      "expected_status": "completion_not_accepted",
+      "expected_notifications": 2
+    }
+  ]
+}
+
