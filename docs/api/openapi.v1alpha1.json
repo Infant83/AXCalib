@@ -1,0 +1,227 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "AXCalib API",
+    "version": "v1alpha1",
+    "summary": "Thin HTTP adapter for AXCalib evaluation and human-authority workflow commands",
+    "description": "Pre-implementation contract. Agent evaluation creates proposals and reports; authorized humans submit final workflow commands."
+  },
+  "servers": [{"url": "/", "description": "Deployment-relative base URL"}],
+  "security": [{"bearerAuth": []}],
+  "paths": {
+    "/v1/projects/{project_id}/evaluations/{stage}": {
+      "post": {
+        "operationId": "createEvaluationRun",
+        "summary": "Create a registration or completion evaluation run",
+        "parameters": [
+          {"$ref": "#/components/parameters/ProjectId"},
+          {"$ref": "#/components/parameters/Stage"},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/EvaluationRequest"},
+              "examples": {
+                "minimal": {
+                  "value": {"expected_revision": 3, "profile": "offline"}
+                },
+                "controlled": {
+                  "value": {
+                    "expected_revision": 3,
+                    "profile": "offline",
+                    "options": {
+                      "evaluation_mode": "single",
+                      "retrieval": {"profile": "registration_lexical", "top_k": 5, "similarity_portion": 0.0},
+                      "model": {"profile": "mock"},
+                      "report": {"formats": ["json", "markdown"], "locale": "ko-KR"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {"description": "Run accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RunAccepted"}}}},
+          "409": {"description": "Revision conflict or stale request", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}},
+          "422": {"description": "Schema, policy, or option validation failure", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}}
+        }
+      }
+    },
+    "/v1/runs/{run_id}": {
+      "get": {
+        "operationId": "getRun",
+        "summary": "Inspect run status and effective configuration references",
+        "parameters": [{"$ref": "#/components/parameters/RunId"}],
+        "responses": {
+          "200": {"description": "Run view", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RunView"}}}},
+          "404": {"description": "Run not found", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}}
+        }
+      }
+    },
+    "/v1/runs/{run_id}/commands": {
+      "post": {
+        "operationId": "submitWorkflowCommand",
+        "summary": "Submit an authorized human workflow command",
+        "description": "Authentication and role authorization are mandatory. This endpoint does not accept model-issued final decisions.",
+        "parameters": [
+          {"$ref": "#/components/parameters/RunId"},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkflowCommandRequest"}}}
+        },
+        "responses": {
+          "200": {"description": "Command applied", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RunView"}}}},
+          "403": {"description": "Actor is not authorized", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}},
+          "409": {"description": "Command conflicts with current revision or state", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}}
+        }
+      }
+    },
+    "/v1/capabilities": {
+      "get": {
+        "operationId": "getCapabilities",
+        "summary": "List allowlisted profiles, limits, and supported option fields",
+        "responses": {
+          "200": {"description": "Capability manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CapabilityManifest"}}}}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "OIDC access token",
+        "description": "Deployment maps the authenticated subject to organization, project, and AXCalib roles. A token never grants a final decision without the required role and scope."
+      }
+    },
+    "parameters": {
+      "ProjectId": {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+      "Stage": {"name": "stage", "in": "path", "required": true, "schema": {"type": "string", "enum": ["registration", "completion"]}},
+      "RunId": {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^run_[A-Za-z0-9_-]+$"}},
+      "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 8, "maxLength": 128}}
+    },
+    "schemas": {
+      "EvaluationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision", "profile"],
+        "properties": {
+          "expected_revision": {"type": "integer", "minimum": 1},
+          "profile": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$", "default": "offline"},
+          "options": {"$ref": "#/components/schemas/EvaluationOptions"}
+        }
+      },
+      "EvaluationOptions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_mode": {"type": "string", "enum": ["single", "panel", "adjudicated"], "default": "single"},
+          "retrieval": {"$ref": "#/components/schemas/RetrievalOptions"},
+          "model": {"$ref": "#/components/schemas/ModelOptions"},
+          "report": {"$ref": "#/components/schemas/ReportOptions"},
+          "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 900}
+        }
+      },
+      "RetrievalOptions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "profile": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+          "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
+          "similarity_portion": {"type": "number", "minimum": 0, "maximum": 0.25}
+        }
+      },
+      "ModelOptions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "profile": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+          "panel_size": {"type": "integer", "minimum": 1, "maximum": 5}
+        }
+      },
+      "ReportOptions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "formats": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "enum": ["json", "markdown"]}},
+          "locale": {"type": "string", "enum": ["ko-KR", "en-US"]}
+        }
+      },
+      "WorkflowCommandRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_revision", "command", "rationale"],
+        "properties": {
+          "expected_revision": {"type": "integer", "minimum": 1},
+          "command": {"type": "string", "enum": ["approve_registration", "reject_registration", "request_registration_changes", "approve_completion", "not_accept_completion", "request_completion_changes", "approve_mentor_completion"]},
+          "rationale": {"type": "string", "minLength": 1, "maxLength": 4000},
+          "report_id": {"type": "string", "minLength": 1}
+        }
+      },
+      "RunAccepted": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "status", "project_id", "stage", "base_revision", "status_url"],
+        "properties": {
+          "run_id": {"type": "string"},
+          "status": {"const": "queued"},
+          "project_id": {"type": "string", "format": "uuid"},
+          "stage": {"type": "string", "enum": ["registration", "completion"]},
+          "base_revision": {"type": "integer", "minimum": 1},
+          "status_url": {"type": "string"}
+        }
+      },
+      "RunView": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "status", "project_id", "stage", "base_revision", "config_hash", "allowed_commands"],
+        "properties": {
+          "run_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["queued", "running", "waiting_human", "succeeded", "blocked", "stale", "retryable_failure", "terminal_failure", "cancelled"]},
+          "project_id": {"type": "string", "format": "uuid"},
+          "stage": {"type": "string", "enum": ["registration", "completion"]},
+          "base_revision": {"type": "integer", "minimum": 1},
+          "config_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "report_id": {"type": ["string", "null"]},
+          "allowed_commands": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "CapabilityManifest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["api_version", "profiles", "option_schema_ref", "protected_invariants"],
+        "properties": {
+          "api_version": {"const": "v1alpha1"},
+          "profiles": {"type": "array", "items": {"type": "string"}},
+          "option_schema_ref": {"type": "string"},
+          "protected_invariants": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["type", "title", "status"],
+        "properties": {
+          "type": {"type": "string", "format": "uri-reference"},
+          "title": {"type": "string"},
+          "status": {"type": "integer", "minimum": 400, "maximum": 599},
+          "detail": {"type": "string"},
+          "instance": {"type": "string", "format": "uri-reference"},
+          "errors": {"type": "array", "items": {"type": "object"}}
+        }
+      }
+    }
+  },
+  "x-axcalib-contract": {
+    "status": "pre-implementation",
+    "protectedInvariants": ["mandatory_hitl", "mandatory_notification", "mentor_guard", "revision_snapshot_stale", "human_final_decision"],
+    "source": "docs/adr/ADR-014-progressive-configuration-and-openapi.md"
+  }
+}

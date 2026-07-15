@@ -1,0 +1,20 @@
+{
+  "expected_revision": 11,
+  "profile": "onprem",
+  "options": {
+    "evaluation_mode": "panel",
+    "retrieval": {
+      "profile": "completion_hybrid",
+      "top_k": 8,
+      "similarity_portion": 0.15
+    },
+    "model": {
+      "profile": "primary",
+      "panel_size": 3
+    },
+    "report": {
+      "formats": ["json", "markdown"],
+      "locale": "ko-KR"
+    }
+  }
+}

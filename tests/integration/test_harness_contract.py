@@ -11,6 +11,11 @@ from harness.prep import ROOT, validate_workspace
 READ_ONLY_SURFACES = [
     ROOT / "PROJECT_STATE.md",
     ROOT / "config" / "axcalib.toml",
+    ROOT / "config" / "axcalib.expert.example.toml",
+    ROOT / "docs" / "schemas" / "runtime-config.schema.json",
+    ROOT / "docs" / "api" / "openapi.v1alpha1.json",
+    ROOT / "docs" / "readiness" / "development-readiness-audit.md",
+    ROOT / "docs" / "manuals" / "diagrams" / "authority-model.svg",
     ROOT / "docs" / "rubrics" / "registration_checklist.md",
     ROOT / "docs" / "rubrics" / "completion_checklist.md",
     ROOT / "docs" / "rubrics" / "hitl_review_checklist.md",

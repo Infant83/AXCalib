@@ -1,0 +1,72 @@
+{
+  "schema_version": "axcalib.pptx-sidecar/v1",
+  "source_sha256": "cb0a21ca59330921855f8e7ce4eb6496c47383750332682160ad48188018bd76",
+  "annotation_status": "manual_visual_transcription_for_offline_fixture",
+  "slides": [
+    {
+      "slide": 1,
+      "summary": "양자컴퓨팅 기반 AI/ML 분자 역설계 프레임워크 제안. 초기 후보군, SELFIES·TabPFN·Boltzmann Machine, surrogate 학습, QUBO 역설계 최적화, 후보 검증을 연결한다.",
+      "tags": ["problem", "goal", "scope", "method", "deliverable_plan"]
+    },
+    {
+      "slide": 2,
+      "summary": "학습 단계에서 분자 표현과 물성 라벨을 이용해 CRBM을 학습하고 QC-assisted sampling으로 후보를 생성하는 흐름을 설명한다.",
+      "tags": ["method", "data", "validation_plan"]
+    },
+    {
+      "slide": 3,
+      "summary": "자유에너지 모델에서 surrogate와 QUBO로 이어지는 역설계 단계. 목표 물성과 제약조건을 목적함수로 변환해 후보를 탐색한다.",
+      "tags": ["goal", "scope", "method", "validation_plan"]
+    },
+    {
+      "slide": 4,
+      "summary": "SELFIES, TabPFN, Boltzmann Machine을 확장 결합하는 다섯 단계 제안과 예상 장점, 모델 정확도 및 양자 자원 관련 주의점을 제시한다.",
+      "tags": ["scope", "roadmap", "risk", "limitation", "deliverable_plan"]
+    },
+    {
+      "slide": 5,
+      "summary": "비판적 평가와 연구 로드맵. 데이터 구축, SELFIES 기반 표현, TabPFN 비교, QUBO·D-Wave 실험, 후보 검증을 단계적으로 추진하며 핵심 리스크와 검증 과제를 적는다.",
+      "tags": ["roadmap", "risk", "limitation", "validation_plan", "kpi_plan"]
+    },
+    {
+      "slide": 7,
+      "summary": "양자컴퓨팅 기반 분자 역설계의 접근법과 통합 로드맵을 소개하는 목차와 핵심 질문을 제시한다.",
+      "tags": ["problem", "scope", "roadmap"]
+    },
+    {
+      "slide": 8,
+      "summary": "Quantum Annealing과 QUBO의 수식, 적용 흐름, 강점과 한계를 정리한다.",
+      "tags": ["method", "risk", "limitation"]
+    },
+    {
+      "slide": 9,
+      "summary": "QAOA의 양자회로·측정·고전 최적화 반복 구조와 장점, 현실적 한계를 비교한다.",
+      "tags": ["method", "risk", "limitation", "validation_plan"]
+    },
+    {
+      "slide": 10,
+      "summary": "VQE와 QAE를 양자화학 데이터 생성과 검증 관점에서 설명하고 현재 적용성 평가를 제시한다.",
+      "tags": ["method", "data", "validation_plan", "limitation"]
+    },
+    {
+      "slide": 11,
+      "summary": "QC-assisted CRBM과 Quantum Boltzmann Machine의 energy model, sampling, 단기·장기 적용 방향을 비교한다.",
+      "tags": ["method", "data", "validation_plan", "risk"]
+    },
+    {
+      "slide": 12,
+      "summary": "Quantum Kernel, QRC 및 기타 gate 기반 QML을 surrogate 대안으로 검토하고 장점·주의점·분자설계 역할을 정리한다.",
+      "tags": ["method", "risk", "limitation", "validation_plan"]
+    },
+    {
+      "slide": 13,
+      "summary": "Quantum Annealing, QAOA, VQE/QAE, QC-assisted CRBM/QBM, Quantum Kernel/QRC를 OLED 적용성 관점에서 비교한다.",
+      "tags": ["method", "comparison", "validation_plan", "risk"]
+    },
+    {
+      "slide": 14,
+      "summary": "SELFIES·TabPFN·Boltzmann Machine·Quantum Optimization을 근·중·장기로 연결한 추천 통합 로드맵과 후보 검증 단계를 제안한다.",
+      "tags": ["roadmap", "scope", "deliverable_plan", "validation_plan"]
+    }
+  ]
+}

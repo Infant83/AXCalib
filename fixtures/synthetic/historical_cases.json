@@ -1,0 +1,30 @@
+{
+  "schema_version": "axcalib.historical-cases/v1alpha1",
+  "synthetic": true,
+  "cases": [
+    {
+      "case_id": "synthetic-reg-molecule-001",
+      "stage": "registration",
+      "text": "분자 후보 탐색 과제의 문제 목표 범위 모델 방법 로드맵 검증 KPI 데이터 위험을 등록심의한다.",
+      "corpus_snapshot_id": "synthetic-registration-v1"
+    },
+    {
+      "case_id": "synthetic-reg-quality-002",
+      "stage": "registration",
+      "text": "품질 예측 과제는 baseline target unit period 측정방법 역할 자원 보안 계획을 제시한다.",
+      "corpus_snapshot_id": "synthetic-registration-v1"
+    },
+    {
+      "case_id": "synthetic-completion-molecule-001",
+      "stage": "completion",
+      "text": "분자 탐색 완료평가는 실제 산출물 KPI 관측값 실행 로그 재현 결과와 한계를 확인한다.",
+      "corpus_snapshot_id": "synthetic-completion-v1"
+    },
+    {
+      "case_id": "synthetic-completion-quality-002",
+      "stage": "completion",
+      "text": "품질 예측 완료 산출물의 버전 hash 테스트 로그 결과 변경사항과 후속 위험을 평가한다.",
+      "corpus_snapshot_id": "synthetic-completion-v1"
+    }
+  ]
+}

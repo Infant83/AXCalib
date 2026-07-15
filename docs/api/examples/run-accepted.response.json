@@ -1,0 +1,8 @@
+{
+  "run_id": "run_01JAXCALIBEXAMPLE",
+  "status": "queued",
+  "project_id": "00000000-0000-4000-8000-000000000001",
+  "stage": "registration",
+  "base_revision": 3,
+  "status_url": "/v1/runs/run_01JAXCALIBEXAMPLE"
+}

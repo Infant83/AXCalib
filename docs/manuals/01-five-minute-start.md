@@ -1,0 +1,96 @@
+# 5분 시작: 가장 작은 AXCalib 인터페이스
+
+> 상태: `two-gate-pptx@v1alpha1` offline vertical slice는 구현·테스트됐다. live model, 운영
+> 알림, API/Web은 아직 구현되지 않았다.
+
+## 가장 작은 Python 사용
+
+```python
+from pathlib import Path
+
+from axcalib import AXCalib
+from axcalib.pipelines import TwoGatePptxRequest
+
+client = AXCalib.from_toml(
+    "config/axcalib.toml",
+    workspace="output/my-review",
+)
+
+result = client.run_pptx(
+    TwoGatePptxRequest(
+        proposal_path=Path("tests/sources/oled_qc_project_outline.pptx"),
+        proposal_sidecar_path=Path(
+            "tests/sources/oled_qc_project_outline.axcalib.json"
+        ),
+        title="검토할 과제",
+    )
+)
+
+print(result.final_status)  # registration_hitl_pending
+print(result.registration_report_uri)
+```
+
+관리자 결정을 전달하지 않았기 때문에 등록심의 초안과 recording notification을 만든 뒤
+멈춘다. `run_pptx`가 Agent 판단만으로 승인하지 않는 것이 정상 동작이다.
+
+## 단계별로 재개하기
+
+```python
+project = client.create_project(
+    "proposal.pptx",
+    title="검토할 과제",
+    sidecar_path="proposal.axcalib.json",
+)
+client.submit_registration(project.project_id)
+draft = client.evaluate(project.project_id, "registration")
+
+# 아래 명령은 인증된 관리자 boundary에서만 호출해야 한다.
+client.decide_registration(
+    project.project_id,
+    command="approve",
+    actor_id="admin:reviewer-001",
+    rationale="근거와 보완조건을 확인했다.",
+)
+client.start_execution(project.project_id)
+client.record_progress(
+    project.project_id,
+    note="첫 검증 실험의 입력과 환경을 고정했다.",
+)
+```
+
+비동기 평가는 같은 의미를 가진다.
+
+```python
+draft = await client.aevaluate(project.project_id, "registration")
+```
+
+## 전체 demo에서 사람 결정을 명시하기
+
+`TwoGatePptxRequest`의 `registration_decision` 또는 `completion_decision`을 설정하면 각각의
+`rationale`도 필수다. 완료 결정을 넣으려면 등록 결정이 `approve`여야 한다. 이 필드는 자동
+승인 설정이 아니라 이미 인증된 사람 명령을 library boundary에 전달하는 입력이다.
+
+```python
+request = TwoGatePptxRequest(
+    proposal_path=Path("proposal.pptx"),
+    final_path=Path("final.pptx"),
+    title="검토할 과제",
+    registration_decision="approve",
+    registration_rationale="관리자 검토 근거",
+    completion_decision="accept",
+    completion_rationale="관리자 완료 수용 근거",
+)
+result = client.run_pptx(request)
+```
+
+## 현재 확인할 수 있는 것
+
+- network/GPU/DB 없는 PPTX two-gate 실행
+- sync/async entrypoint와 typed result
+- locator 없는 기준의 `insufficient_evidence` 처리
+- notification 실패 시 HITL pending 전이 금지
+- mentor 배정 시 mentor의 완료 제출 승인 강제
+- 동일 제안서/최종안 hash의 `not_accept` 제안
+
+idempotent resume, durable outbox, multi-process lock, 실제 OCR/VLM과 API/Web은 다음 hardening
+범위다.

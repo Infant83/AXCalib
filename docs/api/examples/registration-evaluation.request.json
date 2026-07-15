@@ -1,0 +1,19 @@
+{
+  "expected_revision": 3,
+  "profile": "offline",
+  "options": {
+    "evaluation_mode": "single",
+    "retrieval": {
+      "profile": "registration_lexical",
+      "top_k": 5,
+      "similarity_portion": 0.0
+    },
+    "model": {
+      "profile": "mock"
+    },
+    "report": {
+      "formats": ["json", "markdown"],
+      "locale": "ko-KR"
+    }
+  }
+}

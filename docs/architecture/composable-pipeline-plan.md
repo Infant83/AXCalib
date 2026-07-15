@@ -1,8 +1,9 @@
 # AXCalib Composable Pipeline 구현계획
 
 이 문서는 AXCalib를 요소 모듈, 재사용 가능한 국소 파이프라인, 전체 workflow, 전달
-interface로 나누는 구현계약을 정의한다. 현재 문서는 설계 baseline이며 `Pipeline` kernel이나
-개별 파이프라인이 구현됐다는 뜻은 아니다.
+interface로 나누는 구현계약을 정의한다. 2026-07-16 현재 allowlisted Registry,
+`two-gate-pptx@v1alpha1`, filesystem application service와 working script의 offline slice가
+실행된다. 이 문서의 full context/checkpoint/idempotency/API graph는 여전히 Target이다.
 
 전체 흐름과 sequence는 `workflow-blueprint.md`, M00~M13의 현재 상태·선행조건·Exit Evidence는
 `module-delivery-plan.md`, 한 장 요약은 `diagrams/workflow-at-a-glance.svg`를 함께 본다.
@@ -321,8 +322,9 @@ scripts/pipelines/
   run_two_gate_workflow.py
 ~~~
 
-현재 `src/axcalib/workflows/two_gate.py`는 P1 reference state machine이다. 위 구조로 이동하거나
-확장할 때 공개 import 호환성과 기존 테스트를 유지한다.
+현재 `src/axcalib/workflows/two_gate.py`의 state machine은
+`src/axcalib/pipelines/project.py`에서 persisted dossier와 연결된다. 위 목표 구조로 더 분리하거나
+확장할 때 공개 import 호환성과 기존 통합 테스트를 유지한다.
 
 ## 11. 구현 cadence와 Work Package 연결
 

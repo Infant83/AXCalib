@@ -2,8 +2,8 @@
 document_type: module_delivery_plan
 project: AXCalib
 baseline: v0.3-p1
-updated_at: 2026-07-14
-status: detailed_plan_implementation_pending
+updated_at: 2026-07-16
+status: offline_vertical_slice_implemented_hardening_pending
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -16,23 +16,33 @@ Evidence로 예측 가능성을 확보한다.
 
 | ID | Package / Surface | 현재 상태 | 목표 WP | 직접 선행조건 | 다음 Exit Evidence |
 |---|---|---|---|---|---|
-| M00 | `axcalib.pipelines` | interface_defined | WP-01 | P1 harness | context/result/registry contract test |
-| M01 | `axcalib.dossier` | not_started | WP-01 | core/schema contract | round-trip, hash, stale/atomic tests |
+| M00 | `axcalib.pipelines` | offline_reference | WP-01 | P1 harness | full context/idempotency/cancel contract |
+| M01 | `axcalib.dossier` | offline_reference | WP-01 | core/schema contract | JSON Schema + multi-process CAS/lock |
 | M02 | state/approval domain | offline_reference | WP-01 | M01 | persisted transition + outbox integration |
-| M03 | `axcalib.ingest` | not_started | WP-02 | ArtifactRef/schema | TXT/MD/PPTX fixture locator regression |
+| M03 | `axcalib.ingest` | offline_reference | WP-02 | ArtifactRef/schema | actual-template fixture + Docling/VLM spike |
 | M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | stage filter, corpus manifest, Recall/nDCG |
-| M05 | `axcalib.evaluation` | interface_defined | WP-03/05 | M01, M03, M04 | criterion/evidence structured report |
+| M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | structured rubric registry + golden labels |
 | M06 | `axcalib.calibration` | not_started | WP-05/06 | M05 | disagreement/agreement metric report |
-| M07 | `axcalib.reports` | interface_defined | WP-03 | M05 | deterministic Markdown/JSON snapshot |
-| M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | atomic review request/outbox + retry test |
-| M09 | `axcalib.workflows` | interface_defined | WP-06 | M00~M08 | two-gate wait/resume/idempotency scenarios |
-| M10 | `axcalib.runtime` | interface_defined | WP-01/05 | config contract | offline dependency container contract |
-| M11 | scripts / CLI | not_started | WP-01/06 | M00, M10, target pipeline; M09 for workflow | thin script and CLI parity |
+| M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | golden/redaction/content-hash contract |
+| M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | durable outbox + idempotent retry/recovery |
+| M09 | `axcalib.workflows` | offline_reference | WP-06 | M00~M08 | durable checkpoint/resume exactly once |
+| M10 | `axcalib.runtime` | offline_reference | WP-01/05 | config contract | effective-config hash/source manifest |
+| M11 | scripts / CLI | offline_reference | WP-01/06 | M00, M10, target pipeline; M09 for workflow | Typer CLI and script result parity |
 | M12 | API / worker | not_started | WP-06 | M09, M10 | OpenAPI/202/SSE/resume contract |
 | M13 | Web Review | blocked_policy | WP-07 | M12, FE selection | selected-stack E2E review flow |
 
-`offline_reference`는 제품 module 완료가 아니다. 현재 reference state machine,
-RecordingNotifier, Null/Lexical retrieval이 일부 invariant를 실행한다는 의미다.
+`offline_reference`는 제품 module 완료가 아니다. 현재 supplied-PPTX local slice에서 실행되고
+회귀 test가 있다는 뜻이며, 각 행의 다음 Exit Evidence가 남아 있다.
+
+### 1.1 2026-07-16 slice evidence
+
+- `src/axcalib/client.py`와 `src/axcalib/pipelines/project.py`: allowlisted sync/async two-gate flow
+- `src/axcalib/dossier/repository.py`: YAML revision, atomic replace, immutable snapshot
+- `src/axcalib/ingest/pptx.py`: limited safe OOXML + hash-bound reviewed sidecar
+- `src/axcalib/evaluation/offline.py`, `reports/render.py`: criterion/locator JSON·Markdown 초안
+- `scripts/pipelines/run_two_gate_pptx.py`: thin working script
+- `tests/integration/test_pptx_two_gate_pipeline.py`: 두 Gate, wait, fail-closed, same-hash guard
+- `evals/pptx_vertical_slice.py`: 제공 PPTX quality-claim 제한이 있는 offline 회귀
 
 ## 2. 공통 납품 단위
 
@@ -160,13 +170,13 @@ RecordingNotifier, Null/Lexical retrieval이 일부 invariant를 실행한다는
 - 출력: dependency container, pipeline/workflow facade
 - 의존성: 각 module의 port; secret 값은 model/report에 전달하지 않음
 - 첫 slice: filesystem + lexical + mock + recording offline profile
-- 검증: missing capability, unknown adapter, literal secret rejection
-- 완료증거: clean terminal에서 같은 profile로 재현되는 container contract
+- 검증: runtime JSON Schema, unknown/protected key, missing capability, unknown adapter, literal secret rejection
+- 완료증거: clean terminal에서 같은 profile로 재현되는 container contract와 effective-config hash/source map
 
 ### M11 — Working Scripts / CLI
 
 - 책임: arguments/file I/O, runtime 생성, library 호출, exit code/serialization
-- 입력: path, profile, command options
+- 입력: path, allowlisted profile과 progressive command options
 - 출력: PipelineRun/WorkflowRun의 사용자용 표현
 - 의존성: M00, M10과 target pipeline부터 시작하고 workflow command는 M09 사용
 - 첫 slice: `scripts/pipelines/run_dossier_freeze.py`
@@ -180,7 +190,7 @@ RecordingNotifier, Null/Lexical retrieval이 일부 invariant를 실행한다는
 - 출력: typed response와 workflow status event
 - 의존성: M09, M10; FastAPI/queue는 delivery adapter
 - 첫 slice: in-process worker의 registration evaluation job
-- 검증: OpenAPI schema, idempotent retry, partial failure, cancellation
+- 검증: versioned OpenAPI 3.1 artifact/example, unknown option rejection, auth scope, idempotent retry, partial failure, cancellation
 - 완료증거: API contract test와 script/CLI/API result parity
 
 ### M13 — Web Review
@@ -190,27 +200,30 @@ RecordingNotifier, Null/Lexical retrieval이 일부 invariant를 실행한다는
 - 출력: authorized review command; domain state를 브라우저에서 계산하지 않음
 - 의존성: M12, frontend stack/design 선택, auth/RBAC 결정
 - 첫 slice: registration review workbench read/approve/reject/request-evidence flow
-- 검증: 접근성, revision conflict, pending notification, permission/E2E
+- 검증: 사람 권한 경계 가시성, 접근성, revision conflict, pending notification, permission/E2E
 - 완료증거: 선택한 FE stack의 핵심 사용자 flow와 reviewer usability review
 
 ## 4. Dependency Wave 계획
 
 ### Wave 0 — Harness와 시각 baseline
 
-- 상태: 완료, G1 review 대기
-- 범위: 실행 harness, reference workflow, ADR-013, workflow blueprint, module plan
-- Exit: validate/test/eval과 문서 링크·SVG 검증
+- 상태: 완료; local/offline slice 착수 지시는 2026-07-16 반영
+- 범위: 실행 harness, reference workflow, ADR-013/014, workflow blueprint, module plan,
+  product/manual/API/readiness contract
+- Exit: validate/test/eval, 문서 링크·SVG/config/OpenAPI 검증 완료; 공식 rubric/운영 승인은 별도
 
 ### Wave 1 — WP-01 Foundation Vertical Slice
 
-- 범위: M00, M01, M02, M08 일부, M10 offline, M11 freeze script
-- 시작조건: G1 baseline review
-- 핵심 demo: 한 synthetic dossier를 freeze하고 같은 revision/hash를 재현
+- 상태: supplied-PPTX total flow 안의 offline slice 구현, hardening 미완료
+- 범위: M00, M01, M02, M08 일부, M10 offline, M11 working script
+- 시작근거: 2026-07-16 사용자 local/offline 구현 지시
+- 핵심 demo: 한 dossier를 두 Gate에서 freeze하고 같은 revision/hash를 재현
 - 실패기준: stale write 또는 관리자 권한 우회를 허용하면 Gate 실패
-- Exit: `dossier.freeze` contract_verified, atomic outbox integration 준비
+- 남은 Exit: 독립 freeze pipeline, JSON Schema, idempotency와 durable atomic outbox
 
 ### Wave 2 — WP-02/03 Evidence-to-Report
 
+- 상태: 제공 image-only PPTX의 reviewed-sidecar slice 구현, template/parser hardening 미완료
 - 범위: M03, M05 deterministic, M07
 - 시작조건: M00/M01 contract_verified
 - 핵심 demo: synthetic 등록자료 → locator → criterion → Markdown/JSON report
@@ -281,14 +294,14 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-현재 next는 Wave 1의 `dossier.freeze/v1alpha1`이다.
+현재 next는 실제 template을 기다리는 동안 Wave 1/2의 contract hardening이다.
 
-1. M00 PipelineContext/Run/Registry 최소 schema
-2. M01 dossier v1alpha1과 canonical hash
-3. filesystem snapshot repository와 atomic write
-4. `dossier.freeze` local pipeline
-5. thin Python working script
-6. round-trip/hash/stale/idempotency/import-boundary tests
-7. `prep.ps1 validate|test|eval`, Ruff, Pyright
+1. M01 dossier JSON Schema export와 snapshot manifest 검증
+2. M00 typed context/idempotency key와 stale/cancel/retry 상태 연결
+3. M08 durable local outbox, notification dedupe와 recovery test
+4. M05 Markdown checklist를 구조화 rubric registry로 이동
+5. M03 실제 template 도착 시 field/locator fixture와 parser coverage 추가
+6. M11 Typer CLI를 같은 `two-gate-pptx@v1alpha1` pipeline에 연결
+7. `prep.ps1 validate|test|eval`, Ruff, Pyright 회귀
 
-실제 데이터, live model, Vector DB, FastAPI 또는 Web App 없이 완료할 수 있다.
+실제 data/model/Vector DB/API/Web은 readiness 문서의 NO-GO를 유지한다.

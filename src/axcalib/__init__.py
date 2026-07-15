@@ -1,9 +1,11 @@
-"""AXCalib public reference contracts for the P1 harness baseline."""
+"""AXCalib public contracts and offline two-gate MVP facade."""
 
+from axcalib.client import AXCalib
 from axcalib.notifications.base import NotificationEvent, RecordingNotifier
 from axcalib.workflows.two_gate import ActorRole, ProjectStatus, TwoGateWorkflow, WorkflowRecord
 
 __all__ = [
+    "AXCalib",
     "ActorRole",
     "NotificationEvent",
     "ProjectStatus",
@@ -13,4 +15,3 @@ __all__ = [
 ]
 
 __version__ = "0.1.0a0"
-

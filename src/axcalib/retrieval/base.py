@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 
 
@@ -87,3 +89,28 @@ class LexicalRetriever:
         scored.sort(key=lambda hit: (-hit.score, hit.case_id))
         snapshot = ",".join(sorted(snapshots)) or None
         return RetrievalResult("completed", stage, "lexical", snapshot, tuple(scored[:limit]))
+
+
+def load_historical_cases(path: Path) -> tuple[HistoricalCase, ...]:
+    """Load a small versioned synthetic/approved lexical corpus."""
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("schema_version") != "axcalib.historical-cases/v1alpha1":
+        raise ValueError("unsupported historical-case corpus schema_version")
+    cases = data.get("cases")
+    if not isinstance(cases, list):
+        raise ValueError("historical-case corpus cases must be an array")
+    result: list[HistoricalCase] = []
+    for item in cases:
+        if not isinstance(item, dict):
+            raise ValueError("historical-case entries must be objects")
+        case = HistoricalCase(
+            case_id=str(item["case_id"]),
+            stage=str(item["stage"]),
+            text=str(item["text"]),
+            corpus_snapshot_id=str(item["corpus_snapshot_id"]),
+        )
+        if case.stage not in {"registration", "completion"}:
+            raise ValueError(f"invalid historical-case stage: {case.stage}")
+        result.append(case)
+    return tuple(result)

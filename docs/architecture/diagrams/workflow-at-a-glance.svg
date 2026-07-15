@@ -172,8 +172,8 @@
   </g>
   <rect x="1215" y="687" width="290" height="78" rx="12" fill="#252F45" stroke="#465066"/>
   <text x="1360" y="716" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">현재 구현 상태</text>
-  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">P1 offline reference · G1 review</text>
-  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Pipeline kernel은 아직 미구현</text>
+  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">G2 supplied-PPTX offline slice</text>
+  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Library · Script · 2 HITL report 실행</text>
 
   <!-- Delivery waves -->
   <text x="60" y="848" class="lane-title">Delivery Waves — 날짜가 아니라 dependency Gate</text>
@@ -181,19 +181,19 @@
     <rect x="60" y="870" width="280" height="120" rx="16" fill="#EAF8F4" stroke="#1E8A75" filter="url(#shadow)"/>
     <text x="200" y="906" class="wave-title">Wave 0 · P1</text>
     <text x="200" y="931" class="wave-note">Harness + Architecture</text>
-    <text x="200" y="956" class="wave-note">완료 · G1 review</text>
+    <text x="200" y="956" class="wave-note">완료</text>
 
     <path class="arrow" d="M 340 930 L 362 930"/>
     <rect x="370" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="510" y="906" class="wave-title">Wave 1 · WP-01</text>
-    <text x="510" y="931" class="wave-note">Kernel + Dossier + Freeze</text>
-    <text x="510" y="956" class="wave-note">NEXT</text>
+    <text x="510" y="931" class="wave-note">Dossier + Snapshot slice</text>
+    <text x="510" y="956" class="wave-note">실행됨 · hardening 남음</text>
 
     <path class="arrow" d="M 650 930 L 672 930"/>
-    <rect x="680" y="870" width="280" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>
+    <rect x="680" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="820" y="906" class="wave-title">Wave 2/3 · WP-02~05</text>
-    <text x="820" y="931" class="wave-note">Evidence · Evaluation</text>
-    <text x="820" y="956" class="wave-note">Retrieval · Model</text>
+    <text x="820" y="931" class="wave-note">Limited PPTX · Report 실행</text>
+    <text x="820" y="956" class="wave-note">template/model 품질은 남음</text>
 
     <path class="arrow" d="M 960 930 L 982 930"/>
     <rect x="990" y="870" width="250" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>

@@ -1,0 +1,73 @@
+# Expert configuration template. This file is documentation and is not loaded by default.
+# Secret values are never written here; only environment variable names are allowed.
+
+[project]
+baseline = "v0.3-p1"
+environment = "onprem"
+synthetic_only = true
+config_version = "axcalib.runtime/v1alpha1"
+default_profile = "onprem"
+
+[contract]
+# This selects a code-owned invariant set. It is not a feature toggle.
+invariants_profile = "two_gate_human_authority/v1"
+
+[interface]
+locale = "ko-KR"
+report_formats = ["json", "markdown"]
+
+[profiles.onprem]
+storage = "filesystem"
+evaluator = "primary"
+model = "primary"
+notification = "recording"
+registration_retrieval = "registration_hybrid"
+completion_retrieval = "completion_hybrid"
+
+[models.primary]
+provider = "openai_compatible"
+base_url_env = "AXCALIB_PRIMARY_BASE_URL"
+api_key_env = "AXCALIB_PRIMARY_API_KEY"
+model_env = "AXCALIB_PRIMARY_MODEL"
+capabilities = ["text", "vision", "structured_output"]
+generation_profile = "deterministic_review"
+
+[retrieval.registration_hybrid]
+adapter = "hybrid"
+stage = "registration"
+similarity_portion = 0.15
+top_k = 8
+required_for_decision = false
+corpus_snapshot = "approved-registration-corpus"
+
+[retrieval.completion_hybrid]
+adapter = "hybrid"
+stage = "completion"
+similarity_portion = 0.15
+top_k = 8
+required_for_decision = false
+corpus_snapshot = "approved-completion-corpus"
+
+[notifications.recording]
+enabled = true
+adapter = "recording"
+
+[notifications.gitlab_merge_request]
+enabled = false
+adapter = "gitlab_merge_request"
+base_url_env = "AXCALIB_GITLAB_BASE_URL"
+project_id_env = "AXCALIB_GITLAB_PROJECT_ID"
+token_env = "AXCALIB_GITLAB_TOKEN"
+
+[notifications.email]
+enabled = false
+adapter = "email"
+smtp_host_env = "AXCALIB_SMTP_HOST"
+smtp_user_env = "AXCALIB_SMTP_USER"
+smtp_password_env = "AXCALIB_SMTP_PASSWORD"
+from_address_env = "AXCALIB_EMAIL_FROM"
+
+[limits]
+evaluation_timeout_seconds = 300
+max_batch_items = 100
+max_parallel_models = 3

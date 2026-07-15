@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://axcalib.local/schemas/runtime-config/v1alpha1",
+  "title": "AXCalib Runtime Configuration",
+  "description": "Schema for the dictionary produced by parsing an AXCalib TOML 1.0 runtime configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project", "contract", "interface", "profiles", "retrieval", "notifications", "limits"],
+  "properties": {
+    "project": {"$ref": "#/$defs/project"},
+    "contract": {"$ref": "#/$defs/contract"},
+    "interface": {"$ref": "#/$defs/interface"},
+    "profiles": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/profile"}
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/modelProfile"}
+    },
+    "retrieval": {
+      "type": "object",
+      "minProperties": 2,
+      "additionalProperties": {"$ref": "#/$defs/retrievalProfile"}
+    },
+    "notifications": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/notificationProfile"}
+    },
+    "limits": {"$ref": "#/$defs/limits"}
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "environment", "synthetic_only", "config_version", "default_profile"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "environment": {"type": "string", "enum": ["offline", "onprem", "pilot", "production"]},
+        "synthetic_only": {"type": "boolean"},
+        "config_version": {"const": "axcalib.runtime/v1alpha1"},
+        "default_profile": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"}
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariants_profile"],
+      "properties": {
+        "invariants_profile": {"const": "two_gate_human_authority/v1"}
+      }
+    },
+    "interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "report_formats"],
+      "properties": {
+        "locale": {"type": "string", "pattern": "^[a-z]{2}-[A-Z]{2}$"},
+        "report_formats": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "enum": ["json", "markdown", "pdf"]}
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["storage", "evaluator", "notification", "registration_retrieval", "completion_retrieval"],
+      "properties": {
+        "storage": {"type": "string", "minLength": 1},
+        "evaluator": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "notification": {"type": "string", "minLength": 1},
+        "registration_retrieval": {"type": "string", "minLength": 1},
+        "completion_retrieval": {"type": "string", "minLength": 1}
+      }
+    },
+    "modelProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "base_url_env", "api_key_env", "model_env", "capabilities", "generation_profile"],
+      "properties": {
+        "provider": {"const": "openai_compatible"},
+        "base_url_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "api_key_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "model_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "generation_profile": {"type": "string", "minLength": 1}
+      }
+    },
+    "retrievalProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "stage", "similarity_portion", "top_k", "required_for_decision", "corpus_snapshot"],
+      "properties": {
+        "adapter": {"type": "string", "enum": ["null", "lexical", "dense", "hybrid"]},
+        "stage": {"type": "string", "enum": ["registration", "completion"]},
+        "similarity_portion": {"type": "number", "minimum": 0, "maximum": 0.25},
+        "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
+        "required_for_decision": {"const": false},
+        "corpus_snapshot": {"type": "string", "minLength": 1}
+      }
+    },
+    "notificationProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "adapter"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "adapter": {"type": "string", "enum": ["recording", "gitlab_merge_request", "email"]},
+        "base_url_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "project_id_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "token_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "smtp_host_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "smtp_user_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "smtp_password_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "from_address_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"}
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluation_timeout_seconds", "max_batch_items"],
+      "properties": {
+        "evaluation_timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 900},
+        "max_batch_items": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "max_parallel_models": {"type": "integer", "minimum": 1, "maximum": 5}
+      }
+    }
+  }
+}

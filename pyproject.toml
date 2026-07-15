@@ -8,7 +8,10 @@ version = "0.1.0a0"
 description = "Evidence-first building blocks for AX certification workflows."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "pydantic>=2.11,<3",
+  "ruamel-yaml>=0.18,<1",
+]
 
 [dependency-groups]
 dev = [

@@ -85,9 +85,9 @@ similarity portion, Agent recommendation을 포함한다.
 - portion이 0보다 큰데 adapter/corpus가 없으면 가중치를 조용히 재배분하지 않고 평가를
   차단하거나 insufficient evidence로 반환한다.
 
-## 실제 Python reference contract
+## 실제 Python implementation contract
 
-구현 시 이 전체 순서를 하나의 거대한 함수에 넣지 않는다. dossier freeze, evidence 준비,
+이 전체 순서를 interface script에 복사하지 않는다. dossier freeze, evidence 준비,
 stage retrieval, 평가, report, review request, 관리자 decision을 국소 pipeline으로 구현하고
 `two-gate-standard` workflow가 분기와 사람 대기/재개를 연결한다. script, CLI, API, worker는
 같은 library pipeline/workflow를 호출한다. 상세 경계는
@@ -95,13 +95,21 @@ stage retrieval, 평가, report, review request, 관리자 decision을 국소 pi
 ADR-013을 따른다.
 
 ~~~python
-from axcalib import ActorRole, RecordingNotifier, TwoGateWorkflow, WorkflowRecord
+from pathlib import Path
 
-notifier = RecordingNotifier()
-workflow = TwoGateWorkflow(notifier)
-record = WorkflowRecord(project_id="synthetic-project")
-record = workflow.transition(record, "submit_registration", actor_role=ActorRole.SUBMITTER)
+from axcalib import AXCalib
+from axcalib.pipelines import TwoGatePptxRequest
+
+client = AXCalib.from_toml("config/axcalib.toml", workspace="output/review")
+summary = client.run_pptx(
+    TwoGatePptxRequest(
+        proposal_path=Path("proposal.pptx"),
+        title="검토할 과제",
+    )
+)
+assert summary.final_status.value == "registration_hitl_pending"
 ~~~
 
-P1 reference contract는 상태 전이와 알림 guard만 구현한다. dossier persistence, 실제 report,
-GitLab/email, embedding, Vector DB, model evaluation은 후속 WP다.
+2026-07-16 slice는 dossier persistence, JSON/Markdown report, recording notification과 명시적
+관리자 decision까지 구현한다. GitLab/email, durable outbox, embedding, Vector DB, live model,
+API/Web은 후속 WP다.

@@ -2,17 +2,47 @@
 document_type: workflow_blueprint
 project: AXCalib
 baseline: v0.3-p1
-updated_at: 2026-07-14
-status: architecture_contract_implementation_pending
+updated_at: 2026-07-16
+status: supplied_pptx_offline_slice_implemented
 ---
 
 # AXCalib Workflow Blueprint
 
 이 문서는 AXCalib의 전체 workflow, 국소 pipeline, module dependency, 사람 승인과 실패·재개
-경로를 시각적으로 고정한다. 다이어그램은 구현 Target이며 현재 P1 reference code가 모든
-노드를 구현했다는 뜻은 아니다.
+경로를 시각적으로 고정한다. 0절은 현재 실행되는 slice이고, 나머지 다이어그램에는 향후
+Docling/model/outbox/API/Web Target도 포함된다. Target node를 구현 완료로 해석하지 않는다.
 
 ![AXCalib workflow 한 장 구조도](diagrams/workflow-at-a-glance.svg)
+
+## 0. 현재 실행되는 supplied-PPTX slice
+
+```mermaid
+flowchart LR
+    SRC["PPTX + hash-bound sidecar"] --> DOS["YAML dossier + revision"]
+    DOS --> RSNAP["registration snapshot"]
+    RSNAP --> RPARSE["OOXML / reviewed sidecar"]
+    RPARSE --> RLEX["registration lexical cases\nportion 0.0"]
+    RLEX --> REVAL["deterministic criterion report"]
+    REVAL --> RNOTE["recording notification"]
+    RNOTE --> RWAIT{{"registration HITL wait"}}
+    RWAIT -->|"explicit approve/reject + rationale"| EXEC["execution / progress notes"]
+    EXEC --> FINAL["completion PPTX"]
+    FINAL --> CSNAP["completion snapshot + registration baseline"]
+    CSNAP --> CLEX["completion lexical cases\nportion 0.0"]
+    CLEX --> CEVAL["same-hash guard + completion report"]
+    CEVAL --> CNOTE["recording notification"]
+    CNOTE --> CWAIT{{"completion HITL wait"}}
+    CWAIT -->|"explicit accept/not_accept + rationale"| AUDIT["dossier decision + audit"]
+
+    classDef verified fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef human fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
+    class SRC,DOS,RSNAP,RPARSE,RLEX,REVAL,RNOTE,EXEC,FINAL,CSNAP,CLEX,CEVAL,CNOTE,AUDIT verified;
+    class RWAIT,CWAIT human;
+```
+
+이 slice는 `two-gate-pptx@v1alpha1`과 working script에서 실행된다. image-only slide의 sidecar는
+수동 검토 fixture이며 OCR/VLM 품질을 뜻하지 않는다. durable outbox, idempotent resume,
+multi-process lock과 stale-result 객체는 다음 hardening 범위다.
 
 ## 1. 전체 계층
 
@@ -310,8 +340,8 @@ key를 사용하고 새 평가·알림·결정을 중복 생성하지 않는다.
 ```mermaid
 flowchart LR
     W0["Wave 0 — P1\nHarness + Architecture"]
-    W1["Wave 1 — WP-01\nKernel + Dossier + Freeze Script"]
-    W2["Wave 2 — WP-02/03\nEvidence + Deterministic Evaluation + Report"]
+    W1["Wave 1 — WP-01\nOffline slice + hardening"]
+    W2["Wave 2 — WP-02/03\nLimited PPTX slice + template hardening"]
     W3["Wave 3 — WP-04/05\nRetrieval + Model + Calibration"]
     W4["Wave 4 — WP-06\nWorkflow Runtime + CLI/API/Worker"]
     W5["Wave 5 — WP-07/08\nWeb Review + Pilot"]
@@ -319,11 +349,11 @@ flowchart LR
     W0 --> W1 --> W2 --> W3 --> W4 --> W5
 
     classDef done fill:#EAF8F4,stroke:#1E8A75,color:#172033;
-    classDef next fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
+    classDef partial fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
     classDef future fill:#F2F3F5,stroke:#7A8495,color:#172033;
     class W0 done;
-    class W1 next;
-    class W2,W3,W4,W5 future;
+    class W1,W2 partial;
+    class W3,W4,W5 future;
 ```
 
 Wave는 달력 일정이 아니라 dependency Gate다. Owner, 인력과 운영환경이 확정되지 않았으므로

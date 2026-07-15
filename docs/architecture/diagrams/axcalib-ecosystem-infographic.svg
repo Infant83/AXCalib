@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">AXCalib 철학, 조합형 워크플로 라이브러리와 적용 사례</title>
+  <desc id="desc">근거 우선, 편차 보정, 사람 책임이라는 철학에서 요소 모듈과 국소 파이프라인, 버전 워크플로를 거쳐 관리자 웹, 수행자 앱, 멘토 앱, API와 워커로 확장되는 모습을 보여주는 인포그래픽이다. 현재는 P1 오프라인 참조 하네스이며 API, 웹, 앱은 향후 목표다.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="#172033" flood-opacity="0.12"/>
+    </filter>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#172033" flood-opacity="0.10"/>
+    </filter>
+    <clipPath id="clipPhilosophy"><rect x="70" y="230" width="530" height="353" rx="18"/></clipPath>
+    <clipPath id="clipLibrary"><rect x="670" y="230" width="530" height="353" rx="18"/></clipPath>
+    <clipPath id="clipCases"><rect x="1270" y="230" width="530" height="353" rx="18"/></clipPath>
+    <marker id="arrowNavy" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#172033"/>
+    </marker>
+    <style>
+      .sans { font-family: Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; }
+      .title { font: 800 46px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #172033; letter-spacing: -1px; }
+      .subtitle { font: 500 20px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #596477; }
+      .card-title { font: 800 24px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #172033; }
+      .section-no { font: 800 16px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #FFFFFF; text-anchor: middle; }
+      .row-title { font: 750 17px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #172033; }
+      .row-note { font: 450 14px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #5B6578; }
+      .pill { font: 700 13px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; text-anchor: middle; }
+      .mini-title { font: 750 15px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #172033; }
+      .mini-note { font: 450 12px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #677285; }
+      .footer-kicker { font: 800 14px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #FFFFFF; letter-spacing: 1.4px; }
+      .footer-note { font: 450 12px Pretendard, 'Noto Sans KR', 'Segoe UI', Arial, sans-serif; fill: #C9CFD9; }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#F4F1EA"/>
+  <circle cx="1795" cy="-10" r="250" fill="#E8EDF7" opacity="0.72"/>
+  <circle cx="75" cy="1035" r="235" fill="#FBE4E3" opacity="0.68"/>
+
+  <!-- Header -->
+  <text x="60" y="67" class="title">AXCalib</text>
+  <text x="286" y="64" class="sans" font-size="19" font-weight="750" fill="#A50034">AX Certification Agent Library</text>
+  <text x="60" y="104" class="subtitle">근거를 구조화하고, 편차를 보정하며, 최종 책임은 사람에게 남기는 조합형 인증 워크플로 라이브러리</text>
+  <rect x="1640" y="42" width="220" height="44" rx="22" fill="#172033"/>
+  <text x="1750" y="70" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">VISUAL GUIDE · v0.3-p1</text>
+  <line x1="60" y1="130" x2="1860" y2="130" stroke="#D5D0C6" stroke-width="2"/>
+
+  <!-- Cards -->
+  <rect x="50" y="155" width="570" height="825" rx="28" fill="#FFFEFC" stroke="#E0D9CE" filter="url(#shadow)"/>
+  <rect x="650" y="155" width="570" height="825" rx="28" fill="#FFFEFC" stroke="#E0D9CE" filter="url(#shadow)"/>
+  <rect x="1250" y="155" width="570" height="825" rx="28" fill="#FFFEFC" stroke="#E0D9CE" filter="url(#shadow)"/>
+
+  <!-- Card 1: philosophy -->
+  <circle cx="82" cy="191" r="18" fill="#A50034"/>
+  <text x="82" y="197" class="section-no">01</text>
+  <text x="112" y="200" class="card-title">철학 — 근거에서 책임 있는 결정까지</text>
+  <image x="70" y="230" width="530" height="353" href="assets/axcalib-philosophy.jpg" xlink:href="assets/axcalib-philosophy.jpg" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipPhilosophy)"/>
+  <rect x="70" y="230" width="530" height="353" rx="18" fill="none" stroke="#D8D1C6"/>
+
+  <circle cx="94" cy="628" r="17" fill="#EAF2FF"/><text x="94" y="634" class="sans" font-size="14" font-weight="800" fill="#2F6BFF" text-anchor="middle">1</text>
+  <text x="124" y="625" class="row-title">근거 우선</text>
+  <text x="124" y="647" class="row-note">기준·원문 위치·판단불가 이유를 함께 남긴다.</text>
+  <circle cx="94" cy="688" r="17" fill="#E8F6F1"/><text x="94" y="694" class="sans" font-size="14" font-weight="800" fill="#1E8A75" text-anchor="middle">2</text>
+  <text x="124" y="685" class="row-title">편차 보정</text>
+  <text x="124" y="707" class="row-note">모델·평가자 차이를 측정하고 calibration한다.</text>
+  <circle cx="94" cy="748" r="17" fill="#FBE7E6"/><text x="94" y="754" class="sans" font-size="14" font-weight="800" fill="#A50034" text-anchor="middle">3</text>
+  <text x="124" y="745" class="row-title">사람 책임</text>
+  <text x="124" y="767" class="row-note">Agent는 제안하고, 관리자만 최종 승인·반려한다.</text>
+
+  <rect x="75" y="818" width="220" height="45" rx="12" fill="#FCEAE9" stroke="#F3B9B6"/>
+  <text x="185" y="846" class="pill" fill="#A50034">등록심의 · 관리자 HITL</text>
+  <path d="M305 840 L355 840" stroke="#172033" stroke-width="2.5" fill="none" marker-end="url(#arrowNavy)"/>
+  <rect x="365" y="818" width="225" height="45" rx="12" fill="#FCEAE9" stroke="#F3B9B6"/>
+  <text x="477" y="846" class="pill" fill="#A50034">완료평가 · 관리자 HITL</text>
+  <rect x="75" y="884" width="515" height="60" rx="14" fill="#172033"/>
+  <text x="332" y="910" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">ONE DOSSIER · MANY IMMUTABLE SNAPSHOTS</text>
+  <text x="332" y="931" class="sans" font-size="12" fill="#CBD1DB" text-anchor="middle">평가와 최종 결정은 분리하고, stale 결과는 자동 병합하지 않는다.</text>
+
+  <!-- Card 2: library -->
+  <circle cx="682" cy="191" r="18" fill="#1E8A75"/>
+  <text x="682" y="197" class="section-no">02</text>
+  <text x="712" y="200" class="card-title">Workflow Library — 조합하고 재사용한다</text>
+  <image x="670" y="230" width="530" height="353" href="assets/axcalib-composable-library.jpg" xlink:href="assets/axcalib-composable-library.jpg" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipLibrary)"/>
+  <rect x="670" y="230" width="530" height="353" rx="18" fill="none" stroke="#D8D1C6"/>
+
+  <rect x="672" y="612" width="118" height="42" rx="11" fill="#EFF1F4" stroke="#CCD2DB"/>
+  <text x="731" y="638" class="pill" fill="#172033">요소 모듈</text>
+  <path d="M797 633 L818 633" stroke="#5B6578" stroke-width="2" marker-end="url(#arrowNavy)"/>
+  <rect x="828" y="612" width="118" height="42" rx="11" fill="#E8F6F1" stroke="#A8D7C7"/>
+  <text x="887" y="638" class="pill" fill="#1E765F">국소 Pipeline</text>
+  <path d="M953 633 L974 633" stroke="#5B6578" stroke-width="2" marker-end="url(#arrowNavy)"/>
+  <rect x="984" y="612" width="118" height="42" rx="11" fill="#FFF1DE" stroke="#E8C08A"/>
+  <text x="1043" y="638" class="pill" fill="#8A5400">Versioned Flow</text>
+  <path d="M1109 633 L1130 633" stroke="#5B6578" stroke-width="2" marker-end="url(#arrowNavy)"/>
+  <rect x="1140" y="612" width="58" height="42" rx="11" fill="#EAF2FF" stroke="#ABC3F8"/>
+  <text x="1169" y="638" class="pill" fill="#2F6BFF">UI</text>
+
+  <rect x="675" y="681" width="510" height="49" rx="12" fill="#F6F7F8"/>
+  <text x="692" y="702" class="mini-title">Domain</text><text x="766" y="702" class="mini-note">dossier · evidence · retrieval · evaluation · audit/notice</text>
+  <text x="692" y="720" class="mini-title">Rule</text><text x="746" y="720" class="mini-note">각 모듈은 capability만 제공하고 업무 순서를 결정하지 않는다.</text>
+  <rect x="675" y="742" width="510" height="49" rx="12" fill="#EEF8F5"/>
+  <text x="692" y="763" class="mini-title">Pipeline</text><text x="770" y="763" class="mini-note">freeze · prepare · retrieve · evaluate · report · review</text>
+  <text x="692" y="781" class="mini-title">Contract</text><text x="762" y="781" class="mini-note">typed input/output · status · audit · run/arun parity</text>
+  <rect x="675" y="803" width="510" height="49" rx="12" fill="#FFF6E8"/>
+  <text x="692" y="824" class="mini-title">Workflow</text><text x="778" y="824" class="mini-note">branch · human wait · checkpoint · resume</text>
+  <text x="692" y="842" class="mini-title">Guard</text><text x="754" y="842" class="mini-note">state machine과 HITL 불변조건을 우회하지 않는다.</text>
+  <rect x="675" y="864" width="510" height="80" rx="14" fill="#172033"/>
+  <text x="930" y="890" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">업무 로직은 Library에 한 번만</text>
+  <text x="930" y="916" class="sans" font-size="13" fill="#D1D7E0" text-anchor="middle">Python Script · CLI · API · Worker · Web App</text>
+  <text x="930" y="936" class="sans" font-size="11" fill="#99A5B6" text-anchor="middle">모든 전달면이 같은 pipeline/workflow registry를 호출</text>
+
+  <!-- Card 3: use cases -->
+  <circle cx="1282" cy="191" r="18" fill="#2F6BFF"/>
+  <text x="1282" y="197" class="section-no">03</text>
+  <text x="1312" y="200" class="card-title">적용 장면 — 하나의 코어, 여러 경험</text>
+  <image x="1270" y="230" width="530" height="353" href="assets/axcalib-application-cases.jpg" xlink:href="assets/axcalib-application-cases.jpg" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCases)"/>
+  <rect x="1270" y="230" width="530" height="353" rx="18" fill="none" stroke="#B8C6DD" stroke-dasharray="8 6"/>
+  <rect x="1608" y="538" width="177" height="31" rx="15" fill="#F7FAFF" fill-opacity="0.96" stroke="#8EB0F8" stroke-dasharray="5 4" filter="url(#softShadow)"/>
+  <text x="1696" y="559" class="sans" font-size="12" font-weight="750" fill="#2F6BFF" text-anchor="middle">API · WEB · APP TARGET</text>
+
+  <rect x="1270" y="612" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
+  <text x="1288" y="638" class="mini-title">관리자 Review Web</text>
+  <text x="1288" y="660" class="mini-note">근거 비교 · 체크리스트 · 보완요청</text>
+  <text x="1288" y="681" class="mini-note">두 Gate의 최종 승인·반려 기록</text>
+  <rect x="1288" y="690" width="71" height="17" rx="8" fill="#EAF2FF"/><text x="1323" y="702" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">DESKTOP</text>
+
+  <rect x="1535" y="612" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
+  <text x="1553" y="638" class="mini-title">과제 수행자 App</text>
+  <text x="1553" y="660" class="mini-note">dossier 진행기록 · 증거 참조 갱신</text>
+  <text x="1553" y="681" class="mini-note">현재 Gate와 허용 command 확인</text>
+  <rect x="1553" y="690" width="64" height="17" rx="8" fill="#EAF2FF"/><text x="1585" y="702" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">MOBILE</text>
+
+  <rect x="1270" y="730" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
+  <text x="1288" y="756" class="mini-title">Mentor App</text>
+  <text x="1288" y="778" class="mini-note">수행 피드백 · 변경 승인 · 완료 동의</text>
+  <text x="1288" y="799" class="mini-note">멘토 미배정 과제는 guard 없이 진행</text>
+  <rect x="1288" y="808" width="61" height="17" rx="8" fill="#EAF2FF"/><text x="1318" y="820" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">TABLET</text>
+
+  <rect x="1535" y="730" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
+  <text x="1553" y="756" class="mini-title">API + Async Worker</text>
+  <text x="1553" y="778" class="mini-note">기존 인증시스템 연동 · batch 실행</text>
+  <text x="1553" y="799" class="mini-note">202 + run_id · progress · resume</text>
+  <rect x="1553" y="808" width="76" height="17" rx="8" fill="#EAF2FF"/><text x="1591" y="820" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">INTEGRATION</text>
+
+  <rect x="1270" y="856" width="515" height="88" rx="14" fill="#172033"/>
+  <circle cx="1296" cy="884" r="7" fill="#1E8A75"/>
+  <text x="1313" y="889" class="sans" font-size="13" font-weight="750" fill="#FFFFFF">현재 · P1 offline reference harness / G1 review</text>
+  <circle cx="1296" cy="916" r="7" fill="none" stroke="#77A4FF" stroke-width="2" stroke-dasharray="3 2"/>
+  <text x="1313" y="921" class="sans" font-size="13" font-weight="650" fill="#D1D7E0">향후 · API, Worker, Review Web, Owner/Mentor App</text>
+
+  <!-- Footer -->
+  <rect x="0" y="1008" width="1920" height="72" fill="#172033"/>
+  <text x="60" y="1040" class="footer-kicker">EVIDENCE FIRST</text>
+  <text x="60" y="1061" class="footer-note">근거가 없으면 추론하지 않고 insufficient_evidence</text>
+  <line x1="470" y1="1025" x2="470" y2="1063" stroke="#465066"/>
+  <text x="515" y="1040" class="footer-kicker">CALIBRATE DIFFERENCE</text>
+  <text x="515" y="1061" class="footer-note">모델·평가자 편차를 측정하되 과거 사례를 정답으로 쓰지 않음</text>
+  <line x1="1110" y1="1025" x2="1110" y2="1063" stroke="#465066"/>
+  <text x="1155" y="1040" class="footer-kicker">HUMAN DECIDES</text>
+  <text x="1155" y="1061" class="footer-note">두 HITL Gate와 승인요청 알림은 우회 불가</text>
+  <text x="1860" y="1053" class="sans" font-size="11" fill="#8E99AA" text-anchor="end">AI-generated illustration panels · exact labels authored in SVG · no official brand asset</text>
+</svg>

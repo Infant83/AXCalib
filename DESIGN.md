@@ -3,9 +3,9 @@ document_type: architecture_and_product_design
 project: AXCalib
 baseline: v0.3-p1
 created_at: 2026-07-12
-updated_at: 2026-07-14
+updated_at: 2026-07-16
 timezone: Asia/Seoul
-status: p1_harness_ready_for_review
+status: offline_vertical_slice_implemented_design_hardening_pending
 ---
 
 # AXCalib Architecture와 App Design
@@ -13,6 +13,11 @@ status: p1_harness_ready_for_review
 ## 1. 설계 목표
 
 AXCalib는 문서를 한 번 채점하는 도구가 아니라, 과제의 약속과 수행 증거가 시간에 따라 쌓이고 두 번의 공식 평가 Gate를 통과하는 과정을 다룬다. 설계의 중심 객체는 Agent나 채팅 세션이 아니라 **versioned Project Dossier**다.
+
+2026-07-16 구현 기준으로 filesystem dossier/snapshot, 제한된 PPTX OOXML+hash-bound sidecar,
+deterministic evaluator, lexical retrieval, report, recording notification과 두 Gate pipeline이
+offline slice로 연결됐다. 아래 Docling/VLM/model/API/Web 설계는 여전히 Target이며 구현 완료가
+아니다.
 
 제품은 다음 네 층으로 분리한다.
 
@@ -26,6 +31,8 @@ Core Domain은 나머지 층 없이도 실행되고 테스트되어야 한다.
 ## 2. 핵심 설계 원칙
 
 - Library first: 모든 인터페이스는 같은 application service를 호출한다.
+- Human authority is visible: Agent 제안과 권한 있는 사람의 결정을 화면·schema·감사기록에서 분리한다.
+- Progressive disclosure: 첫 API와 기본 설정은 작게 두고 전문 profile과 typed option을 단계적으로 연다.
 - Composable pipelines: 요소 모듈을 국소 pipeline으로 완결하고 전체 workflow는 이를 연결한다.
 - Thin delivery: working script, CLI, API, worker, Web에는 domain 로직을 복제하지 않는다.
 - One dossier, many immutable revisions: 사용자 기준 파일은 하나지만 평가 입력은 고정한다.
@@ -140,6 +147,7 @@ architecture는 다음 세 view를 함께 유지한다.
   failure/resume, Delivery Wave의 Mermaid 원문
 - `module-delivery-plan.md`: M00~M13의 상태, 입력·출력, 직접 선행조건, 첫 slice, test와 Exit Evidence
 - `diagrams/workflow-at-a-glance.svg`: 비기술 이해관계자용 한 장 요약
+- `../product/product-brief.md`와 `../manuals`: Excalibur 기억 장치, quickstart, 권한 구조도와 6컷 tutorial
 
 Mermaid를 정확한 구조 기준으로, SVG를 커뮤니케이션 요약으로 사용한다. module/pipeline ID,
 상태전이, dependency 또는 현재 구현상태가 바뀌면 세 view와 `PROJECT_STATE.md`를 같은 change
@@ -348,8 +356,8 @@ Agent와 LLM에는 final transition repository 권한을 주지 않는다.
 
 notification adapter가 실패하면 `*_hitl_pending` 전이를 완료하지 않는다. 서비스 구현에서는
 review request와 outbox event를 같은 transaction에 기록하고 idempotent worker가 GitLab MR
-또는 email delivery를 처리한다. P1 reference workflow는 RecordingNotifier로 이 fail-closed
-계약만 검증한다.
+또는 email delivery를 처리한다. 현재 offline slice는 RecordingNotifier로 fail-closed를
+검증하지만 durable cross-file outbox는 아직 구현하지 않았다.
 
 ## 7. 등록심의 Pipeline
 
@@ -673,8 +681,23 @@ NotificationPort의 우선 adapter는 다음과 같다.
 
 ### 13.1 Library API
 
-- sync: evaluate_registration, evaluate_completion, ingest_cases
-- async: aevaluate_registration, aevaluate_completion, aingest_cases
+첫 사용자가 알아야 할 facade의 현재 offline 모양은 다음과 같다.
+
+~~~python
+from axcalib import AXCalib
+
+client = AXCalib.from_toml("config/axcalib.toml", workspace="output/review")
+project = client.create_project("proposal.pptx", title="검토할 과제")
+client.submit_registration(project.project_id)
+result = client.evaluate(project.project_id, stage="registration")
+# async boundary에서는 위 evaluate 대신 await client.aevaluate(...)를 사용한다.
+~~~
+
+- 기본 client는 network, GPU, DB를 암묵적으로 호출하지 않는 offline-safe profile이다.
+- 현재 `from_toml`은 offline profile만 조립하며 on-prem expert profile은 Target이다.
+- 세부 service API는 evaluate_registration, evaluate_completion, ingest_cases를 제공할 수 있지만
+  첫 quickstart에 모두 노출하지 않는다.
+- async service는 aevaluate_registration, aevaluate_completion, aingest_cases처럼 `a` 접두어를 쓴다.
 - local pipeline: `run(request, context=...)` / `arun(request, context=...)`
 - total workflow: start, inspect, resume를 versioned workflow facade로 제공
 - 두 API의 input/output schema와 오류 의미는 같다.
@@ -799,6 +822,28 @@ storage port:
 
 각 repository는 tenant/access context를 명시적으로 받는다.
 
+### 15.1 Runtime configuration
+
+configuration은 composition root에서 한 번 검증하고 typed object로 주입한다.
+
+~~~text
+code-owned invariant
+  > safe package default
+  > selected TOML profile
+  > environment secret/endpoint
+  > allowlisted request option
+  > policy guard reject/clamp
+~~~
+
+- `config/axcalib.toml`: 작은 synthetic/offline 기본값
+- `config/axcalib.expert.example.toml`: on-prem model/retrieval/storage/notification 예시
+- `docs/schemas/runtime-config.schema.json`: 허용 키·타입·범위의 기준
+- unknown key는 무시하지 않고 실패한다.
+- secret 값은 TOML이나 effective config에 넣지 않고 환경변수 이름만 둔다.
+- HITL, 승인 알림, 사람 최종결정, stale/revision/mentor guard는 설정으로 끌 수 없다.
+- run manifest에는 secret을 제거한 effective-config hash와 각 값의 source를 기록한다.
+- Python 3.12 `tomllib` 호환을 위해 작성 문법은 TOML 1.0 범위로 제한한다.
+
 ## 16. Backend 전략
 
 ### 16.1 계층
@@ -813,11 +858,16 @@ route와 working script에서 model call, file parse, 상태판정을 직접 수
 
 ### 16.2 API 처리 패턴
 
+- pre-implementation 기준 artifact는 `docs/api/openapi.v1alpha1.json`이다.
+- OpenAPI 3.1.0과 JSON Schema Draft 2020-12를 사용한다.
 - 짧은 read/write: 동기 HTTP response
 - parse/evaluation/index: 202 + run_id
 - 진행상태: SSE 우선, polling fallback
 - 결과 반영: expected_revision 확인 후 explicit apply command
 - OpenAPI에서 TypeScript client와 Zod-compatible boundary를 생성
+- request `options`는 `additionalProperties: false`인 allowlist이며, protected invariant field는 없다.
+- API implementation과 generated SDK는 artifact example에 대한 contract test를 공유한다.
+- OpenAPI 3.2 채택은 WP-06 generator/FastAPI/client 호환 spike 뒤 결정한다.
 
 ### 16.3 오류 모델
 
@@ -852,6 +902,16 @@ HTTP message와 내부 stack trace를 분리하고 trace_id를 제공한다.
 ## 17. Frontend 전략
 
 ### 17.1 UX 목표
+
+첫 화면에서 사용자는 “Agent가 인증한다”가 아니라 다음 순서를 읽어야 한다.
+
+~~~text
+증거 → 기준/Calibration → Agent 제안 → 알림 → 관리자 HITL → 사람 최종결정
+~~~
+
+Excalibur 비유는 onboarding/empty state/교육 자료에만 사용한다. review workbench에서는
+rubric, evidence locator, revision, allowed command를 우선하며 칼 이미지를 권위의 자동 판정이나
+gamification 보상처럼 사용하지 않는다.
 
 평가자가 30초 안에 다음을 파악해야 한다.
 
