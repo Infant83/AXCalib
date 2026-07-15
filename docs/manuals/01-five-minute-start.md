@@ -44,7 +44,8 @@ project = client.create_project(
 client.submit_registration(project.project_id)
 draft = client.evaluate(project.project_id, "registration")
 
-# 아래 명령은 인증된 관리자 boundary에서만 호출해야 한다.
+# 운영에서는 인증된 관리자 boundary만 아래 명령을 호출해야 한다.
+# 현재 local/offline client는 actor identity를 인증하지 않고 demo input으로 기록한다.
 client.decide_registration(
     project.project_id,
     command="approve",
@@ -68,7 +69,8 @@ draft = await client.aevaluate(project.project_id, "registration")
 
 `TwoGatePptxRequest`의 `registration_decision` 또는 `completion_decision`을 설정하면 각각의
 `rationale`도 필수다. 완료 결정을 넣으려면 등록 결정이 `approve`여야 한다. 이 필드는 자동
-승인 설정이 아니라 이미 인증된 사람 명령을 library boundary에 전달하는 입력이다.
+승인 설정이 아니라 사람 결정 command를 library boundary에 전달하는 입력이다. 현재 offline
+구현은 이를 `authority_context=offline_unverified_actor`로 기록하며 실제 인증은 하지 않는다.
 
 ```python
 request = TwoGatePptxRequest(

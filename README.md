@@ -128,6 +128,9 @@ uv run --no-sync python scripts/pipelines/run_two_gate_pptx.py `
 Agent의 등록 제안은 `needs_changes`, 완료 제안은 동일 hash와 수행증거 부족 때문에
 `not_accept`가 예상된다.
 
+현재 local script는 actor identity를 인증하지 않으므로 이 입력은
+`authority_context=offline_unverified_actor`로 기록되며 실제 관리자 승인으로 간주하지 않는다.
+
 ~~~powershell
 uv run --no-sync python scripts/pipelines/run_two_gate_pptx.py `
   tests/sources/oled_qc_project_outline.pptx `

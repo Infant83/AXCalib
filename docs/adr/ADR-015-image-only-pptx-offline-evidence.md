@@ -23,6 +23,7 @@
 5. report의 locator는 원본 PPTX `#slide=N`과 `verified_sidecar` source를 기록한다.
 6. proposal과 final hash가 같으면 완료 산출물 criterion을 `not_met`로 제안한다.
 7. 어느 Agent recommendation도 관리자 final decision을 대체하지 않는다.
+8. local demo decision actor는 인증되지 않았음을 `offline_unverified_actor`로 기록한다.
 
 ## Consequences
 

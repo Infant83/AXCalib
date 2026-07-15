@@ -22,3 +22,4 @@
 | R-018 | 최신 표준을 성급히 채택해 toolchain 불일치 | 생성기/validator 상호운용 실패 | OpenAPI 3.1/TOML 1.0 baseline, 3.2/1.1 spike | Open |
 | R-019 | tutorial이 구현되지 않은 기능을 완료처럼 보임 | 잘못된 기대와 감사 오류 | pre-implementation 라벨, PROJECT_STATE/Exit Evidence 연동 | Mitigated in docs |
 | R-020 | image-only PPTX sidecar의 요약·tag 편향 | 잘못된 criterion 근거와 과대평가 | source hash 고정, reviewed-sidecar 표기, 명시 tag만 사용, sidecar 부재 시 insufficient | Open until parser/model benchmark |
+| R-021 | local actor ID를 실제 관리자 인증으로 오해 | demo 결과가 운영 승인처럼 사용됨 | `explicit_command_input`과 `offline_unverified_actor` 기록, API/RBAC 전 운영 금지 | Mitigated in demo; auth open |

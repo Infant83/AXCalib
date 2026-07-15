@@ -165,7 +165,7 @@ class EvaluationReport(FrozenModel):
 
 
 class HumanDecision(FrozenModel):
-    """Administrator decision stored separately from the Agent report."""
+    """Decision command stored separately from the Agent report and auth boundary."""
 
     stage: ReviewStage
     command: str
@@ -174,7 +174,8 @@ class HumanDecision(FrozenModel):
     rationale: str = Field(min_length=1, max_length=4000)
     report_id: str
     decided_at: datetime = Field(default_factory=utc_now)
-    source: str = "explicit_human_command"
+    source: str = "explicit_command_input"
+    authority_context: str = "offline_unverified_actor"
 
 
 class NotificationRecord(FrozenModel):

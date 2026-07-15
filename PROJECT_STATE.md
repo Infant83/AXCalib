@@ -20,8 +20,9 @@ notification, 관리자 wait/resume 결정과 audit를 남긴다.
 
 이 입력은 OOXML text가 없는 image-only deck이므로 원본 SHA-256에 고정된 수동 검토 sidecar를
 사용한다. 등록 결과는 `needs_changes`이며, 회귀 demo에서는 관리자가 목적과 한계를 적어 조건부
-승인한다. 같은 파일을 완료안으로 제출하면 hash 동일성과 수행증거 부재로 `not_accept`를
-제안하고 관리자가 `not_accept`를 확정한다. 이 결과는 모델 품질이나 실제 인증정책 검증이 아니다.
+승인 command를 입력한다. 같은 파일을 완료안으로 제출하면 hash 동일성과 수행증거 부재로
+`not_accept`를 제안하고 local actor가 `not_accept` command를 입력한다. 현재 local actor는
+인증되지 않으므로 이 결과는 실제 관리자 승인, 모델 품질 또는 인증정책 검증이 아니다.
 
 ## 구현·검증된 범위
 

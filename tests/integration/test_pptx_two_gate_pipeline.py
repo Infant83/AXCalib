@@ -59,7 +59,8 @@ def test_supplied_pptx_runs_both_gates_with_explicit_human_decisions(
     assert summary.final_status is ProjectStatus.COMPLETION_NOT_ACCEPTED
     assert summary.notification_count == 2
     assert summary.registration_decision is not None
-    assert summary.registration_decision.source == "explicit_human_command"
+    assert summary.registration_decision.source == "explicit_command_input"
+    assert summary.registration_decision.authority_context == "offline_unverified_actor"
     assert summary.completion_decision is not None
     assert Path(summary.dossier_uri).is_file()
     assert Path(summary.registration_report_uri).is_file()
