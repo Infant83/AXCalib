@@ -9,8 +9,9 @@
 2. [5분 시작](01-five-minute-start.md)
 3. [설정과 API 제어](02-configuration-and-api.md)
 4. [6컷 웹툰 튜토리얼](03-webtoon-tutorial-storyboard.md)
-5. [정확한 권한 구조도](diagrams/authority-model.svg)
-6. [시각 자산 생성 기록](assets/README.md)
+5. [심사 프로필과 모델 endpoint](04-review-profiles-and-model-endpoints.md)
+6. [정확한 권한 구조도](diagrams/authority-model.svg)
+7. [시각 자산 생성 기록](assets/README.md)
 
 ## 대상별 경로
 
@@ -20,3 +21,4 @@
 | 관리자/평가자 | Excalibur 비유 | HITL checklist와 결정 책임 확인 |
 | Python 개발자 | 5분 시작 | offline fixture로 interface contract 확인 |
 | 플랫폼 엔지니어 | 설정과 API | expert TOML/OpenAPI를 검토하고 adapter 계획 |
+| 평가 정책 관리자 | 심사 프로필과 모델 endpoint | version/hash/승인정보가 있는 policy pack 등록 |

@@ -12,9 +12,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from axcalib.audit import AuditLog
 from axcalib.dossier import DossierRepository, SnapshotRepository
-from axcalib.evaluation import OfflineEvidenceEvaluator
-from axcalib.ingest import PptxEvidenceExtractor
+from axcalib.evaluation import EvidenceEvaluator, OfflineEvidenceEvaluator
+from axcalib.ingest import DoclingPptxParser, PptxEvidenceExtractor
 from axcalib.notifications.base import NotificationPort, RecordingNotifier
+from axcalib.policies import (
+    DEFAULT_REVIEW_PROFILE,
+    ResolvedReviewProfile,
+    ReviewProfileRegistry,
+)
 from axcalib.reports import ReportRenderer
 from axcalib.schemas import (
     ArtifactRef,
@@ -26,6 +31,8 @@ from axcalib.schemas import (
     PipelineResult,
     PipelineStatus,
     ProjectDossier,
+    ReviewContext,
+    ReviewerAdjustment,
     ReviewStage,
     StageReview,
     WorkflowRunSummary,
@@ -58,6 +65,8 @@ class TwoGatePptxRequest(BaseModel):
     completion_decision: Literal["accept", "not_accept"] | None = None
     completion_rationale: str | None = None
     mentor_ref: str | None = None
+    review_profile: str = DEFAULT_REVIEW_PROFILE
+    review_context: ReviewContext = Field(default_factory=ReviewContext)
 
     @model_validator(mode="after")
     def decisions_require_rationales(self) -> TwoGatePptxRequest:
@@ -80,7 +89,10 @@ class LocalProjectService:
         workspace: Path,
         *,
         notifier: NotificationPort | None = None,
-        evaluator: OfflineEvidenceEvaluator | None = None,
+        evaluator: EvidenceEvaluator | None = None,
+        review_profiles: ReviewProfileRegistry | None = None,
+        default_review_profile: str = DEFAULT_REVIEW_PROFILE,
+        docling_parser: DoclingPptxParser | None = None,
     ) -> None:
         self.workspace = workspace.resolve()
         self.workspace.mkdir(parents=True, exist_ok=True)
@@ -91,7 +103,10 @@ class LocalProjectService:
         self.notifier = notifier or RecordingNotifier()
         self.workflow = TwoGateWorkflow(self.notifier)
         self.extractor = PptxEvidenceExtractor()
+        self.docling_parser = docling_parser
         self.evaluator = evaluator or OfflineEvidenceEvaluator()
+        self.review_profiles = review_profiles or ReviewProfileRegistry.with_builtin_default()
+        self.default_review_profile = default_review_profile
 
     def create_project(
         self,
@@ -100,10 +115,16 @@ class LocalProjectService:
         title: str,
         sidecar_path: Path | None = None,
         project_id: str | None = None,
+        review_profile: str | None = None,
+        review_context: ReviewContext | None = None,
     ) -> ProjectDossier:
         """Create one dossier whose source artifact remains external and hash-addressed."""
 
         identifier = project_id or str(uuid.uuid4())
+        resolved_profile = self.review_profiles.resolve(
+            review_profile or self.default_review_profile,
+            allow_offline_reference=True,
+        )
         artifact = self.extractor.artifact_ref(
             proposal_path,
             role="registration_proposal",
@@ -116,8 +137,13 @@ class LocalProjectService:
             title=title.strip(),
             revision=1,
             status=ProjectStatus.DRAFT,
+            review_context=review_context or ReviewContext(),
+            review_profile=resolved_profile.ref,
             artifacts=(artifact,),
-            registration=StageReview(submission_artifact_id=artifact.artifact_id),
+            registration=StageReview(
+                submission_artifact_id=artifact.artifact_id,
+                review_profile=resolved_profile.ref,
+            ),
             audit_event_ids=(event_id,),
         )
         self.dossiers.create(dossier)
@@ -127,7 +153,12 @@ class LocalProjectService:
             "project_created",
             actor_id="submitter:local",
             actor_role=ActorRole.SUBMITTER.value,
-            details={"artifact_id": artifact.artifact_id, "artifact_sha256": artifact.sha256},
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_sha256": artifact.sha256,
+                "review_profile": resolved_profile.ref.selector,
+                "review_profile_sha256": resolved_profile.ref.sha256,
+            },
         )
         return dossier
 
@@ -151,10 +182,11 @@ class LocalProjectService:
         """Freeze, evaluate, report, notify, and wait for an administrator."""
 
         dossier = self.dossiers.load(project_id)
+        profile = self._review_profile(dossier)
         snapshot = self.snapshots.freeze(dossier)
         artifact = self._artifact(dossier, dossier.registration.submission_artifact_id)
         evidence = self._extract(artifact)
-        report = self.evaluator.evaluate_registration(dossier, snapshot, evidence)
+        report = self.evaluator.evaluate_registration(dossier, snapshot, evidence, profile)
         rendered = self.reports.render(report)
         record = self._transition(
             dossier,
@@ -179,6 +211,7 @@ class LocalProjectService:
                 "report_id": report.report_id,
                 "report_json_uri": str(rendered.json_path),
                 "report_markdown_uri": str(rendered.markdown_path),
+                "review_profile": profile.ref,
             }
         )
         updated = dossier.model_copy(
@@ -199,6 +232,7 @@ class LocalProjectService:
                 "recommendation": report.recommendation.value,
                 "notification_event": notification.event_type,
                 "snapshot_id": snapshot.snapshot_id,
+                "review_profile_sha256": profile.ref.sha256,
             },
         )
         return self._result(
@@ -215,6 +249,7 @@ class LocalProjectService:
         command: Literal["approve", "reject"],
         actor_id: str,
         rationale: str,
+        adjustments: tuple[ReviewerAdjustment, ...] = (),
     ) -> PipelineResult:
         """Apply an explicit administrator registration decision."""
 
@@ -224,6 +259,8 @@ class LocalProjectService:
         trigger = "approve_registration" if command == "approve" else "reject_registration"
         record = self._transition(dossier, trigger, ActorRole.ADMINISTRATOR)
         report_id = self._required_report_id(dossier.registration)
+        report = self._load_report(dossier.registration)
+        self._validate_adjustments(report, adjustments)
         decision = HumanDecision(
             stage=ReviewStage.REGISTRATION,
             command=command,
@@ -231,13 +268,12 @@ class LocalProjectService:
             actor_role=ActorRole.ADMINISTRATOR.value,
             rationale=rationale.strip(),
             report_id=report_id,
+            adjustments=adjustments,
         )
         updated = dossier.model_copy(
             update={
                 "status": record.status,
-                "registration": dossier.registration.model_copy(
-                    update={"decision": decision}
-                ),
+                "registration": dossier.registration.model_copy(update={"decision": decision}),
             }
         )
         saved = self._save_event(
@@ -246,7 +282,12 @@ class LocalProjectService:
             "registration_decided",
             actor_id,
             ActorRole.ADMINISTRATOR,
-            {"command": command, "report_id": report_id},
+            {
+                "command": command,
+                "report_id": report_id,
+                "adjustment_count": str(len(adjustments)),
+                "adjusted_criteria": ",".join(item.criterion_id for item in adjustments),
+            },
         )
         message = "등록 승인으로 수행 단계 진입이 가능합니다."
         if command == "reject":
@@ -320,9 +361,7 @@ class LocalProjectService:
         execution = dossier.execution.model_copy(
             update={"notes": (*dossier.execution.notes, note.strip())}
         )
-        updated = dossier.model_copy(
-            update={"execution": execution, "artifacts": artifacts}
-        )
+        updated = dossier.model_copy(update={"execution": execution, "artifacts": artifacts})
         saved = self._save_event(
             updated,
             dossier.revision,
@@ -361,7 +400,10 @@ class LocalProjectService:
             "approve_completion_submission",
             actor_role=approval_actor_role,
         )
-        completion = StageReview(submission_artifact_id=artifact.artifact_id)
+        completion = StageReview(
+            submission_artifact_id=artifact.artifact_id,
+            review_profile=dossier.review_profile,
+        )
         execution = dossier.execution.model_copy(
             update={"completion_submitted_at": datetime.now(UTC)}
         )
@@ -391,6 +433,7 @@ class LocalProjectService:
         """Compare completion evidence with the frozen registration baseline."""
 
         dossier = self.dossiers.load(project_id)
+        profile = self._review_profile(dossier)
         snapshot = self.snapshots.freeze(dossier)
         artifact = self._artifact(dossier, dossier.completion.submission_artifact_id)
         evidence = self._extract(artifact)
@@ -400,6 +443,7 @@ class LocalProjectService:
             snapshot,
             evidence,
             registration_report,
+            profile,
         )
         rendered = self.reports.render(report)
         record = self._transition(dossier, "start_completion_evaluation", ActorRole.SYSTEM)
@@ -421,6 +465,7 @@ class LocalProjectService:
                 "report_id": report.report_id,
                 "report_json_uri": str(rendered.json_path),
                 "report_markdown_uri": str(rendered.markdown_path),
+                "review_profile": profile.ref,
             }
         )
         updated = dossier.model_copy(
@@ -441,6 +486,7 @@ class LocalProjectService:
                 "recommendation": report.recommendation.value,
                 "notification_event": notification.event_type,
                 "snapshot_id": snapshot.snapshot_id,
+                "review_profile_sha256": profile.ref.sha256,
             },
         )
         return self._result(
@@ -457,6 +503,7 @@ class LocalProjectService:
         command: Literal["accept", "not_accept"],
         actor_id: str,
         rationale: str,
+        adjustments: tuple[ReviewerAdjustment, ...] = (),
     ) -> PipelineResult:
         """Apply an explicit administrator completion decision."""
 
@@ -466,6 +513,8 @@ class LocalProjectService:
         trigger = "accept_completion" if command == "accept" else "decline_completion"
         record = self._transition(dossier, trigger, ActorRole.ADMINISTRATOR)
         report_id = self._required_report_id(dossier.completion)
+        report = self._load_report(dossier.completion)
+        self._validate_adjustments(report, adjustments)
         decision = HumanDecision(
             stage=ReviewStage.COMPLETION,
             command=command,
@@ -473,6 +522,7 @@ class LocalProjectService:
             actor_role=ActorRole.ADMINISTRATOR.value,
             rationale=rationale.strip(),
             report_id=report_id,
+            adjustments=adjustments,
         )
         updated = dossier.model_copy(
             update={
@@ -486,7 +536,12 @@ class LocalProjectService:
             "completion_decided",
             actor_id,
             ActorRole.ADMINISTRATOR,
-            {"command": command, "report_id": report_id},
+            {
+                "command": command,
+                "report_id": report_id,
+                "adjustment_count": str(len(adjustments)),
+                "adjusted_criteria": ",".join(item.criterion_id for item in adjustments),
+            },
         )
         return self._result(saved, "완료평가 관리자 결정이 기록됐습니다.")
 
@@ -498,6 +553,8 @@ class LocalProjectService:
             title=request.title,
             sidecar_path=request.proposal_sidecar_path,
             project_id=request.project_id,
+            review_profile=request.review_profile,
+            review_context=request.review_context,
         )
         self.submit_registration(dossier.project_id)
         registration_result = self.evaluate_registration(dossier.project_id)
@@ -598,11 +655,7 @@ class LocalProjectService:
         return PipelineResult(
             pipeline_id=PIPELINE_ID,
             pipeline_version=PIPELINE_VERSION,
-            status=(
-                PipelineStatus.WAITING_HUMAN
-                if allowed_commands
-                else PipelineStatus.SUCCEEDED
-            ),
+            status=(PipelineStatus.WAITING_HUMAN if allowed_commands else PipelineStatus.SUCCEEDED),
             project_id=dossier.project_id,
             dossier_status=dossier.status,
             dossier_revision=dossier.revision,
@@ -611,12 +664,16 @@ class LocalProjectService:
             report_json_uri=(
                 dossier.registration.report_json_uri
                 if report and report.stage is ReviewStage.REGISTRATION
-                else dossier.completion.report_json_uri if report else None
+                else dossier.completion.report_json_uri
+                if report
+                else None
             ),
             report_markdown_uri=(
                 dossier.registration.report_markdown_uri
                 if report and report.stage is ReviewStage.REGISTRATION
-                else dossier.completion.report_markdown_uri if report else None
+                else dossier.completion.report_markdown_uri
+                if report
+                else None
             ),
             allowed_commands=allowed_commands,
             message=message,
@@ -645,10 +702,50 @@ class LocalProjectService:
 
     def _extract(self, artifact: ArtifactRef) -> EvidenceDocument:
         sidecar = artifact.metadata.get("sidecar_uri")
-        return self.extractor.extract(
+        evidence = self.extractor.extract(
             Path(artifact.uri),
             role=artifact.role,
             sidecar_path=Path(sidecar) if sidecar else None,
+        )
+        frozen_sidecar_hash = artifact.metadata.get("sidecar_sha256")
+        current_sidecar_hash = evidence.artifact.metadata.get("sidecar_sha256")
+        if frozen_sidecar_hash != current_sidecar_hash:
+            raise RuntimeError(
+                "sidecar evidence changed after dossier registration; create a new revision"
+            )
+        if self.docling_parser is None:
+            return evidence
+        docling = self.docling_parser.parse(Path(artifact.uri))
+        by_slide = {slide.slide_number: slide for slide in docling.slides}
+        merged = []
+        for slide in evidence.slides:
+            parsed = by_slide.get(slide.slide_number)
+            if parsed is not None and parsed.text and not slide.text:
+                merged.append(
+                    slide.model_copy(
+                        update={
+                            "text": parsed.text,
+                            "tags": parsed.tags,
+                            "text_source": parsed.text_source,
+                            "is_blank": False,
+                        }
+                    )
+                )
+            else:
+                merged.append(slide)
+        warnings = list(evidence.warnings)
+        warnings.extend(docling.manifest.warnings)
+        if docling.manifest.page_count != len(evidence.slides):
+            warnings.append(
+                "Docling and OOXML slide counts differ; OOXML slide numbering was retained."
+            )
+        return evidence.model_copy(
+            update={
+                "slides": tuple(merged),
+                "parser_id": f"{evidence.parser_id}+{docling.manifest.parser_id}",
+                "parser_runs": (*evidence.parser_runs, docling.manifest),
+                "warnings": tuple(dict.fromkeys(warnings)),
+            }
         )
 
     @staticmethod
@@ -693,6 +790,36 @@ class LocalProjectService:
         return EvaluationReport.model_validate_json(
             Path(review.report_json_uri).read_text(encoding="utf-8")
         )
+
+    def _review_profile(self, dossier: ProjectDossier) -> ResolvedReviewProfile:
+        if dossier.review_profile is None:
+            raise RuntimeError("dossier has no frozen review profile")
+        return self.review_profiles.resolve_ref(
+            dossier.review_profile,
+            allow_offline_reference=True,
+        )
+
+    @staticmethod
+    def _validate_adjustments(
+        report: EvaluationReport,
+        adjustments: tuple[ReviewerAdjustment, ...],
+    ) -> None:
+        criteria = {item.criterion_id: item for item in report.criteria}
+        seen: set[str] = set()
+        for adjustment in adjustments:
+            if adjustment.criterion_id in seen:
+                raise ValueError(f"duplicate reviewer adjustment: {adjustment.criterion_id}")
+            seen.add(adjustment.criterion_id)
+            criterion = criteria.get(adjustment.criterion_id)
+            if criterion is None:
+                raise ValueError(
+                    f"reviewer adjustment criterion is not in the Agent report: "
+                    f"{adjustment.criterion_id}"
+                )
+            if criterion.assessment is not adjustment.from_assessment:
+                raise ValueError(
+                    f"reviewer adjustment base assessment is stale for {adjustment.criterion_id}"
+                )
 
     @staticmethod
     def _event_id() -> str:

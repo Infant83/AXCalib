@@ -14,11 +14,12 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 4. Human Review Web App
 5. 기존 인증시스템 연동
 
-현재 작업공간은 **제공 PPTX의 G2 local/offline vertical slice 검증 완료, T1 hardening
-단계**다. dossier/snapshot 영속 저장, 제한된 PPTX ingest, deterministic evaluator,
-JSON/Markdown report, recording notification, 두 HITL과 `two-gate-pptx@v1alpha1` working script가
-존재한다. 실제 model evaluator, Vector DB, durable 운영 알림, CLI/API/Web은 아직 구현되지
-않았다. 이 slice를 제품 MVP 전체나 모델 품질 검증 완료로 기록하지 않는다.
+현재 작업공간은 **G3 Intelligence reference baseline 검증 완료, T1/G3 hardening 단계**다.
+dossier/snapshot, hash-bound review policy, 제한된 PPTX와 optional Docling manifest, synthetic
+lexical retrieval, deterministic/structured model evaluator, report, recording notification, 두 HITL과
+`two-gate-pptx@v1alpha1` working script가 존재한다. 실제 승인 rubric, embedding/Vector DB,
+on-prem Qwen·multi-model 품질, durable 운영 알림, CLI/API/Web은 아직 완료되지 않았다. 이
+reference slice를 제품 MVP 전체나 모델·retrieval 운영 품질 검증 완료로 기록하지 않는다.
 
 ## 2. 기준정보 우선순위
 

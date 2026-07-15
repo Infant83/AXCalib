@@ -21,5 +21,9 @@
 | D-017 | 2026-07-16 | Accepted | 사용자의 명시적 지시에 따라 제공 PPTX를 사용하는 local/offline two-gate slice를 구현한다. 이 지시는 실제 데이터·live model·운영 배포 또는 공식 rubric 승인으로 확대 해석하지 않는다. |
 | D-018 | 2026-07-16 | Accepted | OOXML text가 없는 image-only PPTX는 원본 SHA-256과 일치하는 검토 sidecar가 있을 때만 그 요약·tag를 사용한다. sidecar가 없거나 hash가 다르면 시각 의미를 추론하지 않는다. |
 | D-019 | 2026-07-16 | Accepted | 등록 제안서와 완료 제출물의 content hash가 같으면 수행 산출물로 자동 인정하지 않고 완료 산출물 criterion을 `not_met`로 제안한다. 최종 미수용 결정은 관리자 명시 명령으로만 확정한다. |
+| D-020 | 2026-07-16 | Accepted | 심사기준은 allowlisted `policy_id@version`과 canonical SHA-256으로 dossier/report에 고정한다. 사업·사업부·소속·인증 level context는 감사용이며 승인된 mapping 없이 자동 profile 선택이나 model prompt에 사용하지 않는다. |
+| D-021 | 2026-07-16 | Accepted | model gateway는 표준 `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`을 우선하고 사용자 호환 alias `OPENAPI_*`도 읽는다. 외부 model 미지정 기본값은 `gpt-5.5`, on-prem expert example은 `Qwen3.5-397B-A17B`다. |
+| D-022 | 2026-07-16 | Accepted | strict model output의 존재하지 않는 locator는 실패시키고 locator 없는 met/partially_met/not_met는 `insufficient_evidence`로 하향한다. model 결과는 두 HITL Gate를 우회하지 않는다. |
+| D-023 | 2026-07-16 | Accepted | 사용자 승인 하의 비식별 supplied fixture live registration smoke 1회는 transport/structured-output/HITL contract 증거로만 사용하며 model 품질 또는 공식 심의 결과로 해석하지 않는다. |
 
 세부 근거는 `docs/adr/`의 ADR을 따른다.

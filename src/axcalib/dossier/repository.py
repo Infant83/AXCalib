@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tempfile
 from datetime import UTC, datetime
 from io import StringIO
@@ -30,6 +31,17 @@ class DossierNotFoundError(DossierError):
 
 class RevisionConflictError(DossierError):
     """Raised on stale or concurrent writes."""
+
+
+PROJECT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+
+
+def validate_project_id(project_id: str) -> str:
+    """Validate a project identifier before using it in a filesystem path."""
+
+    if PROJECT_ID_PATTERN.fullmatch(project_id) is None:
+        raise DossierError("invalid project_id")
+    return project_id
 
 
 def atomic_write_text(path: Path, content: str) -> None:
@@ -77,7 +89,8 @@ class DossierRepository:
     def path_for(self, project_id: str) -> Path:
         """Return the canonical dossier path."""
 
-        return self.root / f"AXC-{project_id}.axc.yaml"
+        safe_project_id = validate_project_id(project_id)
+        return self.root / f"AXC-{safe_project_id}.axc.yaml"
 
     def create(self, dossier: ProjectDossier) -> Path:
         """Create a new dossier without overwriting an existing project."""
@@ -128,6 +141,7 @@ class SnapshotRepository:
     def freeze(self, dossier: ProjectDossier) -> SnapshotRef:
         """Freeze exactly the supplied revision and return its hash reference."""
 
+        validate_project_id(dossier.project_id)
         data = dossier.model_dump(mode="json")
         payload = canonical_json_bytes(data)
         digest = hashlib.sha256(payload).hexdigest()

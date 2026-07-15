@@ -1,0 +1,30 @@
+{
+  "schema_version": "axcalib.retrieval-queries/v1alpha1",
+  "synthetic": true,
+  "queries": [
+    {
+      "query_id": "reg-molecule-q1",
+      "stage": "registration",
+      "text": "분자 후보 탐색 문제 목표 범위 모델 로드맵 검증 데이터 위험",
+      "relevant_case_ids": ["synthetic-reg-molecule-001"]
+    },
+    {
+      "query_id": "reg-quality-q2",
+      "stage": "registration",
+      "text": "품질 예측 baseline target unit period 측정방법 역할 자원 보안",
+      "relevant_case_ids": ["synthetic-reg-quality-002"]
+    },
+    {
+      "query_id": "completion-molecule-q1",
+      "stage": "completion",
+      "text": "분자 탐색 완료 산출물 KPI 관측값 실행 로그 재현 결과 한계",
+      "relevant_case_ids": ["synthetic-completion-molecule-001"]
+    },
+    {
+      "query_id": "completion-quality-q2",
+      "stage": "completion",
+      "text": "품질 예측 완료 산출물 버전 hash 테스트 로그 변경사항 후속 위험",
+      "relevant_case_ids": ["synthetic-completion-quality-002"]
+    }
+  ]
+}

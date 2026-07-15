@@ -19,15 +19,18 @@
 
 - [제품 브리프](../product/product-brief.md): Excalibur 기억 장치와 사람 최종권한
 - [사용 안내서](../manuals/README.md): quickstart, 설정/API, 정확한 SVG와 6컷 tutorial
-- [현재 workflow SVG](../architecture/diagrams/workflow-at-a-glance.svg): G2 offline slice와 남은 hardening
+- [현재 workflow SVG](../architecture/diagrams/workflow-at-a-glance.svg): G3 reference slice와 남은 hardening
 - [PPTX demo 기록](../evaluation/oled-qc-pptx-demo.md): 등록 `needs_changes`, 완료 `not_accept` 결과
-- [개발 준비 감사](../readiness/development-readiness-audit.md): offline slice 검증과 운영 NO-GO
+- [G3 개발 리포트](../evaluation/g3-intelligence-development-report.md): policy/Docling/retrieval/model 검증과 코드리뷰
+- [개발 준비 감사](../readiness/development-readiness-audit.md): reference slice 검증과 운영 NO-GO
 
 ## 표현 경계
 
-- deck 자체는 P1 pre-development snapshot이며 현재 상태는 G2 supplied-PPTX offline slice다.
-- T1 전체, intelligence/model/API/Web 또는 제품 기능 완료로 표현하지 않는다.
-- 실제 사내 데이터, live model 결과, Vector DB 품질수치, 운영 알림 결과를 포함하지 않는다.
+- deck 자체는 P1 pre-development snapshot이며 현재 상태는 companion SVG와 G3 개발 리포트가
+  우선한다.
+- T1 전체, G3 운영품질, calibration/API/Web 또는 제품 기능 완료로 표현하지 않는다.
+- deck에는 실제 사내 데이터, live model 결과, Vector DB 품질수치, 운영 알림 결과를 포함하지
+  않는다.
 - 공식 LG 로고·브랜드 폰트를 사용하거나 공식 브랜드 적합성을 주장하지 않는다.
 - similarity는 참고자료이며 자동 통과·탈락 근거가 아니라는 불변조건을 유지한다.
 

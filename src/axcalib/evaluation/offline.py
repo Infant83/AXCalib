@@ -3,8 +3,15 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import json
 
+from axcalib.policies import (
+    CriterionDefinition,
+    ResolvedReviewProfile,
+    ReviewProfileRegistry,
+    StageReviewPolicy,
+    builtin_default_policy,
+)
 from axcalib.retrieval import CaseRetriever, NullRetriever
 from axcalib.schemas import (
     AgentRecommendation,
@@ -21,101 +28,21 @@ from axcalib.schemas import (
 
 EVALUATOR_ID = "axcalib.offline-evidence-tags/v1"
 
-
-@dataclass(frozen=True, slots=True)
-class CriterionDefinition:
-    """Small deterministic criterion definition."""
-
-    criterion_id: str
-    title: str
-    required_tags: tuple[str, ...]
-    follow_up: str
-    critical: bool = False
+_BUILTIN_POLICY = builtin_default_policy()
+REGISTRATION_CRITERIA = _BUILTIN_POLICY.registration.criteria
+COMPLETION_CRITERIA = _BUILTIN_POLICY.completion.criteria
 
 
-REGISTRATION_CRITERIA = (
-    CriterionDefinition(
-        "REG-PROBLEM-GOAL",
-        "문제와 AX 목표",
-        ("problem", "goal"),
-        "해결하려는 문제와 목표를 한 문장씩 명시해 주십시오.",
-        True,
-    ),
-    CriterionDefinition(
-        "REG-SCOPE-METHOD",
-        "범위와 접근방법",
-        ("scope", "method"),
-        "포함·제외 범위와 핵심 방법을 구분해 주십시오.",
-    ),
-    CriterionDefinition(
-        "REG-PLAN-VALIDATION",
-        "로드맵과 검증계획",
-        ("roadmap", "validation_plan"),
-        "단계별 종료조건과 검증 책임자를 추가해 주십시오.",
-    ),
-    CriterionDefinition(
-        "REG-KPI",
-        "정량 KPI와 측정방법",
-        ("kpi_plan", "quantitative_target"),
-        "KPI별 baseline, target, unit, period와 측정방법을 제시해 주십시오.",
-        True,
-    ),
-    CriterionDefinition(
-        "REG-RISK",
-        "위험과 한계",
-        ("risk", "limitation"),
-        "위험별 대응책, owner와 중단조건을 연결해 주십시오.",
-    ),
-    CriterionDefinition(
-        "REG-DATA-GOVERNANCE",
-        "데이터·보안·윤리",
-        ("data", "security"),
-        "데이터 출처, 접근등급, 개인정보와 외부전송 정책을 명시해 주십시오.",
-        True,
-    ),
-    CriterionDefinition(
-        "REG-ROLE-RESOURCE",
-        "역할과 자원",
-        ("role", "resource"),
-        "과제 owner, 평가자, 필요한 인력·시스템·예산을 명시해 주십시오.",
-    ),
-)
+def evidence_sha256(evidence: EvidenceDocument) -> str:
+    """Hash normalized evidence, including verified sidecar-derived text and tags."""
 
-COMPLETION_CRITERIA = (
-    CriterionDefinition(
-        "COM-DELIVERABLE",
-        "완료 산출물과 작동 증거",
-        ("deliverable", "result"),
-        "실제 산출물 URI/hash, 실행 로그와 검증 결과를 제출해 주십시오.",
-        True,
-    ),
-    CriterionDefinition(
-        "COM-KPI",
-        "KPI 관측값과 달성도",
-        ("result", "quantitative_target"),
-        "관측값, 단위, 기간, 측정방법과 원문 locator를 제출해 주십시오.",
-        True,
-    ),
-    CriterionDefinition(
-        "COM-EXECUTION",
-        "수행·재현 증거",
-        ("result", "reproducibility"),
-        "버전, 환경, 테스트 및 재실행 절차를 제출해 주십시오.",
-        True,
-    ),
-    CriterionDefinition(
-        "COM-CHANGE",
-        "등록안 대비 변경",
-        ("change",),
-        "등록 baseline 대비 변경과 승인 여부를 명시해 주십시오.",
-    ),
-    CriterionDefinition(
-        "COM-RISK-FOLLOWUP",
-        "완료 시점 위험과 후속계획",
-        ("risk", "limitation"),
-        "남은 위험, 운영 한계와 후속 책임자를 명시해 주십시오.",
-    ),
-)
+    payload = json.dumps(
+        evidence.model_dump(mode="json"),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 class OfflineEvidenceEvaluator:
@@ -127,6 +54,7 @@ class OfflineEvidenceEvaluator:
         *,
         registration_similarity_portion: float = 0.0,
         completion_similarity_portion: float = 0.0,
+        default_profile: ResolvedReviewProfile | None = None,
     ) -> None:
         for portion in (registration_similarity_portion, completion_similarity_portion):
             if not 0.0 <= portion <= 0.25:
@@ -136,36 +64,39 @@ class OfflineEvidenceEvaluator:
             ReviewStage.REGISTRATION: registration_similarity_portion,
             ReviewStage.COMPLETION: completion_similarity_portion,
         }
+        if default_profile is None:
+            registry = ReviewProfileRegistry.with_builtin_default()
+            default_profile = registry.resolve(
+                "axcalib.default@1.0.0", allow_offline_reference=True
+            )
+        self._default_profile = default_profile
+
+    @property
+    def default_profile(self) -> ResolvedReviewProfile:
+        """Return the safe fallback profile for direct evaluator use."""
+
+        return self._default_profile
 
     def evaluate_registration(
         self,
         dossier: ProjectDossier,
         snapshot: SnapshotRef,
         evidence: EvidenceDocument,
+        profile: ResolvedReviewProfile | None = None,
     ) -> EvaluationReport:
         """Evaluate a proposal and create a non-binding registration recommendation."""
 
+        resolved = profile or self._default_profile
+        stage_policy = resolved.policy.registration
         criteria = tuple(
-            self._evaluate_definition(definition, evidence)
-            for definition in REGISTRATION_CRITERIA
+            self._evaluate_definition(definition, evidence) for definition in stage_policy.criteria
         )
-        by_id = {item.criterion_id: item for item in criteria}
-        if by_id["REG-PROBLEM-GOAL"].assessment is Assessment.INSUFFICIENT_EVIDENCE:
-            recommendation = AgentRecommendation.REJECT
+        recommendation = self._recommend(stage_policy, criteria)
+        if recommendation is AgentRecommendation.REJECT:
             summary = "핵심 문제와 목표 근거가 없어 등록심의 반려 제안입니다."
-        elif any(
-            by_id[criterion_id].assessment
-            in {
-                Assessment.PARTIALLY_MET,
-                Assessment.INSUFFICIENT_EVIDENCE,
-                Assessment.NOT_MET,
-            }
-            for criterion_id in ("REG-KPI", "REG-DATA-GOVERNANCE")
-        ) or any(item.assessment is Assessment.INSUFFICIENT_EVIDENCE for item in criteria):
-            recommendation = AgentRecommendation.NEEDS_CHANGES
+        elif recommendation is AgentRecommendation.NEEDS_CHANGES:
             summary = "접근방법은 확인되지만 KPI·거버넌스·역할 근거 보완이 필요합니다."
         else:
-            recommendation = AgentRecommendation.PASS
             summary = "등록심의 기준을 충족한다는 Agent 제안이며 관리자 확인이 필요합니다."
         return self._report(
             dossier=dossier,
@@ -175,8 +106,8 @@ class OfflineEvidenceEvaluator:
             criteria=criteria,
             recommendation=recommendation,
             summary=summary,
-            rubric_id="axcalib.registration-checklist",
-            rubric_version="0.1.0",
+            profile=resolved,
+            stage_policy=stage_policy,
         )
 
     def evaluate_completion(
@@ -185,9 +116,12 @@ class OfflineEvidenceEvaluator:
         snapshot: SnapshotRef,
         evidence: EvidenceDocument,
         registration_report: EvaluationReport,
+        profile: ResolvedReviewProfile | None = None,
     ) -> EvaluationReport:
         """Compare final evidence with the approved registration baseline."""
 
+        resolved = profile or self._default_profile
+        stage_policy = resolved.policy.completion
         proposal = next(
             artifact for artifact in dossier.artifacts if artifact.role == "registration_proposal"
         )
@@ -211,8 +145,7 @@ class OfflineEvidenceEvaluator:
         )
         criteria = [baseline]
         criteria.extend(
-            self._evaluate_definition(definition, evidence)
-            for definition in COMPLETION_CRITERIA
+            self._evaluate_definition(definition, evidence) for definition in stage_policy.criteria
         )
         if same_artifact:
             criteria[1] = CriterionResult(
@@ -236,29 +169,17 @@ class OfflineEvidenceEvaluator:
                     "실제 수행 산출물, 코드·실험 로그와 결과 보고서를 별도로 제출해 주십시오.",
                 ),
             )
-        critical_failures = {"COM-DELIVERABLE", "COM-KPI", "COM-EXECUTION"}
-        if same_artifact or any(
-            item.criterion_id in critical_failures
-            and item.assessment
-            in {Assessment.NOT_MET, Assessment.INSUFFICIENT_EVIDENCE}
-            for item in criteria
-        ):
+        policy_results = tuple(criteria[1:])
+        recommendation = self._recommend(stage_policy, policy_results)
+        if same_artifact:
             recommendation = AgentRecommendation.NOT_ACCEPT
+        if recommendation is AgentRecommendation.NOT_ACCEPT:
             summary = (
-                "제안서를 최종안으로 재사용해 수행·KPI·산출물 증거가 부족하므로 "
-                "미수용 제안입니다."
+                "제안서를 최종안으로 재사용해 수행·KPI·산출물 증거가 부족하므로 미수용 제안입니다."
             )
-        elif any(
-            item.assessment in {
-                Assessment.PARTIALLY_MET,
-                Assessment.INSUFFICIENT_EVIDENCE,
-            }
-            for item in criteria
-        ):
-            recommendation = AgentRecommendation.NEEDS_CHANGES
+        elif recommendation is AgentRecommendation.NEEDS_CHANGES:
             summary = "완료평가 전 추가 수행증거가 필요합니다."
         else:
-            recommendation = AgentRecommendation.ACCEPT
             summary = "완료평가 수용 Agent 제안이며 관리자 최종 확인이 필요합니다."
         return self._report(
             dossier=dossier,
@@ -268,8 +189,8 @@ class OfflineEvidenceEvaluator:
             criteria=tuple(criteria),
             recommendation=recommendation,
             summary=summary,
-            rubric_id="axcalib.completion-checklist",
-            rubric_version="0.1.0",
+            profile=resolved,
+            stage_policy=stage_policy,
             baseline_report_id=registration_report.report_id,
             proposal_artifact_sha256=proposal.sha256,
         )
@@ -314,6 +235,26 @@ class OfflineEvidenceEvaluator:
         )
 
     @staticmethod
+    def _recommend(
+        policy: StageReviewPolicy,
+        criteria: tuple[CriterionResult, ...],
+    ) -> AgentRecommendation:
+        """Apply only recommendation semantics declared by the frozen policy."""
+
+        results = {item.criterion_id: item for item in criteria}
+        failure_assessments = {Assessment.NOT_MET, Assessment.INSUFFICIENT_EVIDENCE}
+        for definition in policy.criteria:
+            result = results[definition.criterion_id]
+            if (
+                definition.blocking_recommendation is not None
+                and result.assessment in failure_assessments
+            ):
+                return definition.blocking_recommendation
+        if any(item.assessment is not Assessment.MET for item in criteria):
+            return policy.gap_recommendation
+        return policy.all_met_recommendation
+
+    @staticmethod
     def _locators(
         evidence: EvidenceDocument,
         tags: set[str],
@@ -343,18 +284,20 @@ class OfflineEvidenceEvaluator:
         criteria: tuple[CriterionResult, ...],
         recommendation: AgentRecommendation,
         summary: str,
-        rubric_id: str,
-        rubric_version: str,
+        profile: ResolvedReviewProfile,
+        stage_policy: StageReviewPolicy,
         baseline_report_id: str | None = None,
         proposal_artifact_sha256: str | None = None,
     ) -> EvaluationReport:
+        normalized_evidence_sha256 = evidence_sha256(evidence)
         seed = "|".join(
             (
                 dossier.project_id,
                 stage.value,
                 str(snapshot.dossier_revision),
                 snapshot.dossier_sha256,
-                evidence.artifact.sha256,
+                normalized_evidence_sha256,
+                profile.ref.sha256,
                 EVALUATOR_ID,
             )
         )
@@ -376,9 +319,13 @@ class OfflineEvidenceEvaluator:
             stage=stage,
             base_revision=snapshot.dossier_revision,
             snapshot=snapshot,
-            rubric_id=rubric_id,
-            rubric_version=rubric_version,
+            review_profile=profile.ref,
+            rubric_id=stage_policy.rubric_id,
+            rubric_version=stage_policy.rubric_version,
+            checklist_refs=stage_policy.checklist_refs,
+            reference_ids=tuple(item.reference_id for item in stage_policy.references),
             evaluator_id=EVALUATOR_ID,
+            parser_runs=evidence.parser_runs,
             criteria=criteria,
             recommendation=recommendation,
             recommendation_summary=summary,
@@ -392,5 +339,6 @@ class OfflineEvidenceEvaluator:
             baseline_report_id=baseline_report_id,
             proposal_artifact_sha256=proposal_artifact_sha256,
             evaluated_artifact_sha256=evidence.artifact.sha256,
+            evaluated_evidence_sha256=normalized_evidence_sha256,
             limitations=tuple(dict.fromkeys(limitations)),
         )

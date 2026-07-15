@@ -38,12 +38,15 @@ class ReportRenderer:
         directory = self.root / report.project_id / report.stage.value
         json_path = directory / f"{report.report_id}.json"
         markdown_path = directory / f"{report.report_id}.md"
-        json_text = json.dumps(
-            report.model_dump(mode="json"),
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True,
-        ) + "\n"
+        json_text = (
+            json.dumps(
+                report.model_dump(mode="json"),
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n"
+        )
         atomic_write_text(json_path, json_text)
         atomic_write_text(markdown_path, self._markdown(report))
         return RenderedReport(
@@ -68,8 +71,18 @@ class ReportRenderer:
             f"- Run: `{report.run_id}`",
             f"- Dossier revision: `{report.base_revision}`",
             f"- Snapshot: `{report.snapshot.snapshot_id}`",
+            f"- Review profile: `{report.review_profile.selector}`",
+            f"- Review profile SHA-256: `{report.review_profile.sha256}`",
             f"- Rubric: `{report.rubric_id}@{report.rubric_version}`",
             f"- Evaluator: `{report.evaluator_id}`",
+            f"- Evidence SHA-256: `{report.evaluated_evidence_sha256}`",
+            f"- Checklists: `{', '.join(report.checklist_refs) or 'none'}`",
+            f"- References: `{', '.join(report.reference_ids) or 'none'}`",
+            *(
+                f"- Parser: `{run.parser_id}` status=`{run.status}` "
+                f"pages=`{run.page_count}` text-pages=`{run.pages_with_text}`"
+                for run in report.parser_runs
+            ),
             "",
             "## Agent 제안",
             "",
@@ -82,10 +95,13 @@ class ReportRenderer:
             "|---|---|---|---|",
         ]
         for criterion in report.criteria:
-            locators = "<br>".join(
-                f"`{_cell(reference.locator)}` ({_cell(reference.source)})"
-                for reference in criterion.evidence_refs
-            ) or "없음"
+            locators = (
+                "<br>".join(
+                    f"`{_cell(reference.locator)}` ({_cell(reference.source)})"
+                    for reference in criterion.evidence_refs
+                )
+                or "없음"
+            )
             lines.append(
                 "| "
                 + " | ".join(

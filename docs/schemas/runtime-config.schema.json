@@ -35,13 +35,17 @@
     "project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["baseline", "environment", "synthetic_only", "config_version", "default_profile"],
+      "required": ["baseline", "environment", "synthetic_only", "config_version", "default_profile", "default_review_profile"],
       "properties": {
         "baseline": {"type": "string", "minLength": 1},
         "environment": {"type": "string", "enum": ["offline", "onprem", "pilot", "production"]},
         "synthetic_only": {"type": "boolean"},
         "config_version": {"const": "axcalib.runtime/v1alpha1"},
-        "default_profile": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"}
+        "default_profile": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+        "default_review_profile": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,127}@[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+        }
       }
     },
     "contract": {
@@ -82,12 +86,14 @@
     "modelProfile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["provider", "base_url_env", "api_key_env", "model_env", "capabilities", "generation_profile"],
+      "required": ["provider", "base_url_env", "api_key_env", "model_env", "api_mode_env", "default_model", "capabilities", "generation_profile"],
       "properties": {
         "provider": {"const": "openai_compatible"},
-        "base_url_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
-        "api_key_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
-        "model_env": {"type": "string", "pattern": "^AXCALIB_[A-Z0-9_]+$"},
+        "base_url_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
+        "api_key_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
+        "model_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
+        "api_mode_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
+        "default_model": {"type": "string", "minLength": 1},
         "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
         "generation_profile": {"type": "string", "minLength": 1}
       }

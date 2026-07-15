@@ -7,6 +7,7 @@ environment = "onprem"
 synthetic_only = true
 config_version = "axcalib.runtime/v1alpha1"
 default_profile = "onprem"
+default_review_profile = "axcalib.default@1.0.0"
 
 [contract]
 # This selects a code-owned invariant set. It is not a feature toggle.
@@ -26,10 +27,12 @@ completion_retrieval = "completion_hybrid"
 
 [models.primary]
 provider = "openai_compatible"
-base_url_env = "AXCALIB_PRIMARY_BASE_URL"
-api_key_env = "AXCALIB_PRIMARY_API_KEY"
-model_env = "AXCALIB_PRIMARY_MODEL"
-capabilities = ["text", "vision", "structured_output"]
+base_url_env = "OPENAI_BASE_URL"
+api_key_env = "OPENAI_API_KEY"
+model_env = "OPENAI_MODEL"
+api_mode_env = "OPENAI_API_MODE"
+default_model = "Qwen3.5-397B-A17B"
+capabilities = ["text", "image", "structured_output"]
 generation_profile = "deterministic_review"
 
 [retrieval.registration_hybrid]

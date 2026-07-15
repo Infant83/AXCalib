@@ -93,7 +93,11 @@ class PptxEvidenceExtractor:
         digest = sha256_file(resolved)
         metadata: dict[str, str] = {"parser_id": PARSER_ID}
         if sidecar_path is not None:
-            metadata["sidecar_uri"] = str(sidecar_path.resolve())
+            resolved_sidecar = sidecar_path.resolve()
+            if not resolved_sidecar.is_file():
+                raise PptxSourceError(f"PPTX sidecar does not exist: {resolved_sidecar}")
+            metadata["sidecar_uri"] = str(resolved_sidecar)
+            metadata["sidecar_sha256"] = sha256_file(resolved_sidecar)
         return ArtifactRef(
             artifact_id=f"artifact-{role}-{digest[:16]}",
             role=role,

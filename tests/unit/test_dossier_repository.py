@@ -46,3 +46,16 @@ def test_round_trip_snapshot_and_stale_write(tmp_path: Path) -> None:
 
     with pytest.raises(RevisionConflictError, match="current revision is 2"):
         repository.save(original, expected_revision=1)
+
+
+@pytest.mark.parametrize(
+    "project_id",
+    ["../outside", r"..\outside", "contains space", "", "a" * 129],
+)
+def test_repository_rejects_unsafe_project_ids(
+    tmp_path: Path, project_id: str
+) -> None:
+    repository = DossierRepository(tmp_path / "dossiers")
+
+    with pytest.raises(DossierError, match="invalid project_id"):
+        repository.load(project_id)

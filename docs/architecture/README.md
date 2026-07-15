@@ -18,10 +18,12 @@
 | [제품 브리프](../product/product-brief.md) | Excalibur 기억 장치, 사용자 약속과 MVP 경계 |
 | [개발 준비 감사](../readiness/development-readiness-audit.md) | supplied-PPTX offline slice 검증과 live/운영 NO-GO |
 | [PPTX demo 기록](../evaluation/oled-qc-pptx-demo.md) | 실제 입력 hash, 등록/완료 결과와 quality-claim 경계 |
+| [G3 Intelligence 개발 리포트](../evaluation/g3-intelligence-development-report.md) | policy/Docling/retrieval/model 구현·live probe·코드리뷰 결과 |
 | [AXCalib Workflow & Architecture deck](../presentations/AXCalib_Workflow_Architecture_v0.3-p1.pptx) | 두 Gate·pipeline·module·RAG·Wave를 설명하는 12장 검토자료 |
 | [ADR-013](../adr/ADR-013-composable-local-pipelines.md) | 국소 pipeline 조합 방식을 채택한 결정과 결과 |
 | [ADR-014](../adr/ADR-014-progressive-configuration-and-openapi.md) | 최소 facade, expert config와 OpenAPI 제어 경계 |
 | [ADR-015](../adr/ADR-015-image-only-pptx-offline-evidence.md) | image-only PPTX sidecar와 same-hash final 처리 결정 |
+| [ADR-016](../adr/ADR-016-review-policy-and-openai-compatible-evaluator.md) | hash-bound 심사기준, structured model, OpenAI/on-prem 환경계약 |
 
 ## 권장 읽기 순서
 

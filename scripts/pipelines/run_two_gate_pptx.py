@@ -1,4 +1,4 @@
-"""Run the AXCalib offline PPTX workflow without embedding domain rules here."""
+"""Run the AXCalib local PPTX workflow without embedding domain rules here."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ if str(SRC) not in sys.path:
 
 from axcalib import AXCalib  # noqa: E402
 from axcalib.pipelines import TwoGatePptxRequest  # noqa: E402
+from axcalib.schemas import ReviewContext  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -39,6 +40,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--completion-decision", choices=("accept", "not_accept"))
     parser.add_argument("--completion-rationale")
     parser.add_argument("--mentor-ref")
+    parser.add_argument("--review-profile", default="axcalib.default@1.0.0")
+    parser.add_argument("--program-id")
+    parser.add_argument("--business-unit-id")
+    parser.add_argument("--proposer-org-id")
+    parser.add_argument("--certification-level")
+    parser.add_argument(
+        "--docling",
+        action="store_true",
+        help="Enable the optional local Docling parser and provenance manifest.",
+    )
+    parser.add_argument(
+        "--live-model",
+        action="store_true",
+        help="Opt in to the configured OpenAI-compatible endpoint; sends evidence text.",
+    )
     return parser
 
 
@@ -50,6 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         args.config,
         workspace=args.workspace,
         historical_cases_path=args.historical_cases,
+        enable_docling=args.docling,
+        live_model=args.live_model,
     )
     request = TwoGatePptxRequest(
         proposal_path=args.proposal,
@@ -64,6 +82,13 @@ def main(argv: list[str] | None = None) -> int:
         completion_decision=args.completion_decision,
         completion_rationale=args.completion_rationale,
         mentor_ref=args.mentor_ref,
+        review_profile=args.review_profile,
+        review_context=ReviewContext(
+            program_id=args.program_id,
+            business_unit_id=args.business_unit_id,
+            proposer_org_id=args.proposer_org_id,
+            certification_level=args.certification_level,
+        ),
     )
     summary = client.run_pptx(request)
     print(json.dumps(summary.model_dump(mode="json"), ensure_ascii=False, indent=2))

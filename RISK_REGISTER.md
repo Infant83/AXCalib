@@ -8,7 +8,7 @@
 | R-004 | 승인요청 알림 실패 | 관리자 검토 누락 | 알림 성공 전 HITL pending 전이 금지와 integration test; durable outbox/retry는 미구현 | Mitigated offline; operational open |
 | R-005 | 선택적 멘토 흐름의 승인 우회 | 완료자료 품질 저하 | mentor가 배정되면 mentor 승인 강제 및 scenario test | Mitigated offline |
 | R-006 | 평가 중 dossier 변경 | stale 결과 자동 반영 | revision/hash snapshot, sequential stale write 거부; multi-process lock/result 격리는 미구현 | Partially mitigated |
-| R-007 | 실제 데이터 또는 secret 유출 | 개인정보·보안 사고 | synthetic-only 기본, env 이름만 기록, live test 제외 | Open |
+| R-007 | 실제 데이터 또는 secret 유출 | 개인정보·보안 사고 | synthetic-only 기본, env 이름만 기록, default test에서 live 제외; 사용자 승인 비식별 smoke만 별도 수행 | Open |
 | R-008 | GitLab MR 또는 email provider 종속 | 운영 이식성 저하 | NotificationPort와 adapter 분리 | Planned |
 | R-009 | 국소 pipeline 과분할 | 경계·버전·운영 복잡도 증가 | 독립 업무결과와 재사용자가 있을 때만 pipeline 승격 | Planned |
 | R-010 | script, CLI, API별 로직 복제 | interface마다 판정과 오류 의미가 달라짐 | working script는 `AXCalib` pipeline만 호출; CLI/API parity는 미구현 | Partially mitigated |
@@ -21,5 +21,9 @@
 | R-017 | OpenAPI/schema/구현 drift | SDK와 API 결과 불일치 | artifact-first example·contract·parity test | Planned WP-06 |
 | R-018 | 최신 표준을 성급히 채택해 toolchain 불일치 | 생성기/validator 상호운용 실패 | OpenAPI 3.1/TOML 1.0 baseline, 3.2/1.1 spike | Open |
 | R-019 | tutorial이 구현되지 않은 기능을 완료처럼 보임 | 잘못된 기대와 감사 오류 | pre-implementation 라벨, PROJECT_STATE/Exit Evidence 연동 | Mitigated in docs |
-| R-020 | image-only PPTX sidecar의 요약·tag 편향 | 잘못된 criterion 근거와 과대평가 | source hash 고정, reviewed-sidecar 표기, 명시 tag만 사용, sidecar 부재 시 insufficient | Open until parser/model benchmark |
+| R-020 | image-only PPTX sidecar의 요약·tag 편향 | 잘못된 criterion 근거와 과대평가 | source와 sidecar hash 고정, 평가 전 변경 탐지, reviewed-sidecar 표기, 부재 시 insufficient | Open until parser/model benchmark |
 | R-021 | local actor ID를 실제 관리자 인증으로 오해 | demo 결과가 운영 승인처럼 사용됨 | `explicit_command_input`과 `offline_unverified_actor` 기록, API/RBAC 전 운영 금지 | Mitigated in demo; auth open |
+| R-022 | model의 근거 없는 긍정·부정 판정 | 자동 통과 또는 부당한 탈락 제안 | strict criterion set, source locator 검증, locator 없는 판정 insufficient 하향, 관리자 HITL | Mitigated in reference; gold benchmark open |
+| R-023 | 사업부·소속별 기준 선택이 편향을 숨김 | 차별적 기준과 감사 실패 | ReviewContext와 explicit policy selector 분리, 자동 context mapping 금지, policy hash/owner/approval 기록 | Open until mapping policy approved |
+| R-024 | 임의 model endpoint로 원문 전송 또는 capability 오판 | data egress와 잘못된 평가 | live opt-in, secret-free manifest, structured contract; allowlist/capability probe는 미구현 | Operational open |
+| R-025 | project ID를 이용한 저장경로 이탈 | dossier 외 파일 조회·변조 | schema와 repository 경계에서 strict ID pattern 검증 및 traversal 회귀 test | Mitigated locally |

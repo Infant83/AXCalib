@@ -1,7 +1,7 @@
 # 5분 시작: 가장 작은 AXCalib 인터페이스
 
-> 상태: `two-gate-pptx@v1alpha1` offline vertical slice는 구현·테스트됐다. live model, 운영
-> 알림, API/Web은 아직 구현되지 않았다.
+> 상태: `two-gate-pptx@v1alpha1`과 G3 policy/Docling/retrieval/structured-model reference는
+> 구현·테스트됐다. 추가 live model, on-prem 품질, 운영 알림, API/Web은 아직 승인·구현되지 않았다.
 
 ## 가장 작은 Python 사용
 
@@ -36,7 +36,7 @@ print(result.registration_report_uri)
 ## 단계별로 재개하기
 
 ```python
-project = client.create_project(
+project = client.register_case(
     "proposal.pptx",
     title="검토할 과제",
     sidecar_path="proposal.axcalib.json",
@@ -93,6 +93,11 @@ result = client.run_pptx(request)
 - notification 실패 시 HITL pending 전이 금지
 - mentor 배정 시 mentor의 완료 제출 승인 강제
 - 동일 제안서/최종안 hash의 `not_accept` 제안
+- version/hash-bound review profile과 별도 reviewer adjustment
+- optional Docling manifest와 opt-in structured model evaluator
 
 idempotent resume, durable outbox, multi-process lock, 실제 OCR/VLM과 API/Web은 다음 hardening
 범위다.
+
+사업별 심사기준과 OpenAI/on-prem endpoint 설정은
+[심사 프로필과 모델 endpoint](04-review-profiles-and-model-endpoints.md)를 따른다.

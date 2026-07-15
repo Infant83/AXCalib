@@ -3,7 +3,7 @@ document_type: module_delivery_plan
 project: AXCalib
 baseline: v0.3-p1
 updated_at: 2026-07-16
-status: offline_vertical_slice_implemented_hardening_pending
+status: g3_intelligence_reference_baseline_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -19,9 +19,9 @@ Evidence로 예측 가능성을 확보한다.
 | M00 | `axcalib.pipelines` | offline_reference | WP-01 | P1 harness | full context/idempotency/cancel contract |
 | M01 | `axcalib.dossier` | offline_reference | WP-01 | core/schema contract | JSON Schema + multi-process CAS/lock |
 | M02 | state/approval domain | offline_reference | WP-01 | M01 | persisted transition + outbox integration |
-| M03 | `axcalib.ingest` | offline_reference | WP-02 | ArtifactRef/schema | actual-template fixture + Docling/VLM spike |
-| M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | stage filter, corpus manifest, Recall/nDCG |
-| M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | structured rubric registry + golden labels |
+| M03 | `axcalib.ingest` | offline_reference | WP-02 | ArtifactRef/schema | actual-template + slide-render/VLM gold coverage |
+| M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + embedding/Qdrant contract |
+| M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | gold traceability/unsupported-claim benchmark |
 | M06 | `axcalib.calibration` | not_started | WP-05/06 | M05 | disagreement/agreement metric report |
 | M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | golden/redaction/content-hash contract |
 | M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | durable outbox + idempotent retry/recovery |
@@ -43,6 +43,15 @@ Evidence로 예측 가능성을 확보한다.
 - `scripts/pipelines/run_two_gate_pptx.py`: thin working script
 - `tests/integration/test_pptx_two_gate_pipeline.py`: 두 Gate, wait, fail-closed, same-hash guard
 - `evals/pptx_vertical_slice.py`: 제공 PPTX quality-claim 제한이 있는 offline 회귀
+- `config/review_profiles/axcalib-default-v1.yaml`: 두 Gate criterion/reference/checklist hash를
+  묶은 offline reference policy
+- `src/axcalib/ingest/docling_pptx.py`: optional Docling version/status/page/text manifest
+- `src/axcalib/models/openai_compatible.py`, `evaluation/model.py`: Responses/Chat Completions
+  structured-output와 evidence-locator guard
+- `evals/retrieval_baseline.py`: 작은 stage-separated synthetic Recall@5/nDCG@5/leakage 회귀
+- `tests/integration/test_model_gateway.py`: 두 Gate fake-model/HITL contract와 provider dialect
+- 사용자 승인 비식별 live registration smoke: transport 성공, 7/7 criterion insufficient로
+  보수 정규화, 관리자 결정 없이 HITL pending
 
 ## 2. 공통 납품 단위
 
@@ -223,8 +232,9 @@ Evidence로 예측 가능성을 확보한다.
 
 ### Wave 2 — WP-02/03 Evidence-to-Report
 
-- 상태: 제공 image-only PPTX의 reviewed-sidecar slice 구현, template/parser hardening 미완료
-- 범위: M03, M05 deterministic, M07
+- 상태: reviewed-sidecar + Docling manifest + policy/structured-model reference 구현;
+  template/parser gold benchmark 미완료
+- 범위: M03, M05 deterministic/structured reference, M07
 - 시작조건: M00/M01 contract_verified
 - 핵심 demo: synthetic 등록자료 → locator → criterion → Markdown/JSON report
 - 실패기준: 근거 없는 충족판정 또는 locator 누락
@@ -232,6 +242,7 @@ Evidence로 예측 가능성을 확보한다.
 
 ### Wave 3 — WP-04/05 Retrieval·Model·Calibration
 
+- 상태: synthetic lexical metric과 single-model structured contract만 구현; vector/panel/calibration 미완료
 - 범위: M04 vector/hybrid, M05 model adapter, M06
 - 시작조건: 승인된 synthetic/labeled dataset과 model/corpus policy
 - 핵심 demo: stage-aware cases + independent model findings + disagreement report
@@ -294,14 +305,15 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-현재 next는 실제 template을 기다리는 동안 Wave 1/2의 contract hardening이다.
+현재 next는 G3 reference 이후 Wave 1 hardening과 G3 품질 benchmark다.
 
 1. M01 dossier JSON Schema export와 snapshot manifest 검증
 2. M00 typed context/idempotency key와 stale/cancel/retry 상태 연결
 3. M08 durable local outbox, notification dedupe와 recovery test
-4. M05 Markdown checklist를 구조화 rubric registry로 이동
-5. M03 실제 template 도착 시 field/locator fixture와 parser coverage 추가
-6. M11 Typer CLI를 같은 `two-gate-pptx@v1alpha1` pipeline에 연결
-7. `prep.ps1 validate|test|eval`, Ruff, Pyright 회귀
+4. M03 실제 template 도착 시 field/locator fixture와 slide-render/VLM coverage 추가
+5. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark
+6. M05 approved gold label의 traceability/unsupported-claim과 on-prem Qwen contract
+7. M11 Typer CLI를 같은 `two-gate-pptx@v1alpha1` pipeline에 연결
+8. `prep.ps1 validate|test|eval`, Ruff, Pyright 회귀
 
-실제 data/model/Vector DB/API/Web은 readiness 문서의 NO-GO를 유지한다.
+실제 data, 추가 live model, Vector DB, API/Web은 readiness 문서의 승인 Gate를 유지한다.

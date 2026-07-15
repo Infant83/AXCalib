@@ -5,7 +5,7 @@ baseline: v0.3-p1
 created_at: 2026-07-12
 updated_at: 2026-07-16
 timezone: Asia/Seoul
-status: offline_vertical_slice_implemented_design_hardening_pending
+status: g3_intelligence_reference_implemented_hardening_pending
 ---
 
 # AXCalib Architecture와 App Design
@@ -14,10 +14,11 @@ status: offline_vertical_slice_implemented_design_hardening_pending
 
 AXCalib는 문서를 한 번 채점하는 도구가 아니라, 과제의 약속과 수행 증거가 시간에 따라 쌓이고 두 번의 공식 평가 Gate를 통과하는 과정을 다룬다. 설계의 중심 객체는 Agent나 채팅 세션이 아니라 **versioned Project Dossier**다.
 
-2026-07-16 구현 기준으로 filesystem dossier/snapshot, 제한된 PPTX OOXML+hash-bound sidecar,
-deterministic evaluator, lexical retrieval, report, recording notification과 두 Gate pipeline이
-offline slice로 연결됐다. 아래 Docling/VLM/model/API/Web 설계는 여전히 Target이며 구현 완료가
-아니다.
+2026-07-16 구현 기준으로 filesystem dossier/snapshot, hash-bound review policy, 제한된 PPTX
+OOXML+sidecar, optional Docling manifest, deterministic/structured model evaluator, synthetic lexical
+retrieval, report, recording notification과 두 Gate pipeline이 G3 reference slice로 연결됐다.
+slide-render/VLM, embedding/Vector DB, panel/calibration, 운영 API/Web 설계는 여전히 Target이며
+구현 완료가 아니다.
 
 제품은 다음 네 층으로 분리한다.
 
@@ -588,13 +589,19 @@ generation_profile
 endpoint 확인은 일반 curl로 가능해야 한다.
 
 ~~~bash
-curl "$AXCALIB_PRIMARY_BASE_URL/chat/completions" \
-  -H "Authorization: Bearer $AXCALIB_PRIMARY_API_KEY" \
+curl "$OPENAI_BASE_URL/chat/completions" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"<served-model-id>","messages":[{"role":"user","content":"health probe"}]}'
 ~~~
 
 API key 값은 명령 예시, process listing, log에 출력하지 않는다. 실제 harness는 secret redaction과 env presence만 확인한다.
+
+G3 reference adapter는 표준 `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`을 우선하고
+사용자 호환 alias `OPENAPI_API_KEY`, `OPENAPI_BASE_URL`도 읽는다. model이 없으면 외부 기본값은
+`gpt-5.5`이며 on-prem expert example은 `Qwen3.5-397B-A17B`다. OpenAI 공식 endpoint에는
+Responses API, custom compatible endpoint에는 기본적으로 Chat Completions structured-output
+dialect를 사용한다. retry, concurrency, usage/cost와 endpoint allowlist는 운영 전 남은 범위다.
 
 ### 12.2 Capability probe
 
@@ -687,14 +694,16 @@ NotificationPort의 우선 adapter는 다음과 같다.
 from axcalib import AXCalib
 
 client = AXCalib.from_toml("config/axcalib.toml", workspace="output/review")
-project = client.create_project("proposal.pptx", title="검토할 과제")
+project = client.register_case("proposal.pptx", title="검토할 과제")
 client.submit_registration(project.project_id)
 result = client.evaluate(project.project_id, stage="registration")
 # async boundary에서는 위 evaluate 대신 await client.aevaluate(...)를 사용한다.
 ~~~
 
 - 기본 client는 network, GPU, DB를 암묵적으로 호출하지 않는 offline-safe profile이다.
-- 현재 `from_toml`은 offline profile만 조립하며 on-prem expert profile은 Target이다.
+- 현재 `from_toml`은 offline profile을 기본 조립한다. `live_model=True`이면 환경변수 기반
+  OpenAI-compatible structured evaluator를, `enable_docling=True`이면 optional Docling adapter를
+  추가한다. expert TOML의 임의 provider 조립과 운영 endpoint policy는 Target이다.
 - 세부 service API는 evaluate_registration, evaluate_completion, ingest_cases를 제공할 수 있지만
   첫 quickstart에 모두 노출하지 않는다.
 - async service는 aevaluate_registration, aevaluate_completion, aingest_cases처럼 `a` 접두어를 쓴다.

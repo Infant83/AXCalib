@@ -47,12 +47,14 @@ REQUIRED_PATHS = (
     "docs/manuals/01-five-minute-start.md",
     "docs/manuals/02-configuration-and-api.md",
     "docs/manuals/03-webtoon-tutorial-storyboard.md",
+    "docs/manuals/04-review-profiles-and-model-endpoints.md",
     "docs/manuals/diagrams/authority-model.svg",
     "docs/manuals/assets/axcalib-authority-hero.jpg",
     "docs/manuals/assets/axcalib-six-panel-tutorial.jpg",
     "docs/manuals/assets/README.md",
     "docs/readiness/development-readiness-audit.md",
     "docs/evaluation/oled-qc-pptx-demo.md",
+    "docs/evaluation/g3-intelligence-development-report.md",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -66,22 +68,31 @@ REQUIRED_PATHS = (
     "docs/adr/ADR-013-composable-local-pipelines.md",
     "docs/adr/ADR-014-progressive-configuration-and-openapi.md",
     "docs/adr/ADR-015-image-only-pptx-offline-evidence.md",
+    "docs/adr/ADR-016-review-policy-and-openai-compatible-evaluator.md",
+    "docs/schemas/review-policy-pack.md",
     "docs/workflows/two_gate_pipeline.md",
     "docs/rubrics/registration_checklist.md",
     "docs/rubrics/completion_checklist.md",
     "docs/rubrics/hitl_review_checklist.md",
+    "config/review_profiles/axcalib-default-v1.yaml",
     "src/axcalib/workflows/two_gate.py",
     "src/axcalib/client.py",
     "src/axcalib/pipelines/project.py",
     "src/axcalib/dossier/repository.py",
     "src/axcalib/ingest/pptx.py",
+    "src/axcalib/ingest/docling_pptx.py",
     "src/axcalib/evaluation/offline.py",
+    "src/axcalib/evaluation/model.py",
+    "src/axcalib/models/openai_compatible.py",
+    "src/axcalib/policies/registry.py",
     "scripts/pipelines/run_two_gate_pptx.py",
     "tests/sources/oled_qc_project_outline.pptx",
     "tests/sources/oled_qc_project_outline.axcalib.json",
     "fixtures/synthetic/workflow_scenarios.json",
     "fixtures/synthetic/historical_cases.json",
     "evals/pptx_vertical_slice.py",
+    "evals/retrieval_baseline.py",
+    "evals/datasets/retrieval_queries.json",
 )
 
 CHECKLISTS = (
@@ -131,6 +142,10 @@ def _local_markdown_link_errors() -> list[str]:
         "docs/manuals/01-five-minute-start.md",
         "docs/manuals/02-configuration-and-api.md",
         "docs/manuals/03-webtoon-tutorial-storyboard.md",
+        "docs/manuals/04-review-profiles-and-model-endpoints.md",
+        "docs/schemas/review-policy-pack.md",
+        "docs/adr/ADR-016-review-policy-and-openai-compatible-evaluator.md",
+        "docs/evaluation/g3-intelligence-development-report.md",
         "docs/api/README.md",
         "docs/readiness/development-readiness-audit.md",
         "apps/api/README.md",
@@ -556,9 +571,9 @@ def _readiness_contract_errors() -> list[str]:
     path = ROOT / "docs" / "readiness" / "development-readiness-audit.md"
     metadata = _frontmatter(path)
     expected = {
-        "status": "offline_slice_implemented",
-        "verdict": "OFFLINE_VERTICAL_SLICE_VERIFIED",
-        "owner_signoff": "user_directive_for_local_offline_slice",
+        "status": "g3_reference_implemented",
+        "verdict": "G3_REFERENCE_BASELINE_VERIFIED",
+        "owner_signoff": "user_directive_for_g3_and_limited_live_fixture",
     }
     for key, value in expected.items():
         if metadata.get(key) != value:
@@ -585,6 +600,48 @@ def _pptx_fixture_errors() -> list[str]:
         errors.append("PPTX sidecar: unsupported schema_version")
     if sidecar.get("source_sha256") != digest:
         errors.append("PPTX sidecar: source_sha256 does not match supplied PPTX")
+    return errors
+
+
+def _review_policy_errors() -> list[str]:
+    """Verify the committed policy, built-in contract, and referenced document hashes."""
+
+    from axcalib.policies import ReviewProfileRegistry
+
+    errors: list[str] = []
+    registry = ReviewProfileRegistry.with_builtin_default()
+    try:
+        loaded = registry.load_file(
+            ROOT / "config" / "review_profiles" / "axcalib-default-v1.yaml"
+        )
+        resolved = registry.resolve(
+            "axcalib.default@1.0.0",
+            expected_sha256=loaded.ref.sha256,
+            allow_offline_reference=True,
+        )
+    except (OSError, ValueError) as error:
+        return [f"review policy: {error}"]
+    for stage in (resolved.policy.registration, resolved.policy.completion):
+        for reference in stage.references:
+            candidate = (ROOT / reference.uri).resolve()
+            try:
+                candidate.relative_to(ROOT)
+            except ValueError:
+                errors.append(
+                    f"review policy reference leaves workspace: {reference.reference_id}"
+                )
+                continue
+            if not candidate.is_file():
+                errors.append(
+                    f"review policy reference is missing: {reference.reference_id}"
+                )
+                continue
+            if reference.sha256 is not None:
+                digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+                if digest != reference.sha256:
+                    errors.append(
+                        f"review policy reference hash drift: {reference.reference_id}"
+                    )
     return errors
 
 
@@ -620,6 +677,7 @@ def validate_workspace() -> tuple[list[str], list[str]]:
     errors.extend(_local_markdown_link_errors())
     errors.extend(_architecture_document_errors())
     errors.extend(_pptx_fixture_errors())
+    errors.extend(_review_policy_errors())
     errors.extend(_secret_errors())
     return errors, warnings
 
@@ -633,22 +691,22 @@ def show_status() -> int:
     print(f"  status: {state.get('status', 'unknown')}")
     print(f"  current WP: {state.get('current_work_package', 'unknown')}")
     print(f"  next WP: {state.get('next_work_package', 'unknown')}")
-    print("  data/model mode: synthetic + lexical; no live model or Vector DB")
+    print("  data/model mode: synthetic default; one approved live fixture smoke; no Vector DB")
     print("  architecture control: 8 Mermaid views + SVG + M00-M13 module board")
-    print("  implemented: supplied-PPTX two-gate offline vertical slice")
-    print("  boundary: T1/model/API/Web/operations are not complete")
+    print("  implemented: G3 policy + Docling manifest + lexical + structured-model reference")
+    print("  boundary: T1/G3 operational quality/API/Web/operations are not complete")
     return 0
 
 
 def show_next() -> int:
-    print("Next executable slice: WP-01/03 contract hardening")
+    print("Next executable slice: WP-01 hardening + G3 quality benchmark")
     print("  1. export dossier JSON Schema and effective-config manifest")
     print("  2. add idempotency, stale result, durable local outbox, and recovery")
-    print("  3. move Markdown criteria into a structured rubric registry")
-    print("  4. add actual-template field/locator fixtures when supplied")
+    print("  3. add actual-template field/locator and slide-render/VLM fixtures")
+    print("  4. benchmark embedding/Qdrant and approved on-prem Qwen with gold labels")
     print("  5. connect a Typer CLI to the same allowlisted pipeline")
     print("Prerequisite for actual evaluation: Product/Evaluation Owner rubric approval")
-    print("Scope guard: no real data, live model, Vector DB, deployment, or secret")
+    print("Scope guard: no real data, additional live model, Vector DB, deployment, or secret")
     return 0
 
 
@@ -677,7 +735,11 @@ def run_tests() -> int:
 
 
 def run_eval() -> int:
-    for script in ("evals/workflow_smoke.py", "evals/pptx_vertical_slice.py"):
+    for script in (
+        "evals/workflow_smoke.py",
+        "evals/pptx_vertical_slice.py",
+        "evals/retrieval_baseline.py",
+    ):
         result = _run([sys.executable, script])
         if result:
             return result

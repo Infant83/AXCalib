@@ -4,6 +4,7 @@ environment = "offline"
 synthetic_only = true
 config_version = "axcalib.runtime/v1alpha1"
 default_profile = "offline"
+default_review_profile = "axcalib.default@1.0.0"
 
 [contract]
 invariants_profile = "two_gate_human_authority/v1"

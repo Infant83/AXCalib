@@ -3,7 +3,7 @@ document_type: workflow_blueprint
 project: AXCalib
 baseline: v0.3-p1
 updated_at: 2026-07-16
-status: supplied_pptx_offline_slice_implemented
+status: g3_intelligence_reference_baseline_verified
 ---
 
 # AXCalib Workflow Blueprint
@@ -14,35 +14,38 @@ Docling/model/outbox/API/Web Target도 포함된다. Target node를 구현 완�
 
 ![AXCalib workflow 한 장 구조도](diagrams/workflow-at-a-glance.svg)
 
-## 0. 현재 실행되는 supplied-PPTX slice
+## 0. 현재 실행되는 supplied-PPTX G3 reference slice
 
 ```mermaid
 flowchart LR
-    SRC["PPTX + hash-bound sidecar"] --> DOS["YAML dossier + revision"]
+    SRC["PPTX + hash-bound sidecar"] --> POLICY["explicit review profile\nversion + SHA-256"]
+    POLICY --> DOS["YAML dossier + revision"]
     DOS --> RSNAP["registration snapshot"]
-    RSNAP --> RPARSE["OOXML / reviewed sidecar"]
+    RSNAP --> RPARSE["OOXML / reviewed sidecar\n+ optional Docling manifest"]
     RPARSE --> RLEX["registration lexical cases\nportion 0.0"]
-    RLEX --> REVAL["deterministic criterion report"]
+    RLEX --> REVAL["deterministic or strict structured\ncriterion report + locator guard"]
     REVAL --> RNOTE["recording notification"]
     RNOTE --> RWAIT{{"registration HITL wait"}}
     RWAIT -->|"explicit approve/reject + rationale"| EXEC["execution / progress notes"]
     EXEC --> FINAL["completion PPTX"]
     FINAL --> CSNAP["completion snapshot + registration baseline"]
     CSNAP --> CLEX["completion lexical cases\nportion 0.0"]
-    CLEX --> CEVAL["same-hash guard + completion report"]
+    CLEX --> CEVAL["same-hash guard + deterministic/model report"]
     CEVAL --> CNOTE["recording notification"]
     CNOTE --> CWAIT{{"completion HITL wait"}}
     CWAIT -->|"explicit accept/not_accept + rationale"| AUDIT["dossier decision + audit"]
 
     classDef verified fill:#EAF8F4,stroke:#1E8A75,color:#172033;
     classDef human fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
-    class SRC,DOS,RSNAP,RPARSE,RLEX,REVAL,RNOTE,EXEC,FINAL,CSNAP,CLEX,CEVAL,CNOTE,AUDIT verified;
+    class SRC,POLICY,DOS,RSNAP,RPARSE,RLEX,REVAL,RNOTE,EXEC,FINAL,CSNAP,CLEX,CEVAL,CNOTE,AUDIT verified;
     class RWAIT,CWAIT human;
 ```
 
-이 slice는 `two-gate-pptx@v1alpha1`과 working script에서 실행된다. image-only slide의 sidecar는
-수동 검토 fixture이며 OCR/VLM 품질을 뜻하지 않는다. durable outbox, idempotent resume,
-multi-process lock과 stale-result 객체는 다음 hardening 범위다.
+이 slice는 `two-gate-pptx@v1alpha1`과 working script에서 실행된다. 기본은 network 없는
+deterministic evaluator이고, 명시적 opt-in에서 Docling과 OpenAI-compatible structured evaluator를
+같은 application service에 주입한다. image-only slide의 sidecar는 수동 검토 fixture이며
+OCR/VLM 품질을 뜻하지 않는다. 현재 retrieval metric은 작은 synthetic lexical 회귀다. durable
+outbox, idempotent resume, multi-process lock, Vector DB와 stale-result 객체는 다음 범위다.
 
 ## 1. 전체 계층
 

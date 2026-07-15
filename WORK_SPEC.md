@@ -7,10 +7,10 @@ workspace: C:/Users/angpa/myProjects/Daily_Work/AXCalib
 created_at: 2026-07-12
 updated_at: 2026-07-16
 timezone: Asia/Seoul
-status: supplied_pptx_offline_vertical_slice_implemented
+status: g3_intelligence_reference_baseline_verified
 baseline: v0.3
-harness_status: executable_offline_harness; g2_vertical_slice_verified; t1_partial
-git_status: repository_initialized; main_tracks_origin_main; current_changes_uncommitted
+harness_status: executable_offline_harness; g3_reference_verified; t1_partial
+git_status: repository_initialized; main_tracks_origin_main
 openproject_status: not_registered
 ---
 
@@ -655,7 +655,7 @@ model_profile/run_id
 | G0 Alignment | WORK_SPEC/GOAL/DESIGN, RACI, 성공기준 | Owner와 첫 use case 결정 |
 | G1 Harness | package scaffold, prep, state/decision/risk, pre-development audit | 구현 완료, validate/test/eval 통과와 owner sign-off 뒤 WP-01 허용 |
 | G2 Domain MVP | dossier, state, snapshot, synthetic flow | offline vertical slice 통과 |
-| G3 Intelligence | parser, retrieval, model, report | evidence/retrieval baseline |
+| G3 Intelligence | parser, retrieval, model, report | reference evidence/retrieval/model baseline; 운영 품질은 별도 Gate |
 | G4 Interfaces | CLI/API/async/batch | contract/E2E 통과 |
 | G5 Web Review | process/review/calibration UI | 핵심 사용자 flow 검증 |
 | G6 Pilot | 50 paired sample 결과 | 위험·시간·편차·보안 검토 |
@@ -684,9 +684,10 @@ model_profile/run_id
 - 완료 선언에는 file, command, test/eval evidence가 필요하다.
 - 실제 data, token, secret, output은 Git에 넣지 않는다.
 
-`prep.ps1`과 executable offline harness는 구현되어 있다. eval은 synthetic workflow contract와
-제공 PPTX의 deterministic ingest-to-report 회귀를 검증한다. live model, semantic parser 또는
-retrieval 품질을 검증하지 않는다.
+`prep.ps1`과 executable offline harness는 구현되어 있다. eval은 synthetic workflow contract,
+제공 PPTX의 deterministic ingest-to-report 회귀와 작은 stage-aware lexical dataset을 검증한다.
+live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별 fixture registration smoke 1회를
+별도로 수행했다. 이 smoke와 synthetic metric은 실제 model/retrieval 품질 검증이 아니다.
 
 ## 23. 기준정보 우선순위
 
@@ -768,7 +769,7 @@ retrieval 품질을 검증하지 않는다.
 | 18. 요소 모듈·국소 pipeline·전체 workflow 조합 | FR-033~036, DESIGN 4, ADR-013, architecture plan | Supplied-PPTX offline slice implemented; full runtime pending |
 | 19. Workflow 구조도와 module별 예측 가능한 작업계획 | FR-037/038, workflow blueprint, module delivery plan | Visual and delivery control baseline documented |
 | 20. Excalibur 권한 비유와 사람 책임 철학 | Product brief, concept/manual, authority diagram, D-011 | Applied in offline slice; formal product sign-off pending |
-| 21. 미니멀 Library와 expert config | FR-039/040, ADR-014, TOML/schema/manual | Offline facade implemented; expert on-prem pending |
+| 21. 미니멀 Library와 expert config | FR-039/040, ADR-014/016, TOML/schema/manual | Offline facade + env-based model reference implemented; full on-prem composition pending |
 | 22. OpenAPI 표준 JSON 제어 | FR-041, OpenAPI artifact/examples, API manual | Pre-implementation contract ready |
 | 23. 웹툰·강의·매뉴얼 기반 | FR-042, docs/manuals, generated illustrations | Learning baseline documented |
 | 24. 개발 전 audit와 readiness Gate | FR-043, development readiness audit | Offline slice verified; actual/operational NO-GO |
@@ -799,9 +800,12 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] typed PipelineResult/allowlisted Registry와 `two-gate-pptx` working script
 - [x] dossier YAML/revision/snapshot, limited PPTX ingest, deterministic report slice
 - [x] 두 Gate HITL recording notification과 explicit admin decision integration
+- [x] version/hash-bound review policy와 checklist hash drift 검증
+- [x] optional Docling manifest, synthetic retrieval baseline, structured model evaluator
+- [x] 사용자 승인 하의 비식별 live registration smoke
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
 - [ ] full PipelineContext/checkpoint/idempotency와 독립 dossier.freeze script
-- [ ] Docling/VLM/model/Vector DB 품질 spike
+- [ ] slide-render/VLM, Vector DB, on-prem Qwen과 labeled model/retrieval 품질 spike
 - [ ] data/security 승인
 - [ ] pilot 시작
 
@@ -816,3 +820,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-14 | v0.3-p1 | workflow 구조도, SVG 인포그래픽, module별 Wave·Exit Evidence 계획 추가 |
 | 2026-07-15 | v0.3-p1 predev-rc1 | 사람 권한 중심 철학, minimal/expert 설정, OpenAPI 3.1 계약, manual/tutorial, readiness audit 추가 |
 | 2026-07-16 | v0.3-p1 mvp-slice1 | 제공 image-only PPTX의 dossier→등록→HITL→수행→완료→HITL offline vertical slice와 report/eval 추가 |
+| 2026-07-16 | v0.3-p1 g3-ref1 | hash-bound policy, Docling manifest, synthetic retrieval, structured model gateway와 제한된 live smoke 추가 |

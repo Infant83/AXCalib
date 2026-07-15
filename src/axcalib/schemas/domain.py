@@ -1,4 +1,4 @@
-"""Typed records shared by the offline AXCalib vertical slice."""
+"""Typed records shared by the AXCalib two-gate reference slice."""
 
 from __future__ import annotations
 
@@ -48,6 +48,15 @@ class AgentRecommendation(StrEnum):
     REJECT = "reject"
     ACCEPT = "accept"
     NOT_ACCEPT = "not_accept"
+
+
+class ReviewPolicyStatus(StrEnum):
+    """Lifecycle of a review policy without implying business approval."""
+
+    DRAFT = "draft"
+    OFFLINE_REFERENCE = "offline_reference"
+    PUBLISHED = "published"
+    RETIRED = "retired"
 
 
 class PipelineStatus(StrEnum):
@@ -103,6 +112,18 @@ class SlideEvidence(FrozenModel):
     is_blank: bool = False
 
 
+class ParserRunManifest(FrozenModel):
+    """Content-free parser outcome used for provenance and coverage audits."""
+
+    parser_id: str
+    status: str
+    source_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    page_count: int = Field(ge=0)
+    pages_with_text: int = Field(ge=0)
+    text_chars: int = Field(ge=0)
+    warnings: tuple[str, ...] = ()
+
+
 class EvidenceDocument(FrozenModel):
     """Normalized PPTX evidence without model-generated content."""
 
@@ -110,6 +131,7 @@ class EvidenceDocument(FrozenModel):
     slides: tuple[SlideEvidence, ...]
     warnings: tuple[str, ...] = ()
     parser_id: str = "axcalib.pptx-ooxml/v1"
+    parser_runs: tuple[ParserRunManifest, ...] = ()
 
     @property
     def text(self) -> str:
@@ -130,6 +152,41 @@ class CriterionResult(FrozenModel):
     follow_up_questions: tuple[str, ...] = ()
 
 
+class ReviewContext(FrozenModel):
+    """Trusted case metadata retained for policy selection and later audit."""
+
+    program_id: str | None = None
+    business_unit_id: str | None = None
+    proposer_org_id: str | None = None
+    certification_level: str | None = None
+
+
+class ReviewProfileRef(FrozenModel):
+    """Immutable identity of the policy pack used for a case or stage."""
+
+    policy_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,127}$")
+    version: str = Field(pattern=r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$")
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    status: ReviewPolicyStatus
+    source_uri: str
+
+    @property
+    def selector(self) -> str:
+        """Return the human-facing immutable selector."""
+
+        return f"{self.policy_id}@{self.version}"
+
+
+class ReviewerAdjustment(FrozenModel):
+    """Criterion-level human correction that never rewrites the Agent report."""
+
+    criterion_id: str
+    from_assessment: Assessment
+    to_assessment: Assessment
+    reason: str = Field(min_length=1, max_length=2000)
+    evidence_refs: tuple[EvidenceLocator, ...] = ()
+
+
 class RetrievalSummary(FrozenModel):
     """Explicit retrieval status; similarity never becomes a final decision."""
 
@@ -138,6 +195,21 @@ class RetrievalSummary(FrozenModel):
     similarity_portion: float = Field(ge=0.0, le=0.25)
     corpus_snapshot_id: str | None = None
     case_ids: tuple[str, ...] = ()
+
+
+class ModelRunManifest(FrozenModel):
+    """Secret-free identity and integrity record for one model request."""
+
+    profile_id: str
+    provider: str = "openai_compatible"
+    model: str
+    api_mode: str
+    capabilities: tuple[str, ...]
+    request_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    response_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    response_id: str | None = None
+    latency_ms: int = Field(ge=0)
+    live: bool
 
 
 class EvaluationReport(FrozenModel):
@@ -150,9 +222,14 @@ class EvaluationReport(FrozenModel):
     stage: ReviewStage
     base_revision: int = Field(ge=1)
     snapshot: SnapshotRef
+    review_profile: ReviewProfileRef
     rubric_id: str
     rubric_version: str
+    checklist_refs: tuple[str, ...] = ()
+    reference_ids: tuple[str, ...] = ()
     evaluator_id: str
+    model_run: ModelRunManifest | None = None
+    parser_runs: tuple[ParserRunManifest, ...] = ()
     generated_at: datetime = Field(default_factory=utc_now)
     criteria: tuple[CriterionResult, ...]
     recommendation: AgentRecommendation
@@ -161,6 +238,7 @@ class EvaluationReport(FrozenModel):
     baseline_report_id: str | None = None
     proposal_artifact_sha256: str | None = None
     evaluated_artifact_sha256: str
+    evaluated_evidence_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     limitations: tuple[str, ...] = ()
 
 
@@ -173,6 +251,7 @@ class HumanDecision(FrozenModel):
     actor_role: str
     rationale: str = Field(min_length=1, max_length=4000)
     report_id: str
+    adjustments: tuple[ReviewerAdjustment, ...] = ()
     decided_at: datetime = Field(default_factory=utc_now)
     source: str = "explicit_command_input"
     authority_context: str = "offline_unverified_actor"
@@ -198,6 +277,7 @@ class StageReview(FrozenModel):
     report_id: str | None = None
     report_json_uri: str | None = None
     report_markdown_uri: str | None = None
+    review_profile: ReviewProfileRef | None = None
     decision: HumanDecision | None = None
 
 
@@ -214,13 +294,15 @@ class ProjectDossier(FrozenModel):
     """Single mutable project record; evaluation inputs are frozen snapshots."""
 
     schema_version: str = "axcalib.dossier/v1alpha1"
-    project_id: str
+    project_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
     display_id: str
     title: str = Field(min_length=1, max_length=300)
     revision: int = Field(ge=1)
     status: ProjectStatus
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
+    review_context: ReviewContext = Field(default_factory=ReviewContext)
+    review_profile: ReviewProfileRef | None = None
     artifacts: tuple[ArtifactRef, ...] = ()
     registration: StageReview = Field(default_factory=StageReview)
     execution: ExecutionRecord = Field(default_factory=ExecutionRecord)

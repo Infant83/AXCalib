@@ -22,6 +22,7 @@
 |---|---|
 | `config/axcalib.toml` | 작은 offline 기본값 |
 | `config/axcalib.expert.example.toml` | on-prem adapter 구성 예시 |
+| `config/review_profiles/*.yaml` | version/hash-bound 등록·완료 심사기준 |
 | `docs/schemas/runtime-config.schema.json` | 허용 키·타입·범위 |
 | `docs/api/openapi.v1alpha1.json` | 요청별 JSON과 상태 계약 |
 

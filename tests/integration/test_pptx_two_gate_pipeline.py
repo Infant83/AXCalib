@@ -1,5 +1,6 @@
 import asyncio
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -189,3 +190,24 @@ def test_notification_failure_keeps_registration_out_of_hitl_pending(
     unchanged = client.service.dossiers.load(dossier.project_id)
     assert unchanged.status is ProjectStatus.REGISTRATION_READY
     assert unchanged.notifications == ()
+
+
+def test_sidecar_change_after_registration_fails_closed(tmp_path: Path) -> None:
+    source = tmp_path / "proposal.pptx"
+    sidecar = tmp_path / "proposal.axcalib.json"
+    shutil.copy2(SOURCE, source)
+    shutil.copy2(SIDECAR, sidecar)
+    client = AXCalib(tmp_path / "sidecar-integrity")
+    dossier = client.register_case(
+        source,
+        title="sidecar 무결성",
+        sidecar_path=sidecar,
+        project_id="sidecar-integrity-001",
+    )
+    client.submit_registration(dossier.project_id)
+    data = json.loads(sidecar.read_text(encoding="utf-8"))
+    data["slides"][0]["summary"] += " 변경"
+    sidecar.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="sidecar evidence changed"):
+        client.evaluate(dossier.project_id, "registration")
