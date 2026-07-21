@@ -5,10 +5,26 @@
 
 ## Unreleased
 
+### 추가
+
+- project create/update의 dossier와 audit를 묶는 append-only hash-chain transaction journal
+- `project.transaction.reconcile@v1alpha1` library pipeline과 thin recovery script
+- prepare, dossier, audit 직후 synthetic crash 3종과 반복 reconciliation evaluation
+
+### 변경
+
+- 등록·완료 HITL dossier 상태를 적용하기 전에 report JSON/Markdown과 recorded outbox hash를 고정한다.
+- audit event append를 event ID 기준 idempotent operation으로 강화했다.
+
+### 현재 검증
+
+- offline tests 88 passed, evaluation 9 groups, validation 0 errors/0 warnings, Ruff/Pyright passed
+- project dossier/audit recovery는 검증됐지만 education transaction, report/outbox producer와 stale-lock
+  cleanup은 아직 진행 중이다.
+
 ### 다음 변경 후보
 
-- WP-01.R1: dossier, report, audit, notification outbox를 함께 복구하는 transaction journal과
-  reconciliation
+- WP-01.R1.2: education, report/outbox producer, stale lock과 orphan journal recovery
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증
 - 승인된 rubric과 사람 gold label 기반 품질 평가
 - Typer CLI parity 이후 API, worker, review Web App

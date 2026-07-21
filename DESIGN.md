@@ -396,9 +396,12 @@ Agent와 LLM에는 final transition repository 권한을 주지 않는다.
 
 notification adapter가 실패하면 `*_hitl_pending` 전이를 완료하지 않는다. 현재 local reference는
 pending/failed/recorded JSON outbox, deterministic dedupe와 retry를 제공하고 downstream recording이
-성공한 뒤에만 domain 전이를 진행한다. 다만 dossier/enrollment, outbox와 audit를 하나의
-transaction journal로 commit하거나 crash 뒤 reconcile하는 기능은 아직 없다. 운영에서는
-idempotent worker가 GitLab MR 또는 email을 전달하고 cross-file recovery를 보장해야 한다.
+성공한 뒤에만 domain 전이를 진행한다. WP-01.R1.1에서는 project command의 dossier/audit를
+revision/hash-bound append-only transaction journal로 묶고, report JSON/Markdown과 recorded outbox를
+HITL 전이의 hash prerequisite로 고정했다. crash 뒤 reconcile은 dossier/audit만 idempotent하게
+보충하며 notification adapter를 다시 호출하지 않는다. EducationEnrollment와 report/outbox producer,
+stale-lock/orphan cleanup은 아직 같은 transaction 경계가 아니다. 운영에서는 idempotent worker가
+GitLab MR 또는 email을 전달하고 database outbox를 포함한 cross-file recovery를 보장해야 한다.
 
 ## 7. 등록심의 Pipeline
 

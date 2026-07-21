@@ -91,7 +91,8 @@ Intelligence reference contract가 통과했다. hash-bound review policy regist
 manifest, 작은 synthetic lexical retrieval baseline, strict structured model evaluator와 사용자 승인
 하의 live registration smoke를 포함한다. 독립 freeze/update pipeline, dossier JSON Schema,
 filesystem lock, local idempotency, durable recording outbox와 effective-config manifest도 reference
-수준으로 검증했다. 단, T1의 full PipelineContext/checkpoint/cancel, Typer CLI, cross-file recovery와
+수준으로 검증했고 project dossier/audit transaction recovery도 R1.1에서 통과했다. 단, T1의 full
+PipelineContext/checkpoint/cancel, Typer CLI, education/report-outbox producer/stale-lock recovery와
 운영 품질평가는 남아 있으므로 T1 전체 완료로 기록하지 않는다.
 
 2026-07-21 `WP-02.Q1`에서는 제공 PPTX의 16/16 slide를 제한형 embedded-image renderer로
@@ -641,6 +642,8 @@ P0 이후 다음 결정이 필요하다.
 - [x] SkillBoss Qwen3.5 Plus proxy의 structured text/vision capability와 exact-ID 분리 contract
 - [x] SkillBoss Qwen Plus full registration의 JSON-object HTTP 500 원인복구와 HITL pending smoke
 - [x] model-independent multimodal probe와 GPT-4o proxy text/vision 대조; GLM vision 실패 경계
+- [x] project dossier/audit transaction journal과 3개 write-boundary crash/reconcile reference
+- [ ] education/report-outbox producer transaction과 stale-lock/orphan recovery
 - [ ] exact on-prem `Qwen3.5-397B-A17B` capability 및 full two-gate quality 검증
 - [x] synthetic stage-aware retrieval baseline과 제한된 live registration smoke
 - [x] 사용자 최신 지시로 local/offline slice 구현 범위 승인

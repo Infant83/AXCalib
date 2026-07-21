@@ -325,6 +325,8 @@ flowchart TB
         direction LR
         M00["M00 Pipeline Kernel"]
         M01["M01 Dossier / Snapshot"] --> M02["M02 State / Approval"]
+        M01 --> M10["M10 Runtime / Transaction Recovery"]
+        M02 --> M10
     end
 
     subgraph C["Capability Modules"]
@@ -337,13 +339,14 @@ flowchart TB
         M05 --> M07["M07 Reports"]
         M02 --> M08["M08 Review / Notification"]
         M07 --> M08
+        M08 --> M10
     end
 
     subgraph O["Composition"]
         direction LR
         PC["Verified Local Pipeline Contracts"] --> M09["M09 Workflow Runtime"]
         EP["Education Program / Enrollment\nallowlisted milestone composition"] --> M09
-        AP["Validated Adapter Port Contracts"] --> M10["M10 Runtime Profiles"]
+        AP["Validated Adapter Port Contracts"] --> M10
     end
 
     subgraph I["Delivery Interfaces"]
@@ -361,6 +364,7 @@ flowchart TB
     M06 --> PC
     M07 --> PC
     M08 --> PC
+    M10 --> PC
     M01 --> EP
     M02 --> EP
     M08 --> EP
@@ -415,6 +419,33 @@ stateDiagram-v2
 
 `stale`은 현재 dossier에 자동 병합하지 않는다. `failed_retryable` 재시도는 같은 idempotency
 key를 사용하고 새 평가·알림·결정을 중복 생성하지 않는다.
+
+### 6.1 WP-01.R1 local transaction recovery
+
+```mermaid
+flowchart LR
+    CMD["Project command"] --> PREP["prepared\nproject/revision/command/idempotency"]
+    PREP --> REQ{"report/outbox\nhash + recorded?"}
+    REQ -->|yes| APPLY["apply dossier CAS"]
+    APPLY --> AUDIT["append audit once"]
+    AUDIT --> COMMIT["committed"]
+    REQ -->|no| BLOCK["blocked\nno state promotion"]
+    PREP -. crash .-> REC["reconcile"]
+    APPLY -. crash .-> REC
+    AUDIT -. crash .-> REC
+    REC --> REQ
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class PREP,APPLY,AUDIT,COMMIT safe;
+    class CMD,REQ,REC wait;
+    class BLOCK stop;
+```
+
+현재 recovery는 project dossier/audit를 적용하고 report/outbox는 immutable prerequisite로 확인한다.
+notification adapter를 재호출하지 않는다. EducationEnrollment, report/outbox producer와 stale-lock
+quarantine은 R1.2 범위다.
 
 ## 7. Delivery Wave
 

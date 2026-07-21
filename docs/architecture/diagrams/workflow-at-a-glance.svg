@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
   <title id="title">AXCalib 교육 프로그램과 프로젝트 인증 모듈형 워크플로 구조도</title>
-  <desc id="desc">교육 프로그램, 학습자 가입 목표, 프로젝트 두 단계 인증, 제한형 PPT 렌더와 hash-bound gold evidence, Qwen 및 대체 multimodal provider proxy와 exact checkpoint 검증 경계, 전달 인터페이스, 국소 파이프라인, 도메인 모듈, 사람 승인 불변조건과 개발 Wave를 보여주는 인포그래픽</desc>
+  <desc id="desc">교육 프로그램, 학습자 가입 목표, 프로젝트 두 단계 인증, local transaction recovery, 제한형 PPT 렌더와 hash-bound gold evidence, Qwen 및 대체 multimodal provider proxy와 exact checkpoint 검증 경계, 전달 인터페이스, 국소 파이프라인, 도메인 모듈, 사람 승인 불변조건과 개발 Wave를 보여주는 인포그래픽</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#172033" flood-opacity="0.12"/>
@@ -27,7 +27,7 @@
   <text x="60" y="56" class="title">AXCalib — Composable Workflow Architecture</text>
   <text x="60" y="86" class="subtitle">Versioned Program → Enrollment Goals → Project Two Gates → Authorized Completion</text>
   <rect x="1330" y="42" width="210" height="36" rx="18" fill="#172033"/>
-  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">v0.3-p1 · EDU REF</text>
+  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">v0.3-p1 · TX R1A</text>
 
   <!-- Delivery lane -->
   <rect x="60" y="120" width="1080" height="100" rx="18" fill="#EEF4FF" stroke="#BFD2FF" filter="url(#shadow)"/>
@@ -82,7 +82,7 @@
   <g>
     <rect x="245" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="325" y="451" class="box-title">Dossier</text>
-    <text x="325" y="474" class="box-note">init · update · freeze</text>
+    <text x="325" y="474" class="box-note">init · freeze · reconcile</text>
     <rect x="420" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="500" y="451" class="box-title">Evidence</text>
     <text x="500" y="474" class="box-note">render · gold · quality</text>
@@ -109,7 +109,7 @@
     <text x="325" y="629" class="box-note">state machine</text>
     <rect x="420" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
     <text x="500" y="606" class="box-title">Dossier / Programs</text>
-    <text x="500" y="629" class="box-note">revision · enrollment</text>
+    <text x="500" y="629" class="box-note">revision · journal</text>
     <rect x="595" y="576" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#5B6578"/>
     <text x="675" y="606" class="box-title">Retrieval</text>
     <text x="675" y="629" class="box-note">stage-aware</text>
@@ -160,7 +160,7 @@
     <circle cx="1222" cy="378" r="5" fill="#FD6C6A"/>
     <text x="1240" y="383">배정 mentor 승인 우회 금지</text>
     <circle cx="1222" cy="430" r="5" fill="#FD6C6A"/>
-    <text x="1240" y="435">revision · snapshot · stale 검증</text>
+    <text x="1240" y="435">revision · journal · stale 검증</text>
     <circle cx="1222" cy="482" r="5" fill="#FD6C6A"/>
     <text x="1240" y="487">evidence 없으면 insufficient</text>
     <circle cx="1222" cy="534" r="5" fill="#FD6C6A"/>
@@ -172,7 +172,7 @@
   </g>
   <rect x="1215" y="687" width="290" height="78" rx="12" fill="#252F45" stroke="#465066"/>
   <text x="1360" y="716" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">현재 구현 상태</text>
-  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">JSON contract + proxy registration</text>
+  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Project recovery + JSON contract</text>
   <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Exact 397B + completion/gold pending</text>
 
   <!-- Delivery waves -->
@@ -187,7 +187,7 @@
     <rect x="370" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="510" y="906" class="wave-title">Wave 1 · WP-01 / WP-01E</text>
     <text x="510" y="931" class="wave-note">Dossier + Education composition</text>
-    <text x="510" y="956" class="wave-note">local reference · recovery 남음</text>
+    <text x="510" y="956" class="wave-note">project recovery · broader R1.2 남음</text>
 
     <path class="arrow" d="M 650 930 L 672 930"/>
     <rect x="680" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>

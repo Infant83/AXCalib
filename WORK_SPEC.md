@@ -255,6 +255,7 @@ extensions
 | FR-050 | Deterministic slide render | 지원하는 PPTX fixture는 source/image SHA-256을 가진 slide별 manifest로 렌더하고 지원 밖 합성 slide는 fail-closed | Must |
 | FR-051 | Evidence quality baseline | 검토 locator gold set과 field coverage, locator recall, criterion traceability, unsupported-claim 지표를 hash-bound fixture로 회귀 | Must |
 | FR-052 | Structured-output compatibility | `json_object`에 literal JSON과 schema contract를 포함하고 wrapped upstream error를 safe identifier로 진단; model-independent multimodal proxy/deployment probe 제공 | Must |
+| FR-053 | Project transaction recovery | project command의 dossier/audit 변경을 revision/hash-bound append-only journal로 복구하고 HITL report/recorded outbox 불일치와 stale revision을 fail-closed | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -845,6 +846,7 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 25. 과정별 progress·milestone·프로젝트 인증 조합 | FR-044~049, education lifecycle, ADR-017 | Actual-PPT offline reference implemented; rollout/auth/credential pending |
 | 26. 실제 PPT visual provenance와 근거 품질 회귀 | FR-050~051, ADR-015, evidence-quality eval | Restricted image-only fixture baseline implemented; general render/VLM pending |
 | 27. SkillBoss update, HTTP 500 원인복구와 유사 multimodal 비교 | FR-052, ADR-019, WP-05.Q2 recovery report | Qwen/GPT-4o proxy registration verified; exact on-prem/completion/gold pending |
+| 28. project cross-file transaction journal과 crash recovery | FR-053, ADR-020, WP-01.R1.1 recovery report | Dossier/audit local slice verified; education/producer/stale-lock recovery pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 
@@ -883,8 +885,9 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] 실제 image-only PPTX의 16/16 deterministic render manifest와 13개 hash-bound gold locator 품질 eval
 - [x] JSON-object schema contract, wrapped-upstream safe diagnostic와 model-independent multimodal probe
 - [x] SkillBoss Qwen Plus/GPT-4o proxy registration HITL smoke; GLM vision 실패 경계 기록
+- [x] project dossier/audit append-only transaction journal, HITL artifact prerequisite와 idempotent recovery
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
-- [ ] full PipelineContext/checkpoint/cancel과 cross-file recovery/reconciliation
+- [ ] full PipelineContext/checkpoint/cancel과 education/report-outbox producer/stale-lock recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
 - [ ] data/security 승인
 - [ ] pilot 시작
@@ -905,3 +908,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-21 | v0.3-p1 evidence-q1 | 제한형 actual-PPT render manifest, 13개 hash-bound gold locator와 evidence traceability 품질 eval 추가 |
 | 2026-07-21 | v0.3-p1 qwen-capability-q1 | canonical OpenAI-compatible Qwen capability script, alias/exact identity guard, explicit structured-output dialect와 SkillBoss proxy 검증 추가 |
 | 2026-07-22 | v0.3-p1 skillboss-http500-q2 | SkillBoss update, JSON-object 500 원인복구, safe wrapped error와 generic multimodal Qwen/GPT-4o/GLM 비교 추가 |
+| 2026-07-22 | v0.3-p1 transaction-r1a | project dossier/audit hash-chain journal, HITL artifact prerequisite와 idempotent reconciliation 추가 |

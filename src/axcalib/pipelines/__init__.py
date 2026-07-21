@@ -25,6 +25,11 @@ from axcalib.pipelines.project import (
     TwoGatePptxPipeline,
     TwoGatePptxRequest,
 )
+from axcalib.pipelines.recovery import (
+    TransactionReconcilePipeline,
+    TransactionReconcilePipelineResult,
+    TransactionReconcileRequest,
+)
 
 __all__ = [
     "LocalPipeline",
@@ -38,6 +43,9 @@ __all__ = [
     "PipelineRegistry",
     "TwoGatePptxPipeline",
     "TwoGatePptxRequest",
+    "TransactionReconcilePipeline",
+    "TransactionReconcilePipelineResult",
+    "TransactionReconcileRequest",
     "BindProjectCommand",
     "DecideProgramCompletionCommand",
     "EducationCommand",

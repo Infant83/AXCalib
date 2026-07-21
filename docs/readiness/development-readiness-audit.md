@@ -39,7 +39,7 @@ template, 승인된 gold label, on-prem model, 운영 notification adapter, CLI/
 | 데이터·보안 | synthetic-only, env secret, 원문 최소화 | Conditional | 실제 data classification/DPIA 미승인 |
 | 시험 | read-only validation, offline test/eval | Supplied PPTX regression verified | `prep.ps1`과 static checks |
 | 문서·교육 | product brief, manual, diagram, comic | Ready | `docs/manuals`와 시각 자산 |
-| 운영 | local outbox/retry는 reference; provider/RBAC/reconciliation/observability | Not ready | WP-06 전 NO-GO |
+| 운영 | local outbox/retry와 project dossier/audit recovery는 reference; provider/RBAC/broader reconciliation/observability | Not ready | WP-06 전 NO-GO |
 | Frontend | API boundary와 역할은 정의 | Decision pending | 3개 후보 중 stack/design owner 선택 필요 |
 
 ## 이번 감사에서 닫은 결함
@@ -76,7 +76,7 @@ template, 승인된 gold label, on-prem model, 운영 notification adapter, CLI/
 | B-08 | on-prem Qwen capability, endpoint allowlist와 data egress 승인 | on-prem/live 운영 전 | Model/Security Owner |
 | B-09 | 실제 template과 labeled retrieval/model gold set | G3 품질승격 전 | Data/Evaluation Owner |
 | B-10 | program publish/retire/migration, 재수강·면제·credential 정책 | 교육 pilot 전 | Course/Product Owner |
-| B-11 | dossier/enrollment/audit/outbox reconciliation | API/worker 전 | Tech/Platform Owner |
+| B-11 | education/report-outbox producer/stale-lock reconciliation | API/worker 전 | Tech/Platform Owner |
 | B-12 | exact `Qwen3.5-397B-A17B` full registration/completion와 deployment fingerprint | G3 품질승격 전 | Model/Evaluation Owner |
 
 ## 구현된 local/offline slice
@@ -100,8 +100,10 @@ template, 승인된 gold label, on-prem model, 운영 notification adapter, CLI/
 14. versioned program/enrollment, typed milestone과 actual-PPT project roll-up/program HITL 예제
 15. Qwen Plus와 GPT-4o provider proxy의 supplied-fixture registration report/notification/HITL smoke
 16. generic multimodal text/vision probe와 JSON-object schema compatibility contract
+17. project dossier/audit append-only journal, HITL artifact prerequisite와 3-boundary crash recovery
 
-full checkpoint/cancel, cross-file reconciliation, stale-lock recovery와 독립 CLI는 아직 남았다.
+full checkpoint/cancel, education/report-outbox producer reconciliation, stale-lock recovery와 독립 CLI는
+아직 남았다.
 embedding, Qdrant, exact on-prem Qwen registration/completion·gold, multi-model calibration, FastAPI, email/GitLab, Web UI는 이 slice에
 넣지 않았다.
 

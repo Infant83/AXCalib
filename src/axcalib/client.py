@@ -22,6 +22,9 @@ from axcalib.pipelines import (
     EducationProgramPipeline,
     LocalProjectService,
     PipelineRegistry,
+    TransactionReconcilePipeline,
+    TransactionReconcilePipelineResult,
+    TransactionReconcileRequest,
     TwoGatePptxPipeline,
     TwoGatePptxRequest,
 )
@@ -98,6 +101,11 @@ class AXCalib:
             EducationProgramPipeline.pipeline_id,
             EducationProgramPipeline.pipeline_version,
             lambda: EducationProgramPipeline(self.education),
+        )
+        self.registry.register(
+            TransactionReconcilePipeline.pipeline_id,
+            TransactionReconcilePipeline.pipeline_version,
+            lambda: TransactionReconcilePipeline(self.service.transactions),
         )
 
     @classmethod
@@ -239,6 +247,31 @@ class AXCalib:
         """Async equivalent of :meth:`run_education`."""
 
         return await asyncio.to_thread(self.run_education, request)
+
+    def reconcile_transactions(
+        self,
+        transaction_id: str | None = None,
+    ) -> TransactionReconcilePipelineResult:
+        """Reconcile one or all local project transaction journals."""
+
+        pipeline = self.registry.create(
+            TransactionReconcilePipeline.pipeline_id,
+            TransactionReconcilePipeline.pipeline_version,
+        )
+        result = pipeline.run(
+            TransactionReconcileRequest(transaction_id=transaction_id)
+        )
+        if not isinstance(result, TransactionReconcilePipelineResult):
+            raise TypeError("transaction reconcile pipeline returned an invalid result")
+        return result
+
+    async def areconcile_transactions(
+        self,
+        transaction_id: str | None = None,
+    ) -> TransactionReconcilePipelineResult:
+        """Async equivalent of :meth:`reconcile_transactions`."""
+
+        return await asyncio.to_thread(self.reconcile_transactions, transaction_id)
 
     def register_case(
         self,

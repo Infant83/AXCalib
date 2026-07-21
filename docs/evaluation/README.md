@@ -7,3 +7,4 @@
 - [WP-02.Q1 Actual-PPT Evidence Quality 개발·코드리뷰](wp02-actual-ppt-evidence-quality-report.md)
 - [WP-05.Q1 Qwen3.5 Capability 검증·코드리뷰](qwen35-capability-validation-report.md)
 - [WP-05.Q2 SkillBoss HTTP 500 복구·멀티모달 비교](wp05-q2-skillboss-http500-recovery-report.md)
+- [WP-01.R1.1 Local Transaction Recovery 개발·검증](wp01-r1-transaction-recovery-report.md)

@@ -61,6 +61,8 @@ REQUIRED_PATHS = (
     "docs/evaluation/education-program-wp01-development-report.md",
     "docs/evaluation/wp02-actual-ppt-evidence-quality-report.md",
     "docs/evaluation/qwen35-capability-validation-report.md",
+    "docs/evaluation/wp01-r1-transaction-recovery-report.md",
+    "docs/adr/ADR-020-local-project-transaction-journal.md",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -98,10 +100,13 @@ REQUIRED_PATHS = (
     "src/axcalib/evaluation/model.py",
     "src/axcalib/models/openai_compatible.py",
     "src/axcalib/models/capability.py",
+    "src/axcalib/runtime/transactions.py",
+    "src/axcalib/pipelines/recovery.py",
     "src/axcalib/policies/registry.py",
     "scripts/pipelines/run_two_gate_pptx.py",
     "scripts/pipelines/export_schemas.py",
     "scripts/pipelines/run_dossier_freeze.py",
+    "scripts/pipelines/run_transaction_reconciliation.py",
     "scripts/pipelines/probe_qwen35_capabilities.py",
     "examples/education_project_lifecycle/README.md",
     "examples/education_project_lifecycle/run_full_lifecycle.py",
@@ -119,6 +124,7 @@ REQUIRED_PATHS = (
     "evals/vector_contract_smoke.py",
     "evals/model_contract_smoke.py",
     "evals/qwen_capability_contract.py",
+    "evals/transaction_recovery.py",
     "evals/datasets/retrieval_queries.json",
     "evals/datasets/oled_qc_pptx_evidence_gold.json",
 )
@@ -931,6 +937,7 @@ def run_eval() -> int:
         "evals/vector_contract_smoke.py",
         "evals/model_contract_smoke.py",
         "evals/qwen_capability_contract.py",
+        "evals/transaction_recovery.py",
     ):
         result = _run([sys.executable, script])
         if result:

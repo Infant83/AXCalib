@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-skillboss-http500-q2
-phase: P2 Domain hardening after P5 provider compatibility
+baseline: v0.3-p1-transaction-r1a
+phase: P2 Domain hardening
 gate: G2 Domain hardening
-gate_status: provider_compatibility_evidence_added_hardening_ready
-status: ready_for_transaction_reconciliation
+gate_status: project_transaction_recovery_verified_broader_hardening_active
+status: wp01_r1_in_progress
 current_work_package: WP-01 Dossier and state hardening
 active_slice: WP-01.R1 transaction-journal-reconciliation
-active_slice_status: ready
+active_slice_status: active
 next_gate: G2 Domain hardening
 schedule_mode: dependency_only
 updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-003
+last_history_id: HIST-2026-07-22-004
 ---
 
 # AXCalib Project Execution Ledger
@@ -61,11 +61,11 @@ last_history_id: HIST-2026-07-22-003
 |---|---|
 | 현재 Phase | **P2 Domain hardening**; P5 provider compatibility Q2 완료 |
 | 현재 Work Package | **WP-01 Dossier and state hardening** |
-| Active Slice | **WP-01.R1 Transaction Journal / Reconciliation** (`ready`) |
-| 현재 Gate | **G2 Domain offline reference / hardening ready** |
+| Active Slice | **WP-01.R1 Transaction Journal / Reconciliation** (`active`; R1.1 project recovery verified) |
+| 현재 Gate | **G2 Domain offline reference / hardening in progress** |
 | 다음 Gate | **G2 Domain hardening** |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 79 tests passed, 8 eval groups passed, validation 0 errors/0 warnings |
+| 최근 회귀 | 88 tests passed, 9 eval groups passed, validation 0 errors/0 warnings, Ruff/Pyright passed |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·CLI/API/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -103,7 +103,7 @@ gantt
     WP-02.Q1 Actual-PPT evidence quality :done, wp02q1, 2026-07-21, 1d
     WP-05.Q1 Qwen proxy capability      :done, wp05q1, after wp02q1, 2d
     WP-05.Q2 Provider compatibility     :done, wp05q2, after wp05q1, 2d
-    WP-01.R Recovery hardening          :crit, wp01r, after wp05q2, 6d
+    WP-01.R Recovery hardening          :active,crit, wp01r, after wp05q2, 6d
     WP-03 Gold rubric evaluation        :crit, wp03, after wp02q1, 8d
     WP-04 Retrieval benchmark           :wp04, after wp03, 10d
     WP-05 Model and calibration         :wp05, after wp04, 10d
@@ -127,7 +127,7 @@ gantt
 |---|---|---|---|
 | P0 Planning | baseline 문서·정책 | `offline_reference` | G0 Owner/use-case 공식 sign-off 남음 |
 | P1 Harness | WP-00 | `verified` | G1 local validate/test/eval 통과 |
-| P2 Domain | WP-01, WP-01E, R1 | `ready` | G2 local flow 통과; provider compatibility 긴급 slice 뒤 transaction journal/recovery 진행 |
+| P2 Domain | WP-01, WP-01E, R1 | `active` | project dossier/audit R1.1 검증; education/producer/stale-lock R1.2 진행 |
 | P3 Evidence | WP-02, Q1 | `contract_verified` | 제한형 actual-PPT render/locator/coverage 완료; general VLM 남음 |
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
@@ -142,7 +142,7 @@ gantt
 |---|---|---|---|
 | G0 Alignment | `reference_ready` | 제품명·철학·T1·설계 기준 정렬 | Product/Evaluation Owner와 첫 공식 use case |
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
-| G2 Domain MVP | `offline_reference` | dossier/snapshot/two-gate/education lifecycle | full checkpoint와 cross-file recovery |
+| G2 Domain MVP | `hardening_in_progress` | dossier/snapshot/two-gate/education + project transaction R1.1 | education/producer/stale-lock recovery와 full checkpoint |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
 | G4 Interfaces | `not_started` | thin working scripts만 존재 | Typer CLI, API, async/batch contract |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
@@ -201,7 +201,7 @@ Exit Evidence:
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `ready` |
+| 상태 | `active`; R1.1 project dossier/audit recovery verified, R1.2 pending |
 | 목적 | dossier, snapshot/report, audit와 notification outbox의 다중 파일 변경을 journal로 복구·대조 가능하게 고정 |
 | 대상 Module | M01 dossier, M02 state/approval, M08 audit/notification |
 | 입력 | 현재 filesystem CAS, atomic file write, durable recording outbox와 failure-injection fixture |
@@ -220,12 +220,21 @@ Exit Evidence:
 
 Exit Evidence:
 
-- [ ] journal record가 project/revision/command/idempotency key와 대상 artifact를 연결한다.
-- [ ] failure injection 각 지점에서 재시작 후 dossier/report/audit/outbox가 일관된다.
-- [ ] reconcile 반복 실행이 idempotent하고 이미 commit된 notification을 중복 생성하지 않는다.
-- [ ] 사람 승인·필수 알림·stale revision 불변조건이 recovery 중에도 유지된다.
-- [ ] 현재 76 tests와 8 eval groups를 포함한 전체 offline 회귀가 통과한다.
-- [ ] 새 위험·결정과 module/diagram/PROJECT_STATE 변경을 기록한다.
+- [x] journal record가 project/revision/command/idempotency key와 대상 artifact를 연결한다.
+- [ ] failure injection 각 지점에서 재시작 후 dossier/report/audit/outbox가 일관된다. Project
+  dossier/audit 3개 boundary와 HITL prerequisite는 통과; producer/enrollment boundary는 남음.
+- [x] reconcile 반복 실행이 idempotent하고 이미 commit된 notification을 중복 생성하지 않는다.
+- [x] 사람 승인·필수 알림·stale revision 불변조건이 recovery 중에도 유지된다.
+- [x] 현재 88 tests와 9 eval groups를 포함한 전체 offline 회귀가 통과한다.
+- [x] 새 위험·결정과 module/diagram/PROJECT_STATE 변경을 기록한다.
+
+R1.1 결과:
+
+- `prepared → applying → reconcile_required/reconciling → committed/blocked` append-only hash chain
+- create/update dossier CAS와 audit `append_once` 복구
+- HITL report JSON/Markdown와 recorded outbox hash prerequisite
+- `project.transaction.reconcile@v1alpha1`, working script와 3-boundary synthetic eval
+- 남은 R1.2: education files, report/outbox producer, stale lock/orphan retention
 
 ### 5.4 종료된 최신 Slice — WP-05.Q2 SkillBoss HTTP500 Recovery
 
@@ -259,7 +268,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 1 | P3 / WP-02 | Q1 Actual-PPT evidence quality | `verified` | Docling contract, supplied fixture | 2026-07-21 | 2026-07-21 | G3 quality evidence 일부 |
 | 2 | P5 / WP-05 | Q1 Qwen provider-proxy capability | `partial_verified` | Q1 evidence, user-approved SkillBoss access | 2026-07-21 | 2026-07-21 | G3 evidence 일부 |
 | 3 | P5 / WP-05 | Q2 SkillBoss HTTP500 recovery | `verified_proxy` | Q1 proxy evidence, user-approved live diagnostics | 2026-07-22 | 2026-07-22 | G3 evidence 일부 |
-| 4 | P2 / WP-01 | R1 transaction journal/reconciliation | `ready` | Q2 provider compatibility 종료, current filesystem boundary | TBD | TBD | G2 hardening |
+| 4 | P2 / WP-01 | R1 transaction journal/reconciliation | `active` | Q2 provider compatibility 종료, current filesystem boundary | 2026-07-22 | TBD | G2 hardening |
 | 5 | P5 / WP-03 | Q2 rubric/report gold benchmark | `planned` | Q1 gold evidence, Owner rubric | TBD | TBD | G3 quality |
 | 6 | P7 / CLI | project/education pipeline parity | `planned` | WP-01.R, stable pipeline result | TBD | TBD | G4 |
 | 7 | P4 / WP-04 | embedding/Qdrant/rerank benchmark | `blocked_policy` | approved corpus와 labels | TBD | TBD | G3 quality |
@@ -271,6 +280,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-22 | WP-01.R1.1 project transaction recovery | 3-boundary crash eval, full test/eval, Ruff/Pyright | 88 passed, 9 eval groups, recovery 3/3, Ruff passed, Pyright 0/0 | local project dossier/audit only; broader recovery pending |
 | 2026-07-22 | WP-05.Q2 단계 종료 offline 회귀 | `prep test`, `prep eval`, Ruff, Pyright | 79 passed, 8 eval groups, Ruff passed, Pyright 0/0 | fake/offline contract; live quality 아님 |
 | 2026-07-22 | Qwen Plus generic proxy probe | structured text + synthetic vision | passed, 12,415/10,415ms; deployment false | alias capability만 |
 | 2026-07-22 | Qwen Plus registration recovery | supplied fixture, JSON-object schema contract | 7 criteria, model 77,724ms, notification 1, HITL pending | exact Qwen/공식 심의 아님 |
@@ -521,6 +531,27 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 다음 작업: Active Slice `WP-01.R1 transaction-journal-reconciliation`을 착수한다.
 - 관련 근거: [CHANGELOG](CHANGELOG.md), [인수인계 안내](docs/HANDOFF.md),
   [Memory Bank](.memory-bank/README.md).
+
+### HIST-2026-07-22-004
+
+- Phase / WP / Gate: P2 / WP-01.R1.1 / G2 Domain hardening
+- 상태: `project_dossier_audit_verified_broader_recovery_pending`
+- 작업: project create/update에 revision/hash-bound transaction plan과 append-only JSONL hash chain을
+  적용했다. dossier CAS와 audit append-once를 재개 가능하게 만들고, HITL report/recorded outbox를
+  hash prerequisite로 고정했다. allowlisted reconcile pipeline, facade, script와 synthetic eval을 추가했다.
+- 변경 파일: `runtime/transactions.py`, `pipelines/recovery.py`, project service/client/audit, recovery
+  script·unit/integration/eval, ADR-020, 개발리포트, WORK_SPEC/GOAL/DESIGN/README/CHANGELOG/HANDOFF,
+  module board·Mermaid/SVG, decision/risk와 이 원장.
+- 검증: targeted 9 passed, full 88 passed, 9 eval groups passed, crash boundary 3/3, Ruff passed,
+  Pyright 0 errors/0 warnings, `prep validate` 0 errors/0 warnings.
+- 특이사항: Windows global pytest temp cleanup 권한 오류가 한 번 발생했으나 작업공간 고유
+  `--basetemp` 재실행에서 7/7 통과했다. 외부 모델·실데이터·notification 전송은 사용하지 않았다.
+- 미검증: education enrollment/audit/outbox, report/outbox producer 자체, stale-lock/orphan cleanup,
+  database/distributed worker transaction과 운영 provider.
+- 다음 작업: WP-01.R1.2 broader recovery와 stale-lock quarantine/retention을 구현한다.
+- 관련 근거: [ADR-020](docs/adr/ADR-020-local-project-transaction-journal.md),
+  [WP-01.R1.1 리포트](docs/evaluation/wp01-r1-transaction-recovery-report.md), D-033,
+  R-012/R-029/R-035와 M01/M02/M08/M10 Module Control Board.
 
 ## 10. 단계 종료 업데이트 템플릿
 

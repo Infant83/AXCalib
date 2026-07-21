@@ -14,15 +14,17 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 4. Human Review Web App
 5. 기존 인증시스템 연동
 
-현재 작업공간은 **G3 Intelligence reference baseline과 evidence Q1 검증 완료, Qwen3.5 Plus
-provider-proxy text/vision capability 검증 완료, T1/WP-01 hardening 및 교육 프로그램 composition
-reference 단계**다.
+현재 작업공간은 **G3 Intelligence reference baseline과 evidence Q1 검증 완료, Qwen3.5 Plus/GPT-4o
+provider-proxy registration 검증 완료, T1/WP-01.R1 transaction hardening 및 교육 프로그램
+composition reference 단계**다.
 dossier/snapshot, hash-bound review policy, 제한된 PPTX와 optional Docling manifest, synthetic
 lexical retrieval, deterministic/structured model evaluator, report, recording notification, 두 HITL과
-`two-gate-pptx@v1alpha1` working script가 존재한다. exact on-prem `Qwen3.5-397B-A17B`와 full
-rubric은 미검증이며 SkillBoss proxy full registration은 HTTP 500으로 실패했다. 실제 승인 rubric,
-embedding/Vector DB, multi-model 품질, durable 운영 알림, CLI/API/Web은 아직 완료되지 않았다. 이
-reference slice를 제품 MVP 전체나 모델·retrieval 운영 품질 검증 완료로 기록하지 않는다.
+`two-gate-pptx@v1alpha1` working script가 존재한다. SkillBoss JSON-mode HTTP 500 원인은 복구했고
+project dossier/audit append-only transaction journal과 idempotent reconcile도 local reference로
+검증했다. exact on-prem `Qwen3.5-397B-A17B`, full rubric, education/report-outbox producer transaction,
+stale-lock recovery, embedding/Vector DB, multi-model 품질, durable 운영 알림, CLI/API/Web은 아직
+완료되지 않았다. 이 reference slice를 제품 MVP 전체나 모델·retrieval 운영 품질 검증 완료로
+기록하지 않는다.
 
 ## 2. 기준정보 우선순위
 

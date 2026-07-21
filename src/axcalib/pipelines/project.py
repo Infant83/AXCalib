@@ -14,7 +14,7 @@ from axcalib.audit import AuditLog
 from axcalib.dossier import DossierRepository, RevisionConflictError, SnapshotRepository
 from axcalib.evaluation import EvidenceEvaluator, OfflineEvidenceEvaluator
 from axcalib.ingest import DoclingPptxParser, PptxEvidenceExtractor
-from axcalib.notifications.base import NotificationPort, RecordingNotifier
+from axcalib.notifications.base import NotificationEvent, NotificationPort, RecordingNotifier
 from axcalib.notifications.outbox import DurableNotificationOutbox
 from axcalib.policies import (
     DEFAULT_REVIEW_PROFILE,
@@ -22,6 +22,10 @@ from axcalib.policies import (
     ReviewProfileRegistry,
 )
 from axcalib.reports import ReportRenderer
+from axcalib.runtime import (
+    ProjectTransactionCoordinator,
+    TransactionArtifactRequirement,
+)
 from axcalib.schemas import (
     ArtifactRef,
     AuditEvent,
@@ -112,6 +116,11 @@ class LocalProjectService:
             self.workspace / "outbox",
             self.delivery_notifier,
         )
+        self.transactions = ProjectTransactionCoordinator(
+            self.workspace,
+            dossiers=self.dossiers,
+            audit=self.audit,
+        )
         self.workflow = TwoGateWorkflow(self.notifier)
         self.extractor = PptxEvidenceExtractor()
         self.docling_parser = docling_parser
@@ -159,13 +168,13 @@ class LocalProjectService:
             ),
             audit_event_ids=(event_id,),
         )
-        self.dossiers.create(dossier)
-        self._append_event(
-            event_id,
-            dossier,
-            "project_created",
+        event = AuditEvent(
+            event_id=event_id,
+            project_id=dossier.project_id,
+            event_type="project_created",
             actor_id="submitter:local",
             actor_role=ActorRole.SUBMITTER.value,
+            dossier_revision=1,
             details={
                 "artifact_id": artifact.artifact_id,
                 "artifact_sha256": artifact.sha256,
@@ -173,7 +182,12 @@ class LocalProjectService:
                 "review_profile_sha256": resolved_profile.ref.sha256,
             },
         )
-        return dossier
+        return self.transactions.execute_create(
+            dossier,
+            event,
+            command="project_created",
+            idempotency_key=event_id,
+        )
 
     def submit_registration(self, project_id: str) -> PipelineResult:
         """Submit a draft to the registration-ready checkpoint."""
@@ -633,37 +647,80 @@ class LocalProjectService:
         candidate = dossier.model_copy(
             update={"audit_event_ids": (*dossier.audit_event_ids, event_id)}
         )
-        saved = self.dossiers.save(candidate, expected_revision=expected_revision)
-        self._append_event(
-            event_id,
-            saved,
-            event_type,
+        event = AuditEvent(
+            event_id=event_id,
+            project_id=candidate.project_id,
+            event_type=event_type,
             actor_id=actor_id,
             actor_role=actor_role.value,
+            dossier_revision=expected_revision + 1,
             details=details,
         )
-        return saved
+        return self.transactions.execute_update(
+            candidate,
+            expected_revision=expected_revision,
+            audit_event=event,
+            command=event_type,
+            idempotency_key=event_id,
+            required_artifacts=self._transaction_requirements(
+                candidate,
+                target_revision=expected_revision + 1,
+            ),
+        )
 
-    def _append_event(
+    def _transaction_requirements(
         self,
-        event_id: str,
         dossier: ProjectDossier,
-        event_type: str,
         *,
-        actor_id: str,
-        actor_role: str,
-        details: dict[str, str],
-    ) -> None:
-        self.audit.append(
-            AuditEvent(
-                event_id=event_id,
-                project_id=dossier.project_id,
-                event_type=event_type,
-                actor_id=actor_id,
-                actor_role=actor_role,
-                dossier_revision=dossier.revision,
-                details=details,
-            )
+        target_revision: int,
+    ) -> tuple[TransactionArtifactRequirement, ...]:
+        """Bind report and recorded outbox files before entering a HITL state."""
+
+        if dossier.status is ProjectStatus.REGISTRATION_HITL_PENDING:
+            stage = ReviewStage.REGISTRATION
+            review = dossier.registration
+        elif dossier.status is ProjectStatus.COMPLETION_HITL_PENDING:
+            stage = ReviewStage.COMPLETION
+            review = dossier.completion
+        else:
+            return ()
+        if not review.report_id or not review.report_json_uri or not review.report_markdown_uri:
+            raise RuntimeError("HITL transaction requires both rendered report files")
+        notification = next(
+            (
+                item
+                for item in reversed(dossier.notifications)
+                if item.stage is stage
+                and item.report_id == review.report_id
+                and item.dossier_revision == target_revision
+            ),
+            None,
+        )
+        if notification is None or notification.delivery_status != "recorded":
+            raise RuntimeError("HITL transaction requires a recorded notification")
+        outbox_event = NotificationEvent(
+            event_type=notification.event_type,
+            project_id=dossier.project_id,
+            stage=stage.value,
+            required_role=notification.required_role,
+            revision=target_revision,
+            report_ref=review.report_id,
+        )
+        return (
+            self.transactions.require_file(
+                Path(review.report_json_uri),
+                kind="report_json",
+                expected_report_id=review.report_id,
+            ),
+            self.transactions.require_file(
+                Path(review.report_markdown_uri),
+                kind="report_markdown",
+            ),
+            self.transactions.require_file(
+                self.notifier.path_for(outbox_event),
+                kind="notification_outbox",
+                expected_delivery_status="recorded",
+            ),
         )
 
     def _result(

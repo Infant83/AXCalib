@@ -22,6 +22,7 @@
 | [교육 프로그램/WP-01 개발 리포트](../evaluation/education-program-wp01-development-report.md) | actual-PPT lifecycle, program composition, local hardening과 코드리뷰 |
 | [WP-02.Q1 근거 품질 리포트](../evaluation/wp02-actual-ppt-evidence-quality-report.md) | 제한형 actual-PPT render, gold locator, traceability metric과 코드리뷰 경계 |
 | [WP-05.Q1 Qwen capability 리포트](../evaluation/qwen35-capability-validation-report.md) | provider proxy, exact checkpoint identity, on-prem 환경계약과 full-rubric 실패 경계 |
+| [WP-01.R1.1 transaction recovery 리포트](../evaluation/wp01-r1-transaction-recovery-report.md) | project journal, crash injection, 무중복 reconcile과 남은 경계 |
 | [교육 프로젝트 lifecycle](../workflows/education_project_lifecycle.md) | program→enrollment→project two-gate→program HITL 운영계약 |
 | [AXCalib Workflow & Architecture deck](../presentations/AXCalib_Workflow_Architecture_v0.3-p1.pptx) | 두 Gate·pipeline·module·RAG·Wave를 설명하는 12장 검토자료 |
 | [ADR-013](../adr/ADR-013-composable-local-pipelines.md) | 국소 pipeline 조합 방식을 채택한 결정과 결과 |
@@ -30,6 +31,8 @@
 | [ADR-016](../adr/ADR-016-review-policy-and-openai-compatible-evaluator.md) | hash-bound 심사기준, structured model, OpenAI/on-prem 환경계약 |
 | [ADR-017](../adr/ADR-017-education-program-composition.md) | 교육 program/enrollment와 project 인증 경계, version/roll-up 결정 |
 | [ADR-018](../adr/ADR-018-qwen-capability-and-provider-alias.md) | Qwen provider proxy와 exact deployment identity·structured-output 경계 |
+| [ADR-019](../adr/ADR-019-json-object-contract-and-multimodal-probe.md) | JSON-object provider compatibility와 공통 multimodal probe 경계 |
+| [ADR-020](../adr/ADR-020-local-project-transaction-journal.md) | local project journal, recovery, HITL artifact prerequisite와 남은 범위 |
 
 ## 권장 읽기 순서
 

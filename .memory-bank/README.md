@@ -14,9 +14,10 @@
 - 제품: AXCalib, AX Certification Agent Library
 - 핵심 경계: Agent는 심의 초안을 만들고 승인된 사람이 최종 결정한다.
 - 현재 위치: P2 / WP-01.R1 / G2 Domain hardening
-- Active Slice: transaction journal과 cross-file reconciliation
-- 최근 증거: 79 tests, 8 eval groups, validation 0 errors/0 warnings
+- Active Slice: R1.1 project recovery 완료, R1.2 education/producer/stale-lock 진행 대기
+- 최근 증거: 88 tests, 9 eval groups, validation 0 errors/0 warnings, Ruff/Pyright 통과
 - 최근 해결: SkillBoss proxy의 `json_object` HTTP 500 원인을 JSON keyword/schema contract로 복구
+- 최근 구현: project dossier/audit hash-chain journal과 idempotent reconciliation
 - 모델 경계: Qwen3.5 Plus/GPT-4o provider proxy만 확인; exact `Qwen3.5-397B-A17B`는 미검증
 - 데이터 경계: synthetic 또는 승인된 비식별 fixture만 사용
 - 다음 읽기: `../docs/HANDOFF.md` → `../PROJECT_STATE.md` → `../CHANGELOG.md`
