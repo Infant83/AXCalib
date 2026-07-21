@@ -4,7 +4,7 @@ project: AXCalib
 expanded_name: AX Certification Agent Library
 baseline: v0.3-p1
 created_at: 2026-07-12
-updated_at: 2026-07-16
+updated_at: 2026-07-22
 timezone: Asia/Seoul
 status: g3_intelligence_reference_baseline_verified
 ---
@@ -86,12 +86,18 @@ Library가 안정화된 뒤 같은 기능을 CLI, API, batch worker, on-prem Web
 
 ### Target T1: Offline Evidence-to-Review Vertical Slice
 
-2026-07-16 현재 제공된 image-only PPTX 한 건에 대해 이 흐름의 executable slice와 G3
+2026-07-20 현재 제공된 image-only PPTX 한 건에 대해 이 흐름의 executable slice와 G3
 Intelligence reference contract가 통과했다. hash-bound review policy registry, Docling parser
 manifest, 작은 synthetic lexical retrieval baseline, strict structured model evaluator와 사용자 승인
-하의 live registration smoke를 포함한다. 단, T1의 Typer CLI, 독립 freeze/update pipeline,
-idempotency/checkpoint, effective-config manifest와 운영 품질평가는 남아 있으므로 T1 전체 완료로
-기록하지 않는다.
+하의 live registration smoke를 포함한다. 독립 freeze/update pipeline, dossier JSON Schema,
+filesystem lock, local idempotency, durable recording outbox와 effective-config manifest도 reference
+수준으로 검증했다. 단, T1의 full PipelineContext/checkpoint/cancel, Typer CLI, cross-file recovery와
+운영 품질평가는 남아 있으므로 T1 전체 완료로 기록하지 않는다.
+
+2026-07-21 `WP-02.Q1`에서는 제공 PPTX의 16/16 slide를 제한형 embedded-image renderer로
+재현하고, 13개 reviewed locator와 12개 reference field를 source/sidecar hash에 고정한 품질
+baseline을 추가했다. 이 결과는 해당 fixture의 provenance·coverage·traceability 계약만 검증하며,
+일반 PPTX semantic extraction, VLM 또는 공식 rubric 품질을 의미하지 않는다.
 
 네트워크와 실제 사내 데이터 없이 다음 전체 흐름이 한 번에 실행되는 Python package와 CLI를 첫 Target으로 한다.
 
@@ -114,7 +120,7 @@ dossier 생성
 
 ### T1 지원 범위
 
-- dossier schema: axcalib.dossier/v1alpha1
+- dossier schema: axcalib.dossier/v1alpha2; v1alpha1 explicit migration 지원
 - ID: UUID4 project_id와 별도 human-readable display_id
 - 입력: YAML dossier, Markdown/TXT, 제한된 PPTX synthetic fixture
 - rubric: 등록심의·완료평가를 묶은 version/hash-bound YAML policy pack 1개
@@ -128,6 +134,8 @@ dossier 생성
 - public facade: `AXCalib().evaluate/aevaluate`, expert `from_toml(...)`
 - pipeline kernel: typed context/result/status/registry와 sync/async parity
 - working scripts: dossier freeze, 등록심의, 완료평가, two-gate synthetic entrypoint
+- education composition: immutable program, enrollment goal generation, manual/score/project milestone,
+  program completion HITL
 
 ### T1 수용기준
 
@@ -149,6 +157,9 @@ dossier 생성
 - default TOML과 expert example이 schema를 통과하고 unknown/protected key를 거부한다.
 - OpenAPI request options에 관리자 전용 상태나 HITL 우회 필드가 존재하지 않는다.
 - 적용된 설정이 secret을 제외한 effective-config hash/source map으로 실행기록에 연결된다.
+- 가입이 exact program version/hash를 고정하고 prerequisite에 따라 milestone을 단계적으로 연다.
+- project milestone은 exact enrollment context와 저장된 dossier 상태만 사용한다.
+- 필수 milestone 충족만으로 과정 완료되지 않고 notification과 관리자 HITL에서 대기한다.
 
 ## 5. MVP와 파일럿의 경계
 
@@ -236,6 +247,8 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 - pyproject.toml과 src layout
 - prep.ps1 status/next/validate/test/eval
 - PROJECT_STATE.md, DECISIONS.md, RISK_REGISTER.md
+- PROJECT_STATE 단일 실행 원장의 P/WP/G dependency Gantt, Active Slice, 검증·특이사항과
+  append-only 작업 이력 contract
 - Ruff, Pyright, pytest, coverage, secret scan
 - synthetic-only 기본 설정
 - 관리자 전용 final transition과 mandatory notification reference contract
@@ -259,6 +272,20 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 - `dossier.initialize`, `dossier.update`, `dossier.freeze` 국소 pipeline
 - `scripts/pipelines/run_dossier_freeze.py` working script와 interface boundary test
 
+### WP-01E 교육 프로그램 Composition Reference
+
+- immutable `EducationProgram@version`과 canonical hash
+- 가입 시 `EducationEnrollment` 및 ordered/locked milestone 목표 생성
+- allowlisted manual confirmation, score threshold, project status requirement
+- program/version/enrollment/milestone/learner exact-context project binding
+- project `completion_accepted`를 과정 milestone 근거로 sync
+- 필수 milestone 충족 뒤 관리자 notification과 completion HITL
+- 명시적 approve 또는 selected milestone `return_for_revision`
+- 실제 제안 PPTX와 별도 synthetic 완료 PPTX를 사용한 end-to-end Library 예제
+
+이 WP는 과정 전체 credential 정책, learner identity 인증, program migration 또는 Web course builder를
+완료한 것이 아니다. 상세 경계는 ADR-017과 교육 lifecycle 문서를 따른다.
+
 ### WP-02 Evidence ingestion
 
 - ArtifactRef와 content hash
@@ -266,6 +293,17 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 - Docling PPTX parser
 - slide image rendering adapter
 - source locator, extraction coverage, parse warning
+
+`WP-02.Q1 Actual-PPT Evidence Quality Baseline` 완료 범위:
+
+- single full-slide embedded PNG 또는 true blank만 허용하는 `SlideRenderer` reference adapter
+- 16/16 slide artifact와 source/image SHA-256 render manifest; 13 visual, 3 blank
+- 13개 reviewed locator와 12개 reference field의 hash-bound gold fixture
+- locator recall, field coverage, criterion traceability, unsupported-claim 회귀 eval
+- Docling 16 page / 0 text 결과와 reviewed sidecar evidence의 출처 분리
+
+남은 범위는 실제 복수 template field mapping, 합성 slide를 지원하는 승인된 renderer, OCR/VLM,
+공식 rubric 기반 semantic gold label과 운영 parser sandbox다.
 
 ### WP-03 Rubric과 Evaluation
 
@@ -293,6 +331,10 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 - OpenAI-compatible HTTP client
 - Qwen3.5 primary profile
 - capability probe: text, vision, tool calling, structured output
+- canonical `OPENAI_API_KEY`/`OPENAI_BASE_URL`/`OPENAI_MODEL` deployment script
+- provider alias와 exact checkpoint identity 분리; response model 미보고 시 fail-closed
+- explicit `json_schema`/`json_object` dialect와 output token limit; silent fallback 금지
+- raw output와 hidden reasoning을 보존하지 않는 capability report
 - timeout, retry, concurrency, token/latency logging
 - single/panel/adjudicated runner
 - optional Deep Agents adapter
@@ -564,6 +606,9 @@ P0 이후 다음 결정이 필요하다.
 13. mentor가 없는 완료 제출의 최종 확인 역할
 14. Web frontend stack과 주 디자인 선택
 15. pre-development baseline과 WP-01 synthetic-only slice 승인
+16. 교육 program publish/retire/version owner와 기존 enrollment migration 정책
+17. 과정 완료와 공식 credential 발급을 분리하는 권한·유효기간·재인증 정책
+18. 수업 이수, 점수, 면제, 재수강, 기한을 확인할 trusted source system과 역할
 
 이 결정이 없어도 WP-01~03 synthetic/offline 작업은 진행할 수 있다. 실제 데이터, 모델 품질
 확정, 운영 알림, 인증 정책, 운영 배포는 해당 결정 전에는 진행하지 않는다.
@@ -591,7 +636,12 @@ P0 이후 다음 결정이 필요하다.
 - [x] supplied-PPTX two-gate local pipeline, script, report와 offline eval
 - [x] hash-bound review policy registry와 사람 reviewer adjustment 감사계약
 - [x] optional Docling PPTX adapter와 zero-text parser manifest contract
+- [x] supplied image-only PPTX의 deterministic 16-slide render manifest와 13-locator evidence-quality baseline
 - [x] OpenAI-compatible structured evaluator와 on-prem Qwen3.5 환경계약
+- [x] SkillBoss Qwen3.5 Plus proxy의 structured text/vision capability와 exact-ID 분리 contract
+- [x] SkillBoss Qwen Plus full registration의 JSON-object HTTP 500 원인복구와 HITL pending smoke
+- [x] model-independent multimodal probe와 GPT-4o proxy text/vision 대조; GLM vision 실패 경계
+- [ ] exact on-prem `Qwen3.5-397B-A17B` capability 및 full two-gate quality 검증
 - [x] synthetic stage-aware retrieval baseline과 제한된 live registration smoke
 - [x] 사용자 최신 지시로 local/offline slice 구현 범위 승인
 - [ ] full PipelineContext와 독립 dossier.freeze/update pipeline 구현

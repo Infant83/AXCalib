@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import tomllib
 from pathlib import Path
 from typing import Literal
 
@@ -16,15 +15,26 @@ from axcalib.ingest import DoclingPptxParser
 from axcalib.models import OpenAICompatibleClient
 from axcalib.notifications.base import NotificationPort, RecordingNotifier
 from axcalib.pipelines import (
+    DossierFreezePipeline,
+    DossierInitializePipeline,
+    DossierUpdatePipeline,
+    EducationCommand,
+    EducationProgramPipeline,
     LocalProjectService,
     PipelineRegistry,
     TwoGatePptxPipeline,
     TwoGatePptxRequest,
 )
 from axcalib.policies import DEFAULT_REVIEW_PROFILE, ReviewProfileRegistry
+from axcalib.programs import EducationProgramService
 from axcalib.retrieval import LexicalRetriever, load_historical_cases
+from axcalib.runtime import LocalIdempotencyStore, load_runtime_config
 from axcalib.schemas import (
+    EducationPipelineResult,
+    EducationProgram,
+    EffectiveConfigRef,
     PipelineResult,
+    ProgramRef,
     ProjectDossier,
     ReviewContext,
     ReviewerAdjustment,
@@ -46,6 +56,7 @@ class AXCalib:
         review_profiles: ReviewProfileRegistry | None = None,
         default_review_profile: str = DEFAULT_REVIEW_PROFILE,
         docling_parser: DoclingPptxParser | None = None,
+        effective_config: EffectiveConfigRef | None = None,
     ) -> None:
         self.service = LocalProjectService(
             Path(workspace),
@@ -54,12 +65,39 @@ class AXCalib:
             review_profiles=review_profiles,
             default_review_profile=default_review_profile,
             docling_parser=docling_parser,
+            effective_config=effective_config,
+        )
+        self.idempotency = LocalIdempotencyStore(self.service.workspace / "idempotency")
+        self.education = EducationProgramService(
+            self.service.workspace / "education",
+            dossiers=self.service.dossiers,
+            notifier=self.service.notifier,
         )
         self.registry = PipelineRegistry()
         self.registry.register(
             TwoGatePptxPipeline.pipeline_id,
             TwoGatePptxPipeline.pipeline_version,
             lambda: TwoGatePptxPipeline(self.service),
+        )
+        self.registry.register(
+            DossierInitializePipeline.pipeline_id,
+            DossierInitializePipeline.pipeline_version,
+            lambda: DossierInitializePipeline(self.service),
+        )
+        self.registry.register(
+            DossierUpdatePipeline.pipeline_id,
+            DossierUpdatePipeline.pipeline_version,
+            lambda: DossierUpdatePipeline(self.service),
+        )
+        self.registry.register(
+            DossierFreezePipeline.pipeline_id,
+            DossierFreezePipeline.pipeline_version,
+            lambda: DossierFreezePipeline(self.service),
+        )
+        self.registry.register(
+            EducationProgramPipeline.pipeline_id,
+            EducationProgramPipeline.pipeline_version,
+            lambda: EducationProgramPipeline(self.education),
         )
 
     @classmethod
@@ -75,7 +113,11 @@ class AXCalib:
         """Create an offline-safe runtime with optional Docling and model adapters."""
 
         path = Path(config_path).resolve()
-        config = tomllib.loads(path.read_text(encoding="utf-8"))
+        loaded = load_runtime_config(
+            path,
+            manifest_path=Path(workspace) / "runtime" / "effective-config.json",
+        )
+        config = loaded.value
         profile_name = config["project"]["default_profile"]
         profile = config["profiles"][profile_name]
         implemented: dict[str, set[str]] = {
@@ -123,6 +165,7 @@ class AXCalib:
             review_profiles=review_profiles,
             default_review_profile=default_review_profile,
             docling_parser=DoclingPptxParser() if enable_docling else None,
+            effective_config=loaded.reference,
         )
 
     def run_pptx(self, request: TwoGatePptxRequest) -> WorkflowRunSummary:
@@ -132,7 +175,19 @@ class AXCalib:
             TwoGatePptxPipeline.pipeline_id,
             TwoGatePptxPipeline.pipeline_version,
         )
-        result = pipeline.run(request)
+        if request.idempotency_key:
+            result = self.idempotency.execute(
+                key=request.idempotency_key,
+                operation=(
+                    f"{TwoGatePptxPipeline.pipeline_id}@"
+                    f"{TwoGatePptxPipeline.pipeline_version}"
+                ),
+                request=request,
+                result_type=WorkflowRunSummary,
+                call=lambda: pipeline.run(request),
+            )
+        else:
+            result = pipeline.run(request)
         if not isinstance(result, WorkflowRunSummary):
             raise TypeError("two-gate pipeline returned an invalid result")
         return result
@@ -140,6 +195,8 @@ class AXCalib:
     async def arun_pptx(self, request: TwoGatePptxRequest) -> WorkflowRunSummary:
         """Run the same workflow asynchronously."""
 
+        if request.idempotency_key:
+            return await asyncio.to_thread(self.run_pptx, request)
         pipeline = self.registry.create(
             TwoGatePptxPipeline.pipeline_id,
             TwoGatePptxPipeline.pipeline_version,
@@ -148,6 +205,40 @@ class AXCalib:
         if not isinstance(result, WorkflowRunSummary):
             raise TypeError("two-gate pipeline returned an invalid result")
         return result
+
+    def publish_program(self, program: EducationProgram) -> ProgramRef:
+        """Publish an immutable, allowlisted education program definition."""
+
+        return self.education.publish_program(program)
+
+    def run_education(self, request: EducationCommand) -> EducationPipelineResult:
+        """Run one typed education enrollment command."""
+
+        pipeline = self.registry.create(
+            EducationProgramPipeline.pipeline_id,
+            EducationProgramPipeline.pipeline_version,
+        )
+        if request.idempotency_key:
+            result = self.idempotency.execute(
+                key=request.idempotency_key,
+                operation=(
+                    f"{EducationProgramPipeline.pipeline_id}@"
+                    f"{EducationProgramPipeline.pipeline_version}:{request.action}"
+                ),
+                request=request,
+                result_type=EducationPipelineResult,
+                call=lambda: pipeline.run(request),
+            )
+        else:
+            result = pipeline.run(request)
+        if not isinstance(result, EducationPipelineResult):
+            raise TypeError("education pipeline returned an invalid result")
+        return result
+
+    async def arun_education(self, request: EducationCommand) -> EducationPipelineResult:
+        """Async equivalent of :meth:`run_education`."""
+
+        return await asyncio.to_thread(self.run_education, request)
 
     def register_case(
         self,

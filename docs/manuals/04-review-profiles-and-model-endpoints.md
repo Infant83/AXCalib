@@ -70,12 +70,65 @@ $env:OPENAI_API_KEY = "<on-prem-secret-or-placeholder>"
 $env:OPENAI_BASE_URL = "https://approved-model-gateway.example/v1"
 $env:OPENAI_MODEL = "Qwen3.5-397B-A17B"
 $env:OPENAI_API_MODE = "chat_completions"
+$env:OPENAI_STRUCTURED_OUTPUT_MODE = "json_schema"
+$env:OPENAI_MAX_OUTPUT_TOKENS = "8192"
 ```
 
 사용자가 제안한 `OPENAPI_API_KEY`, `OPENAPI_BASE_URL`도 호환 alias로 읽지만 표준
 `OPENAI_*`가 우선한다. API key 값은 dossier, report, log, fixture에 저장하지 않는다. base URL이
 없으면 OpenAI 공식 endpoint와 Responses API를 사용하고, custom base URL은 기본적으로
 Chat Completions dialect를 사용한다.
+
+`OPENAI_STRUCTURED_OUTPUT_MODE`은 `json_schema` 또는 `json_object`를 명시한다. provider 오류가 나도
+다른 dialect나 model로 자동 대체하지 않는다. 어느 mode에서도 model text는 Pydantic으로 다시
+검증한다. `OPENAI_MAX_OUTPUT_TOKENS`는 긴 rubric 응답의 명시적 생성 한도이며 선택값과 실제 값은
+secret이 아닌 run metadata로 남긴다.
+
+`json_object`는 provider가 schema를 직접 강제하지 않는 dialect다. AXCalib gateway는 literal `JSON`,
+contract name과 compact JSON Schema를 system instructions에 포함한 뒤에도 Pydantic/domain guard로
+재검증한다. 이 계약이 없으면 일부 OpenAI-compatible endpoint는 upstream 400을 반환하고 proxy가
+이를 500으로 감쌀 수 있다. 자세한 원인과 회귀는
+[WP-05.Q2 복구 리포트](../evaluation/wp05-q2-skillboss-http500-recovery-report.md)를 따른다.
+
+## Qwen3.5 배포 전 capability probe
+
+on-prem 배포 전에는 실제 과제 대신 합성 text/image로 route를 검증한다.
+
+```powershell
+uv run --no-sync python scripts/pipelines/probe_qwen35_capabilities.py `
+  --expected-checkpoint Qwen3.5-397B-A17B `
+  --scope deployment `
+  --output output/evaluation/qwen35-onprem-capability.json
+```
+
+`deployment_ready=true`가 되려면 structured text/vision뿐 아니라 endpoint가 반환한 model metadata도
+exact checkpoint와 일치해야 한다. model metadata가 없거나 `qwen3.5-plus` 같은 alias이면 capability가
+성공해도 deployment-ready가 아니다.
+
+개인환경에서 SkillBoss를 사용할 때도 같은 script를 쓰되 일시적으로 SkillBoss key/base URL을
+canonical 환경변수에 연결하고 `--scope provider_proxy`를 사용한다. 이 방식은 사전 호환성 확인일 뿐
+제품 의존성이나 exact on-prem 검증이 아니다. 2026-07-21 상세 결과와 제한은
+[Qwen3.5 capability validation report](../evaluation/qwen35-capability-validation-report.md)를 따른다.
+
+## 대체 multimodal route 비교 probe
+
+Qwen route 장애와 model-independent contract를 구분하려면 같은 canonical 환경변수로 공통 probe를
+실행한다. 기본 `provider_proxy` scope는 text/vision이 모두 통과해도 운영 배포 승인을 뜻하지 않는다.
+
+```powershell
+$env:OPENAI_API_KEY = "<approved-proxy-secret>"
+$env:OPENAI_BASE_URL = "https://approved-proxy.example/v1"
+$env:OPENAI_MODEL = "<approved-multimodal-route>"
+$env:OPENAI_API_MODE = "chat_completions"
+$env:OPENAI_STRUCTURED_OUTPUT_MODE = "json_object"
+
+uv run --no-sync python scripts/pipelines/probe_multimodal_capabilities.py `
+  --scope provider_proxy `
+  --output output/evaluation/multimodal-proxy-capability.json
+```
+
+실제 on-prem deployment 검증은 `--scope deployment --expected-model <exact-served-model-id>`를 함께
+지정해야 한다. 대체 model 결과를 Qwen checkpoint identity 또는 평가품질 동등성으로 환산하지 않는다.
 
 ## 사람 수정 기록
 

@@ -25,17 +25,37 @@
 7. 어느 Agent recommendation도 관리자 final decision을 대체하지 않는다.
 8. local demo decision actor는 인증되지 않았음을 `offline_unverified_actor`로 기록한다.
 
+### 2026-07-21 WP-02.Q1 보강 결정
+
+9. supplied fixture의 visual provenance는 `SlideRenderer` port 뒤의
+   `axcalib.pptx-embedded-image/v1` adapter로 고정한다.
+10. 이 adapter는 단일 uncropped near-full-slide embedded PNG 또는 true blank만 지원하고,
+    text/chart/group/multiple picture/crop/rotation/external image/macro는 fail-closed한다.
+11. render manifest는 source hash, renderer ID, 16개 slide artifact의 relative URI, pixel 크기,
+    byte 수와 image SHA-256을 기록하며 timestamp·절대 output path를 넣지 않는다.
+12. 13개 reviewed locator는 summary 원문 대신 summary hash와 reviewed tag를 가진 gold fixture로
+    관리하고 source/sidecar hash가 바뀌면 로드를 거부한다.
+13. evidence-quality eval은 locator/field coverage, criterion locator 해소와 unsupported assertion을
+    측정한다. 이 지표를 VLM semantic accuracy 또는 공식 rubric 품질로 해석하지 않는다.
+
 ## Consequences
 
 - network, GPU, model 없이 두 Gate와 evidence locator를 재현할 수 있다.
 - sidecar 작성자의 편향이 남으므로 실제 parser/model 품질을 주장할 수 없다.
 - 실제 template이 오면 OOXML field mapping fixture를 먼저 만들고, 필요할 때만 Docling,
-  slide renderer, OCR/VLM adapter를 별도 contract/eval 뒤에 추가한다.
+  일반 slide renderer, OCR/VLM adapter를 별도 contract/eval 뒤에 추가한다.
 - sidecar는 운영 데이터의 장기 표준이 아니라 첫 offline 회귀 fixture다.
+- 제한형 renderer는 Microsoft PowerPoint 설치 여부와 무관하게 재현되지만 일반 PPTX fidelity를
+  제공하지 않는다. 지원 범위를 벗어난 slide를 조용히 부분 렌더하지 않는다.
 
 ## Verification
 
 - `tests/unit/test_pptx_ingest.py`
 - `tests/integration/test_pptx_two_gate_pipeline.py`
+- `tests/unit/test_slide_render.py`
+- `tests/unit/test_evidence_quality.py`
 - `evals/pptx_vertical_slice.py`
+- `evals/evidence_quality.py`
+- `evals/datasets/oled_qc_pptx_evidence_gold.json`
 - `docs/evaluation/oled-qc-pptx-demo.md`
+- `docs/evaluation/wp02-actual-ppt-evidence-quality-report.md`

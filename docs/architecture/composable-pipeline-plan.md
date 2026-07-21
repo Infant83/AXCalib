@@ -1,9 +1,10 @@
 # AXCalib Composable Pipeline 구현계획
 
 이 문서는 AXCalib를 요소 모듈, 재사용 가능한 국소 파이프라인, 전체 workflow, 전달
-interface로 나누는 구현계약을 정의한다. 2026-07-16 현재 allowlisted Registry,
-`two-gate-pptx@v1alpha1`, filesystem application service와 working script의 offline slice가
-실행된다. 이 문서의 full context/checkpoint/idempotency/API graph는 여전히 Target이다.
+interface로 나누는 구현계약을 정의한다. 2026-07-20 현재 allowlisted Registry,
+`two-gate-pptx@v1alpha1`, `dossier.initialize/update/freeze`와
+`education-program-runtime@v1alpha1`의 offline slice가 실행된다. local idempotency는 구현됐지만
+full context/checkpoint/cancel과 API graph는 여전히 Target이다.
 
 전체 흐름과 sequence는 `workflow-blueprint.md`, M00~M13의 현재 상태·선행조건·Exit Evidence는
 `module-delivery-plan.md`, 한 장 요약은 `diagrams/workflow-at-a-glance.svg`를 함께 본다.
@@ -130,7 +131,8 @@ port 구현체는 runtime container가 pipeline 생성자에 주입하며 contex
 
 - 파일, DB, model, retrieval, notification 접근은 port를 통해서만 수행한다.
 - mutation pipeline은 expected_revision, actor, idempotency_key를 요구한다.
-- dossier mutation과 notification outbox 기록은 같은 local transaction에 둔다.
+- 목표 운영계약은 dossier mutation과 notification outbox 기록을 같은 transaction/journal에 둔다.
+  현재 local reference는 각 파일 atomic/CAS와 fail-closed 순서를 제공하지만 cross-file transaction은 없다.
 - 외부 메일/GitLab 전달은 commit 뒤 idempotent worker가 처리한다.
 - pipeline 간 분산 transaction을 만들지 않고 durable checkpoint와 보상 command를 사용한다.
 - retry가 새 평가, 새 알림, 새 final decision을 중복 생성하지 않아야 한다.
@@ -147,6 +149,7 @@ port 구현체는 runtime container가 pipeline 생성자에 주입하며 contex
 | reports | typed evaluation result | Markdown/JSON artifact |
 | notifications | ReviewRequest | outbox/delivery reference |
 | audit | run event와 version manifest | append-only audit reference |
+| programs | EducationProgram, Enrollment command | versioned blueprint, generated goals, progression |
 
 각 모듈은 독립 unit test와 fake/in-memory adapter를 제공한 뒤 local pipeline에 연결한다.
 
@@ -166,6 +169,7 @@ port 구현체는 runtime container가 pipeline 생성자에 주입하며 contex
 | completion.evaluate | 등록 baseline 대비 완료평가 초안 | CompletionEvaluationReport |
 | completion.decide | 관리자 완료 결정 적용 | accepted/not_accepted/needs_changes |
 | report.render | typed result를 전달 형식으로 변환 | Markdown/JSON artifact |
+| education-program-runtime | enroll/start/confirm/score/bind/sync/complete command | progression result 또는 waiting_human |
 
 `registration.evaluate`와 `completion.evaluate`는 내부에서 evidence/retrieval/evaluation/report
 모듈을 사용하지만 final state를 확정하지 않는다. `*.decide`는 관리자 actor와 대상 snapshot을
@@ -228,6 +232,26 @@ dossier.initialize/update
 
 이 recipe들은 새로운 평가 로직이 아니라 동일 pipeline의 연결과 실행정책만 다르게 한다. 공식
 상태를 변경하는 recipe는 항상 domain precondition과 사람 command를 통과한다.
+
+### 7.4 교육 프로그램 조합
+
+`EducationProgram`은 범용 workflow DSL이 아니라 다음 allowlisted contract의 versioned
+composition이다.
+
+~~~text
+program.publish(program_id@version + hash)
+→ enroll(exact version) → generated milestone goals
+→ manual-confirmation / score-assessment / two-gate-pptx
+→ project dossier completion_accepted sync
+→ required milestone aggregation
+→ notification + WAIT administrator program completion
+→ approve 또는 selected milestone return_for_revision
+~~~
+
+project milestone은 program/version/enrollment/milestone/learner context가 모두 같아야 하고,
+caller가 project status를 option으로 전달할 수 없다. program version 변경은 신규 enrollment에만
+적용하며 진행 중 migration은 별도 승인된 command가 생기기 전에는 금지한다. 과정 전체 Gate는
+프로젝트 두 Gate를 대체하지 않는다.
 
 ## 8. Workflow definition과 registry
 
@@ -296,6 +320,9 @@ src/axcalib/
   reports/
   notifications/
   audit/
+  programs/
+    repository.py
+    service.py
   pipelines/
     base.py
     context.py
@@ -305,6 +332,7 @@ src/axcalib/
     evidence.py
     registration.py
     completion.py
+    education.py
     review.py
   workflows/
     base.py
@@ -343,6 +371,7 @@ Work Package 적용:
 | WP | pipeline 산출물 |
 |---|---|
 | WP-01 | PipelineContext/Run/Registry 최소계약, dossier.initialize/update/freeze, working script |
+| WP-01E | program publish/enroll, milestone progression, project roll-up, program completion HITL |
 | WP-02 | evidence.prepare와 parser adapter contract |
 | WP-03 | registration.evaluate, completion.evaluate, report.render의 deterministic baseline |
 | WP-04 | cases.retrieve와 corpus/index pipeline |
@@ -386,10 +415,13 @@ Work Package 적용:
 | pipeline 버전 조합 불일치 | allowlisted registry, compatibility test, run manifest |
 | 부분 side effect와 중복 알림 | local transaction + outbox + idempotency + checkpoint |
 | 사용자 정의 graph의 보안위험 | MVP에서는 arbitrary import/expression 금지, 승인된 recipe만 허용 |
+| 다른 학습자 project의 잘못된 roll-up | exact program/version/enrollment/milestone/learner binding |
+| program version drift | immutable hash pin, 기존 enrollment 자동 migration 금지 |
 
-## 15. 당장 구현할 가장 작은 slice
+## 15. 현재 slice와 다음 작은 slice
 
-WP-01의 첫 slice는 `dossier.freeze/v1alpha1`이다.
+WP-01의 첫 slice인 `dossier.freeze/v1alpha1`과 WP-01E education composition reference는
+구현·검증됐다.
 
 1. typed request/context/result 정의
 2. dossier revision 검증과 canonical SHA-256 snapshot 생성
@@ -398,4 +430,10 @@ WP-01의 첫 slice는 `dossier.freeze/v1alpha1`이다.
 5. `scripts/pipelines/run_dossier_freeze.py`에서 실행
 6. 같은 pipeline을 향후 CLI/API가 호출할 수 있음을 contract test로 검증
 
-이 slice에는 FastAPI, Web, 실제 모델, Vector DB, 실제 데이터가 필요하지 않다.
+여기에 generated JSON Schema, filesystem lock, idempotency, durable local outbox와 actual proposal
+PPTX 기반 education lifecycle 예제가 연결됐다. 이 slice에는 FastAPI, Web, 실제 모델, Vector DB,
+실제 개인정보가 필요하지 않다.
+
+다음 가장 작은 slice는 `transaction.reconcile/v1alpha1` 설계와 Typer CLI parity다. dossier,
+enrollment, audit, outbox 사이 crash recovery contract를 먼저 고정하고 같은 project/education
+pipeline을 CLI에서 호출한다. 실제 provider나 배포는 포함하지 않는다.

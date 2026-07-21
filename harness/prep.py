@@ -36,6 +36,9 @@ REQUIRED_PATHS = (
     "config/axcalib.toml",
     "config/axcalib.expert.example.toml",
     "docs/schemas/runtime-config.schema.json",
+    "docs/schemas/axcalib.dossier.v1alpha2.schema.json",
+    "docs/schemas/axcalib.education-program.v1alpha1.schema.json",
+    "docs/schemas/axcalib.education-enrollment.v1alpha1.schema.json",
     "docs/api/README.md",
     "docs/api/openapi.v1alpha1.json",
     "docs/api/examples/registration-evaluation.request.json",
@@ -55,6 +58,9 @@ REQUIRED_PATHS = (
     "docs/readiness/development-readiness-audit.md",
     "docs/evaluation/oled-qc-pptx-demo.md",
     "docs/evaluation/g3-intelligence-development-report.md",
+    "docs/evaluation/education-program-wp01-development-report.md",
+    "docs/evaluation/wp02-actual-ppt-evidence-quality-report.md",
+    "docs/evaluation/qwen35-capability-validation-report.md",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -69,8 +75,11 @@ REQUIRED_PATHS = (
     "docs/adr/ADR-014-progressive-configuration-and-openapi.md",
     "docs/adr/ADR-015-image-only-pptx-offline-evidence.md",
     "docs/adr/ADR-016-review-policy-and-openai-compatible-evaluator.md",
+    "docs/adr/ADR-017-education-program-composition.md",
+    "docs/adr/ADR-018-qwen-capability-and-provider-alias.md",
     "docs/schemas/review-policy-pack.md",
     "docs/workflows/two_gate_pipeline.md",
+    "docs/workflows/education_project_lifecycle.md",
     "docs/rubrics/registration_checklist.md",
     "docs/rubrics/completion_checklist.md",
     "docs/rubrics/hitl_review_checklist.md",
@@ -78,21 +87,40 @@ REQUIRED_PATHS = (
     "src/axcalib/workflows/two_gate.py",
     "src/axcalib/client.py",
     "src/axcalib/pipelines/project.py",
+    "src/axcalib/pipelines/education.py",
+    "src/axcalib/programs/service.py",
     "src/axcalib/dossier/repository.py",
     "src/axcalib/ingest/pptx.py",
     "src/axcalib/ingest/docling_pptx.py",
+    "src/axcalib/ingest/slide_render.py",
     "src/axcalib/evaluation/offline.py",
+    "src/axcalib/evaluation/evidence_quality.py",
     "src/axcalib/evaluation/model.py",
     "src/axcalib/models/openai_compatible.py",
+    "src/axcalib/models/capability.py",
     "src/axcalib/policies/registry.py",
     "scripts/pipelines/run_two_gate_pptx.py",
+    "scripts/pipelines/export_schemas.py",
+    "scripts/pipelines/run_dossier_freeze.py",
+    "scripts/pipelines/probe_qwen35_capabilities.py",
+    "examples/education_project_lifecycle/README.md",
+    "examples/education_project_lifecycle/run_full_lifecycle.py",
+    "fixtures/synthetic/education_project_lifecycle/program.yaml",
+    "fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.pptx",
+    "fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.axcalib.json",
     "tests/sources/oled_qc_project_outline.pptx",
     "tests/sources/oled_qc_project_outline.axcalib.json",
     "fixtures/synthetic/workflow_scenarios.json",
     "fixtures/synthetic/historical_cases.json",
     "evals/pptx_vertical_slice.py",
+    "evals/evidence_quality.py",
+    "evals/education_lifecycle.py",
     "evals/retrieval_baseline.py",
+    "evals/vector_contract_smoke.py",
+    "evals/model_contract_smoke.py",
+    "evals/qwen_capability_contract.py",
     "evals/datasets/retrieval_queries.json",
+    "evals/datasets/oled_qc_pptx_evidence_gold.json",
 )
 
 CHECKLISTS = (
@@ -129,6 +157,7 @@ def _local_markdown_link_errors() -> list[str]:
         "GOAL.md",
         "DESIGN.md",
         "AGENTS.md",
+        "PROJECT_STATE.md",
         "AXCalib_Concept_Overview.md",
         "docs/architecture/README.md",
         "docs/architecture/axcalib-visual-guide.md",
@@ -146,6 +175,7 @@ def _local_markdown_link_errors() -> list[str]:
         "docs/schemas/review-policy-pack.md",
         "docs/adr/ADR-016-review-policy-and-openai-compatible-evaluator.md",
         "docs/evaluation/g3-intelligence-development-report.md",
+        "docs/evaluation/wp02-actual-ppt-evidence-quality-report.md",
         "docs/api/README.md",
         "docs/readiness/development-readiness-audit.md",
         "apps/api/README.md",
@@ -173,6 +203,9 @@ def _architecture_document_errors() -> list[str]:
         "M00 Pipeline Kernel",
         "M13 Web Review",
         "Delivery Wave",
+        "education-program-runtime",
+        "restricted render manifest 16/16",
+        "13 locators / 12 fields",
     ):
         if token not in blueprint:
             errors.append(f"workflow-blueprint.md: missing required token {token}")
@@ -189,6 +222,7 @@ def _architecture_document_errors() -> list[str]:
         "Exit Evidence",
         "Dependency Wave",
         "다음 실행 가능한 작업",
+        "WP-02.Q1 actual-PPT evidence-quality evidence",
     ):
         if token not in module_plan:
             errors.append(f"module-delivery-plan.md: missing required section {token}")
@@ -208,6 +242,38 @@ def _architecture_document_errors() -> list[str]:
             errors.append("workflow-at-a-glance.svg: accessible description is required")
         if root.get("role") != "img" or not root.get("aria-labelledby"):
             errors.append("workflow-at-a-glance.svg: role and aria-labelledby are required")
+        svg_text = " ".join(root.itertext())
+        for token in ("Restricted render", "render · gold · quality"):
+            if token not in svg_text:
+                errors.append(f"workflow-at-a-glance.svg: missing required token {token}")
+
+    ecosystem_path = (
+        ROOT
+        / "docs"
+        / "architecture"
+        / "diagrams"
+        / "axcalib-ecosystem-infographic.svg"
+    )
+    try:
+        ecosystem_root = ET.parse(ecosystem_path).getroot()
+    except ET.ParseError as error:
+        errors.append(f"axcalib-ecosystem-infographic.svg: invalid XML: {error}")
+    else:
+        namespace = {"svg": "http://www.w3.org/2000/svg"}
+        title = ecosystem_root.find("svg:title", namespace)
+        description = ecosystem_root.find("svg:desc", namespace)
+        if title is None or not (title.text or "").strip():
+            errors.append("axcalib-ecosystem-infographic.svg: accessible title is required")
+        if description is None or not (description.text or "").strip():
+            errors.append(
+                "axcalib-ecosystem-infographic.svg: accessible description is required"
+            )
+        if ecosystem_root.get("role") != "img" or not ecosystem_root.get(
+            "aria-labelledby"
+        ):
+            errors.append(
+                "axcalib-ecosystem-infographic.svg: role and aria-labelledby are required"
+            )
 
     authority_svg = ROOT / "docs" / "manuals" / "diagrams" / "authority-model.svg"
     try:
@@ -246,6 +312,86 @@ def _architecture_document_errors() -> list[str]:
                 "architecture presentation: expected 12 slides, "
                 f"found {len(slide_parts)}"
             )
+    return errors
+
+
+def _project_ledger_errors(path: Path | None = None) -> list[str]:
+    """Validate the single P/WP/G execution ledger and append-only history pointers."""
+
+    ledger_path = path or (ROOT / "PROJECT_STATE.md")
+    metadata = _frontmatter(ledger_path)
+    content = ledger_path.read_text(encoding="utf-8")
+    errors: list[str] = []
+
+    for key in (
+        "document_type",
+        "ledger_version",
+        "baseline",
+        "phase",
+        "gate",
+        "gate_status",
+        "status",
+        "current_work_package",
+        "active_slice",
+        "active_slice_status",
+        "next_gate",
+        "schedule_mode",
+        "updated_at",
+        "last_history_id",
+    ):
+        if not metadata.get(key):
+            errors.append(f"PROJECT_STATE.md: missing frontmatter key {key}")
+
+    if metadata.get("document_type") != "project_execution_ledger":
+        errors.append("PROJECT_STATE.md: document_type must be project_execution_ledger")
+    if metadata.get("ledger_version") != "axcalib.project-ledger/v1":
+        errors.append("PROJECT_STATE.md: unsupported ledger_version")
+    if metadata.get("schedule_mode") not in {"dependency_only", "calendar_baseline"}:
+        errors.append("PROJECT_STATE.md: invalid schedule_mode")
+
+    for token in (
+        "# AXCalib Project Execution Ledger",
+        "## 1. 원장 운영 계약",
+        "## 3. P/WP/G 통합 로드맵",
+        "```mermaid",
+        "gantt",
+        "## 4. Gate Control Board",
+        "## 5. Active Slice",
+        "Exit Evidence",
+        "## 6. 일정·작업 Queue",
+        "## 8. 특이사항·Blocker·범위 경계",
+        "## 9. 작업 이력",
+        "## 10. 단계 종료 업데이트 템플릿",
+    ):
+        if token not in content:
+            errors.append(f"PROJECT_STATE.md: missing required token {token}")
+
+    for index in range(10):
+        phase = f"P{index}"
+        if phase not in content:
+            errors.append(f"PROJECT_STATE.md: missing phase {phase}")
+    for index in range(9):
+        gate = f"G{index}"
+        if gate not in content:
+            errors.append(f"PROJECT_STATE.md: missing gate {gate}")
+
+    history_ids = re.findall(
+        r"^### (HIST-\d{4}-\d{2}-\d{2}-\d{3})$",
+        content,
+        flags=re.MULTILINE,
+    )
+    if not history_ids:
+        errors.append("PROJECT_STATE.md: at least one concrete history entry is required")
+        return errors
+    if len(history_ids) != len(set(history_ids)):
+        errors.append("PROJECT_STATE.md: history IDs must be unique")
+    if history_ids != sorted(history_ids):
+        errors.append("PROJECT_STATE.md: history entries must be chronological")
+    if metadata.get("last_history_id") != history_ids[-1]:
+        errors.append("PROJECT_STATE.md: last_history_id must match the final history entry")
+    latest_history_date = history_ids[-1][5:15]
+    if metadata.get("updated_at") != latest_history_date:
+        errors.append("PROJECT_STATE.md: updated_at must match the final history entry date")
     return errors
 
 
@@ -571,8 +717,8 @@ def _readiness_contract_errors() -> list[str]:
     path = ROOT / "docs" / "readiness" / "development-readiness-audit.md"
     metadata = _frontmatter(path)
     expected = {
-        "status": "g3_reference_implemented",
-        "verdict": "G3_REFERENCE_BASELINE_VERIFIED",
+        "status": "education_and_g3_reference_implemented",
+        "verdict": "EDUCATION_WP01_LOCAL_REFERENCE_VERIFIED",
         "owner_signoff": "user_directive_for_g3_and_limited_live_fixture",
     }
     for key, value in expected.items():
@@ -600,6 +746,16 @@ def _pptx_fixture_errors() -> list[str]:
         errors.append("PPTX sidecar: unsupported schema_version")
     if sidecar.get("source_sha256") != digest:
         errors.append("PPTX sidecar: source_sha256 does not match supplied PPTX")
+    from axcalib.evaluation import EvidenceGoldError, load_evidence_gold
+
+    try:
+        load_evidence_gold(
+            ROOT / "evals" / "datasets" / "oled_qc_pptx_evidence_gold.json",
+            source_path=source,
+            sidecar_path=sidecar_path,
+        )
+    except EvidenceGoldError as error:
+        errors.append(f"PPTX evidence gold: {error}")
     return errors
 
 
@@ -657,9 +813,11 @@ def validate_workspace() -> tuple[list[str], list[str]]:
     if errors:
         return errors, warnings
 
+    from axcalib.schemas.export import export_schema_artifacts
     from axcalib.workflows.two_gate import approval_transition_errors
 
     errors.extend(approval_transition_errors())
+    errors.extend(export_schema_artifacts(ROOT / "docs" / "schemas", check=True))
 
     for relative, expected_stage in CHECKLISTS:
         metadata = _frontmatter(ROOT / relative)
@@ -676,6 +834,7 @@ def validate_workspace() -> tuple[list[str], list[str]]:
     errors.extend(_readiness_contract_errors())
     errors.extend(_local_markdown_link_errors())
     errors.extend(_architecture_document_errors())
+    errors.extend(_project_ledger_errors())
     errors.extend(_pptx_fixture_errors())
     errors.extend(_review_policy_errors())
     errors.extend(_secret_errors())
@@ -690,23 +849,38 @@ def show_status() -> int:
     print(f"  gate: {state.get('gate', 'unknown')} ({state.get('gate_status', 'unknown')})")
     print(f"  status: {state.get('status', 'unknown')}")
     print(f"  current WP: {state.get('current_work_package', 'unknown')}")
-    print(f"  next WP: {state.get('next_work_package', 'unknown')}")
-    print("  data/model mode: synthetic default; one approved live fixture smoke; no Vector DB")
-    print("  architecture control: 8 Mermaid views + SVG + M00-M13 module board")
-    print("  implemented: G3 policy + Docling manifest + lexical + structured-model reference")
-    print("  boundary: T1/G3 operational quality/API/Web/operations are not complete")
+    active_slice = state.get("active_slice", "unknown")
+    active_status = state.get("active_slice_status", "unknown")
+    print(f"  active slice: {active_slice} ({active_status})")
+    print(f"  next gate: {state.get('next_gate', 'unknown')}")
+    print(f"  schedule mode: {state.get('schedule_mode', 'unknown')}")
+    print(f"  ledger history: {state.get('last_history_id', 'unknown')}")
+    print(
+        "  data/model mode: synthetic default; approved limited live proxy probes; "
+        "no Vector DB"
+    )
+    print("  architecture control: 9 Mermaid views + 2 SVGs + M00-M13 module board")
+    print(
+        "  implemented: actual-PPT project gates + evidence Q1 + Qwen proxy capability + "
+        "education goals + WP-01 local hardening"
+    )
+    print(
+        "  boundary: exact Qwen/full-rubric quality, credential, CLI/API/Web and "
+        "operations are not complete"
+    )
     return 0
 
 
 def show_next() -> int:
-    print("Next executable slice: WP-01 hardening + G3 quality benchmark")
-    print("  1. export dossier JSON Schema and effective-config manifest")
-    print("  2. add idempotency, stale result, durable local outbox, and recovery")
-    print("  3. add actual-template field/locator and slide-render/VLM fixtures")
-    print("  4. benchmark embedding/Qdrant and approved on-prem Qwen with gold labels")
-    print("  5. connect a Typer CLI to the same allowlisted pipeline")
-    print("Prerequisite for actual evaluation: Product/Evaluation Owner rubric approval")
-    print("Scope guard: no real data, additional live model, Vector DB, deployment, or secret")
+    state = _state()
+    print(f"Next executable slice: {state.get('active_slice', 'unknown')}")
+    print(f"  status: {state.get('active_slice_status', 'unknown')}")
+    print(f"  work package: {state.get('current_work_package', 'unknown')}")
+    print(f"  target gate: {state.get('next_gate', 'unknown')}")
+    print(f"  schedule mode: {state.get('schedule_mode', 'unknown')}")
+    print("  scope and Exit Evidence: PROJECT_STATE.md section 5")
+    print("  queue and dependencies: PROJECT_STATE.md section 6")
+    print("Scope guard: follow PROJECT_STATE.md section 8 and AGENTS.md stop conditions")
     return 0
 
 
@@ -731,14 +905,32 @@ def _run(command: list[str]) -> int:
 
 
 def run_tests() -> int:
-    return _run([sys.executable, "-m", "pytest", "-q"])
+    # Windows may leave an inaccessible global ``pytest-current`` junction behind.
+    # A per-process workspace path avoids that global cleanup while remaining ignored.
+    base_temp = ROOT / "output" / "pytest-runs" / f"run-{os.getpid()}"
+    base_temp.parent.mkdir(parents=True, exist_ok=True)
+    return _run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "--basetemp",
+            str(base_temp),
+        ]
+    )
 
 
 def run_eval() -> int:
     for script in (
         "evals/workflow_smoke.py",
         "evals/pptx_vertical_slice.py",
+        "evals/evidence_quality.py",
+        "evals/education_lifecycle.py",
         "evals/retrieval_baseline.py",
+        "evals/vector_contract_smoke.py",
+        "evals/model_contract_smoke.py",
+        "evals/qwen_capability_contract.py",
     ):
         result = _run([sys.executable, script])
         if result:

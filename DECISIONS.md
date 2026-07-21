@@ -25,5 +25,14 @@
 | D-021 | 2026-07-16 | Accepted | model gateway는 표준 `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`을 우선하고 사용자 호환 alias `OPENAPI_*`도 읽는다. 외부 model 미지정 기본값은 `gpt-5.5`, on-prem expert example은 `Qwen3.5-397B-A17B`다. |
 | D-022 | 2026-07-16 | Accepted | strict model output의 존재하지 않는 locator는 실패시키고 locator 없는 met/partially_met/not_met는 `insufficient_evidence`로 하향한다. model 결과는 두 HITL Gate를 우회하지 않는다. |
 | D-023 | 2026-07-16 | Accepted | 사용자 승인 하의 비식별 supplied fixture live registration smoke 1회는 transport/structured-output/HITL contract 증거로만 사용하며 model 품질 또는 공식 심의 결과로 해석하지 않는다. |
+| D-024 | 2026-07-20 | Accepted | 교육과정은 과제 dossier를 대체하지 않는 상위 aggregate다. `EducationProgram`은 기획자가 고정한 blueprint, `EducationEnrollment`는 학습자별 진행기록으로 분리한다. |
+| D-025 | 2026-07-20 | Accepted | 현재 교육 인증의 직접 평가 대상은 제출 프로젝트다. 프로젝트 `completion_accepted`는 과정 milestone 근거가 되지만 과정 전체 완료를 자동 확정하지 않는다. |
+| D-026 | 2026-07-20 | Accepted | 과정 유연성은 versioned level/milestone/prerequisite와 allowlisted manual/score/project requirement로 제공하며 arbitrary Python import 또는 expression은 실행하지 않는다. |
+| D-027 | 2026-07-20 | Accepted | 가입은 exact `program_id@version`과 SHA-256을 고정하고 목표를 생성한다. 새 program version은 신규 가입에 적용하며 기존 가입의 자동 migration은 하지 않는다. |
+| D-028 | 2026-07-20 | Accepted | 모든 필수 교육 milestone 충족 후에도 notification이 기록된 관리자 completion HITL을 거쳐야 `completed`가 된다. 이는 credential 발급 또는 법적 인증을 뜻하지 않는다. |
+| D-029 | 2026-07-20 | Accepted | 교육 project milestone에는 program/version/enrollment/milestone/learner context가 정확히 일치하는 dossier만 연결하며 조건은 저장된 dossier 상태에서 도출한다. |
+| D-030 | 2026-07-21 | Accepted | `PROJECT_STATE.md`를 P/WP/G dependency Gantt, Active Slice, 일정·Exit Evidence·검증·특이사항과 append-only 작업 이력을 관리하는 단일 Project Execution Ledger로 사용한다. 단계 종료는 이 원장 갱신을 포함하며 승인 전 미래 일정은 dependency-only로 유지한다. |
+| D-031 | 2026-07-21 | Accepted | Qwen provider alias capability와 exact checkpoint deployment 검증을 분리한다. 제품/on-prem은 canonical `OPENAI_*` OpenAI-compatible 계약만 사용하고 SkillBoss는 개인환경 proxy에 한정한다. response model 미보고나 alias는 exact identity가 아니며 structured-output dialect/model을 조용히 fallback하지 않고 숨은 reasoning을 보존하지 않는다. |
+| D-032 | 2026-07-22 | Accepted | `json_object` dialect는 gateway가 literal JSON과 canonical schema contract를 prompt에 포함하고 Pydantic으로 재검증한다. wrapped upstream 오류는 allowlisted identifier만 노출한다. 공통 multimodal probe의 기본 `provider_proxy` scope는 model ID가 일치해도 deployment-ready가 될 수 없다. |
 
 세부 근거는 `docs/adr/`의 ADR을 따른다.

@@ -37,6 +37,21 @@ FastAPI 구현과 생성된 `openapi.json`은 이 계약에 대한 compatibility
 
 이 문서와 예시는 **interface contract**이며 현재 P1에서 endpoint가 실행된다는 뜻이 아니다.
 
+## 교육 프로그램 확장 경계
+
+`EducationProgram`, `EducationEnrollment`과 `education-program-runtime@v1alpha1` typed command는
+현재 Python Library에서 실행된다. program/enrollment JSON Schema Draft 2020-12 artifact도
+생성되지만 이 v1alpha1 OpenAPI 문서에는 아직 endpoint를 추가하지 않았다. WP-06에서 다음
+resource/command를 같은 schema와 idempotency 의미로 노출한다.
+
+- immutable program publish/show/retire
+- learner enrollment와 milestone progress 조회
+- manual confirmation, score, project bind/sync typed command
+- program completion administrator approve/return command
+
+project status, HITL 생략, 자동 과정 완료, arbitrary expression/import는 request field로 제공하지
+않는다. Web App은 API가 반환한 milestone state와 allowed command만 표시한다.
+
 ## 표준 참고
 
 - [OpenAPI Specification 3.1.0](https://spec.openapis.org/oas/v3.1.0.html)

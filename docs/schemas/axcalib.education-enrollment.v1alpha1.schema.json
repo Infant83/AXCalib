@@ -1,0 +1,388 @@
+{
+  "$defs": {
+    "EnrollmentStatus": {
+      "description": "Program progression state with a mandatory human completion gate.",
+      "enum": [
+        "active",
+        "completion_hitl_pending",
+        "completed",
+        "returned_for_revision",
+        "withdrawn"
+      ],
+      "title": "EnrollmentStatus",
+      "type": "string"
+    },
+    "MilestoneProgress": {
+      "additionalProperties": false,
+      "description": "Generated learner goal and its current evidence state.",
+      "properties": {
+        "bound_project_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bound Project Id"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completed At"
+        },
+        "goal_title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Goal Title",
+          "type": "string"
+        },
+        "level_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Level Id",
+          "type": "string"
+        },
+        "milestone_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Milestone Id",
+          "type": "string"
+        },
+        "pipeline_id": {
+          "title": "Pipeline Id",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "requirement_results": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/RequirementResult"
+          },
+          "title": "Requirement Results",
+          "type": "array"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "status": {
+          "$ref": "#/$defs/MilestoneProgressStatus"
+        }
+      },
+      "required": [
+        "milestone_id",
+        "level_id",
+        "goal_title",
+        "pipeline_id",
+        "pipeline_version",
+        "status"
+      ],
+      "title": "MilestoneProgress",
+      "type": "object"
+    },
+    "MilestoneProgressStatus": {
+      "description": "Runtime status of one generated learner goal.",
+      "enum": [
+        "locked",
+        "available",
+        "in_progress",
+        "waiting_review",
+        "needs_action",
+        "completed"
+      ],
+      "title": "MilestoneProgressStatus",
+      "type": "string"
+    },
+    "ProgramCompletionDecision": {
+      "additionalProperties": false,
+      "description": "Explicit administrator decision, separate from condition evaluation.",
+      "properties": {
+        "actor_id": {
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "actor_role": {
+          "const": "administrator",
+          "default": "administrator",
+          "title": "Actor Role",
+          "type": "string"
+        },
+        "authority_context": {
+          "default": "offline_unverified_actor",
+          "title": "Authority Context",
+          "type": "string"
+        },
+        "command": {
+          "enum": [
+            "approve",
+            "return_for_revision"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "rationale": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "source": {
+          "default": "explicit_command_input",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "actor_id",
+        "rationale"
+      ],
+      "title": "ProgramCompletionDecision",
+      "type": "object"
+    },
+    "ProgramNotificationRecord": {
+      "additionalProperties": false,
+      "description": "Administrator completion request retained on the enrollment.",
+      "properties": {
+        "delivery_status": {
+          "const": "recorded",
+          "default": "recorded",
+          "title": "Delivery Status",
+          "type": "string"
+        },
+        "enrollment_revision": {
+          "minimum": 1,
+          "title": "Enrollment Revision",
+          "type": "integer"
+        },
+        "event_type": {
+          "default": "education_program_completion_approval_requested",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "required_role": {
+          "default": "administrator",
+          "title": "Required Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "enrollment_revision"
+      ],
+      "title": "ProgramNotificationRecord",
+      "type": "object"
+    },
+    "ProgramRef": {
+      "additionalProperties": false,
+      "description": "Hash-bound program version used by one enrollment.",
+      "properties": {
+        "program_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Program Id",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "source_uri": {
+          "title": "Source Uri",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "program_id",
+        "version",
+        "sha256",
+        "source_uri"
+      ],
+      "title": "ProgramRef",
+      "type": "object"
+    },
+    "RequirementResult": {
+      "additionalProperties": false,
+      "description": "Auditable observation for one configured requirement.",
+      "properties": {
+        "actor_id": {
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "actor_role": {
+          "title": "Actor Role",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "observed_value": {
+          "title": "Observed Value",
+          "type": "string"
+        },
+        "points_awarded": {
+          "maximum": 1000.0,
+          "minimum": 0.0,
+          "title": "Points Awarded",
+          "type": "number"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "requirement_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "satisfied": {
+          "title": "Satisfied",
+          "type": "boolean"
+        },
+        "source": {
+          "enum": [
+            "manual_confirmation",
+            "score",
+            "project_dossier"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "satisfied",
+        "points_awarded",
+        "source",
+        "actor_id",
+        "actor_role",
+        "evidence_ref",
+        "observed_value"
+      ],
+      "title": "RequirementResult",
+      "type": "object"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/education-enrollment/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Mutable learner progress record pinned to one immutable program version.",
+  "properties": {
+    "audit_event_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Audit Event Ids",
+      "type": "array"
+    },
+    "completion_decisions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ProgramCompletionDecision"
+      },
+      "title": "Completion Decisions",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "enrollment_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "title": "Enrollment Id",
+      "type": "string"
+    },
+    "learner_ref": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Learner Ref",
+      "type": "string"
+    },
+    "milestones": {
+      "items": {
+        "$ref": "#/$defs/MilestoneProgress"
+      },
+      "title": "Milestones",
+      "type": "array"
+    },
+    "notifications": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ProgramNotificationRecord"
+      },
+      "title": "Notifications",
+      "type": "array"
+    },
+    "program": {
+      "$ref": "#/$defs/ProgramRef"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "axcalib.education-enrollment/v1alpha1",
+      "default": "axcalib.education-enrollment/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/EnrollmentStatus",
+      "default": "active"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "enrollment_id",
+    "learner_ref",
+    "program",
+    "revision",
+    "milestones"
+  ],
+  "title": "EducationEnrollment",
+  "type": "object"
+}

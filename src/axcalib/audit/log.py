@@ -6,7 +6,8 @@ import json
 import os
 from pathlib import Path
 
-from axcalib.schemas import AuditEvent
+from axcalib.dossier import exclusive_file_lock
+from axcalib.schemas import AuditEvent, ProgramAuditEvent
 
 
 class AuditLog:
@@ -16,7 +17,7 @@ class AuditLog:
         self.path = path.resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def append(self, event: AuditEvent) -> None:
+    def append(self, event: AuditEvent | ProgramAuditEvent) -> None:
         """Durably append one validated event."""
 
         payload = json.dumps(
@@ -25,10 +26,11 @@ class AuditLog:
             sort_keys=True,
             separators=(",", ":"),
         ) + "\n"
-        with self.path.open("a", encoding="utf-8", newline="\n") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
+        with exclusive_file_lock(self.path):
+            with self.path.open("a", encoding="utf-8", newline="\n") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
 
 
 __all__ = ["AuditLog"]

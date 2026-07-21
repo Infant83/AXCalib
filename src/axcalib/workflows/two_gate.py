@@ -143,7 +143,13 @@ class TwoGateWorkflow:
         return replace(record, mentor_ref=mentor_ref)
 
     def transition(
-        self, record: WorkflowRecord, trigger: str, *, actor_role: ActorRole
+        self,
+        record: WorkflowRecord,
+        trigger: str,
+        *,
+        actor_role: ActorRole,
+        notification_revision: int | None = None,
+        notification_report_ref: str | None = None,
     ) -> WorkflowRecord:
         rule = TRANSITIONS.get(trigger)
         if rule is None:
@@ -167,7 +173,13 @@ class TwoGateWorkflow:
                 raise WorkflowError("administrator approval notification is required")
             stage = "registration" if "registration" in rule.notification_event else "completion"
             self._notifier.send(
-                NotificationEvent(rule.notification_event, record.project_id, stage)
+                NotificationEvent(
+                    rule.notification_event,
+                    record.project_id,
+                    stage,
+                    revision=notification_revision,
+                    report_ref=notification_report_ref,
+                )
             )
         return replace(record, status=rule.target)
 

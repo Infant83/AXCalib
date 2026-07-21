@@ -1,0 +1,12 @@
+schema_version: axcalib.example-source-manifest/v1alpha1
+example_id: education-project-lifecycle
+synthetic: true
+registration_source:
+  uri: ../../tests/sources/oled_qc_project_outline.pptx
+  sha256: cb0a21ca59330921855f8e7ce4eb6496c47383750332682160ad48188018bd76
+  interpretation: user-supplied image-only proposal fixture
+completion_source:
+  uri: ../../fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.pptx
+  sha256: 38d8a99ae722668be5dade5b7972ac5af99de25ab2f5ed7c5b92a561b68146b8
+  interpretation: generated synthetic completion evidence; not an actual outcome
+external_upload: false

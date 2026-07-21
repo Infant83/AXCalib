@@ -11,10 +11,11 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from axcalib.audit import AuditLog
-from axcalib.dossier import DossierRepository, SnapshotRepository
+from axcalib.dossier import DossierRepository, RevisionConflictError, SnapshotRepository
 from axcalib.evaluation import EvidenceEvaluator, OfflineEvidenceEvaluator
 from axcalib.ingest import DoclingPptxParser, PptxEvidenceExtractor
 from axcalib.notifications.base import NotificationPort, RecordingNotifier
+from axcalib.notifications.outbox import DurableNotificationOutbox
 from axcalib.policies import (
     DEFAULT_REVIEW_PROFILE,
     ResolvedReviewProfile,
@@ -24,6 +25,7 @@ from axcalib.reports import ReportRenderer
 from axcalib.schemas import (
     ArtifactRef,
     AuditEvent,
+    EffectiveConfigRef,
     EvaluationReport,
     EvidenceDocument,
     HumanDecision,
@@ -59,6 +61,10 @@ class TwoGatePptxRequest(BaseModel):
     final_path: Path | None = None
     final_sidecar_path: Path | None = None
     project_id: str | None = None
+    idempotency_key: str | None = Field(
+        default=None,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+    )
     administrator_id: str = "admin:local-reviewer"
     registration_decision: Literal["approve", "reject"] | None = None
     registration_rationale: str | None = None
@@ -93,6 +99,7 @@ class LocalProjectService:
         review_profiles: ReviewProfileRegistry | None = None,
         default_review_profile: str = DEFAULT_REVIEW_PROFILE,
         docling_parser: DoclingPptxParser | None = None,
+        effective_config: EffectiveConfigRef | None = None,
     ) -> None:
         self.workspace = workspace.resolve()
         self.workspace.mkdir(parents=True, exist_ok=True)
@@ -100,10 +107,15 @@ class LocalProjectService:
         self.snapshots = SnapshotRepository(self.workspace / "snapshots")
         self.reports = ReportRenderer(self.workspace / "reports")
         self.audit = AuditLog(self.workspace / "audit" / "events.jsonl")
-        self.notifier = notifier or RecordingNotifier()
+        self.delivery_notifier = notifier or RecordingNotifier()
+        self.notifier = DurableNotificationOutbox(
+            self.workspace / "outbox",
+            self.delivery_notifier,
+        )
         self.workflow = TwoGateWorkflow(self.notifier)
         self.extractor = PptxEvidenceExtractor()
         self.docling_parser = docling_parser
+        self.effective_config = effective_config
         self.evaluator = evaluator or OfflineEvidenceEvaluator()
         self.review_profiles = review_profiles or ReviewProfileRegistry.with_builtin_default()
         self.default_review_profile = default_review_profile
@@ -139,6 +151,7 @@ class LocalProjectService:
             status=ProjectStatus.DRAFT,
             review_context=review_context or ReviewContext(),
             review_profile=resolved_profile.ref,
+            effective_config=self.effective_config,
             artifacts=(artifact,),
             registration=StageReview(
                 submission_artifact_id=artifact.artifact_id,
@@ -197,6 +210,8 @@ class LocalProjectService:
             record,
             "publish_registration_draft",
             actor_role=ActorRole.SYSTEM,
+            notification_revision=dossier.revision + 1,
+            notification_report_ref=report.report_id,
         )
         notification = NotificationRecord(
             event_type="registration_admin_approval_requested",
@@ -339,10 +354,15 @@ class LocalProjectService:
         note: str,
         artifact_path: Path | None = None,
         sidecar_path: Path | None = None,
+        expected_revision: int | None = None,
     ) -> PipelineResult:
         """Append a progress note and optional hash-addressed PPTX evidence."""
 
         dossier = self.dossiers.load(project_id)
+        if expected_revision is not None and dossier.revision != expected_revision:
+            raise RevisionConflictError(
+                f"expected revision {expected_revision}; current revision is {dossier.revision}"
+            )
         if dossier.status is not ProjectStatus.IN_PROGRESS:
             raise ValueError("progress can be recorded only while the project is in progress")
         if not note.strip():
@@ -451,6 +471,8 @@ class LocalProjectService:
             record,
             "publish_completion_draft",
             actor_role=ActorRole.SYSTEM,
+            notification_revision=dossier.revision + 1,
+            notification_report_ref=report.report_id,
         )
         notification = NotificationRecord(
             event_type="completion_admin_approval_requested",

@@ -1,0 +1,67 @@
+schema_version: axcalib.education-program/v1alpha1
+program_id: ax-oled-project-foundations
+version: 0.1.0
+title: AX 프로젝트 기반 OLED 분자설계 교육
+description: >-
+  실제 제공 제안서와 명시적 synthetic 완료자료로 단계별 프로젝트 인증을 검증하는
+  offline 교육 프로그램 fixture다. 공식 교육과정이나 인증정책이 아니다.
+status: offline_reference
+owner_ref: unassigned:education-program-owner
+levels:
+  - level_id: foundation
+    title: Level 1 · 기초와 제안
+    sequence: 1
+    milestones:
+      - milestone_id: orientation
+        title: 과정 오리엔테이션과 안전수칙 이수
+        sequence: 1
+        kind: learning_activity
+        prerequisites: []
+        pipeline_id: education.manual-confirmation
+        pipeline_version: v1alpha1
+        requirements:
+          - kind: manual_confirmation
+            requirement_id: orientation-attendance
+            title: 강사가 오리엔테이션 이수를 확인
+            required_role: instructor
+            points: 10
+        completion_rule:
+          mode: all_required
+        required_for_program_completion: true
+      - milestone_id: oled-project-certification
+        title: OLED 분자 역설계 프로젝트 등록·수행·완료평가
+        sequence: 2
+        kind: project_certification
+        prerequisites: [orientation]
+        pipeline_id: two-gate-pptx
+        pipeline_version: v1alpha1
+        requirements:
+          - kind: project_status
+            requirement_id: project-completion-accepted
+            title: 관리자 HITL을 거친 프로젝트 완료 수용
+            required_status: completion_accepted
+            points: 70
+        completion_rule:
+          mode: all_required
+        required_for_program_completion: true
+  - level_id: reflection
+    title: Level 2 · 결과 설명과 회고
+    sequence: 2
+    milestones:
+      - milestone_id: final-reflection
+        title: 결과 설명과 재현성 구두평가
+        sequence: 1
+        kind: assessment
+        prerequisites: [oled-project-certification]
+        pipeline_id: education.score-assessment
+        pipeline_version: v1alpha1
+        requirements:
+          - kind: score_at_least
+            requirement_id: reflection-score
+            title: 강사 평가 80점 이상
+            passing_score: 80
+            required_role: instructor
+            points: 20
+        completion_rule:
+          mode: all_required
+        required_for_program_completion: true

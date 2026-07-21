@@ -1,0 +1,755 @@
+{
+  "$defs": {
+    "ArtifactRef": {
+      "additionalProperties": false,
+      "description": "Content-addressed artifact reference; bytes are not embedded in a dossier.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "byte_size": {
+          "minimum": 0,
+          "title": "Byte Size",
+          "type": "integer"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "role",
+        "uri",
+        "media_type",
+        "sha256",
+        "byte_size"
+      ],
+      "title": "ArtifactRef",
+      "type": "object"
+    },
+    "Assessment": {
+      "description": "One criterion assessment without a final certification decision.",
+      "enum": [
+        "met",
+        "partially_met",
+        "not_met",
+        "insufficient_evidence",
+        "not_applicable"
+      ],
+      "title": "Assessment",
+      "type": "string"
+    },
+    "EffectiveConfigRef": {
+      "additionalProperties": false,
+      "description": "Secret-free identity of the resolved runtime configuration.",
+      "properties": {
+        "config_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Config Sha256",
+          "type": "string"
+        },
+        "effective_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Effective Sha256",
+          "type": "string"
+        },
+        "profile_name": {
+          "title": "Profile Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "axcalib.effective-config/v1alpha1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_map": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Source Map",
+          "type": "object"
+        },
+        "source_uri": {
+          "title": "Source Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config_sha256",
+        "effective_sha256",
+        "profile_name",
+        "source_uri"
+      ],
+      "title": "EffectiveConfigRef",
+      "type": "object"
+    },
+    "EvidenceLocator": {
+      "additionalProperties": false,
+      "description": "Auditable source location with a short allowed excerpt.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "excerpt": {
+          "maxLength": 500,
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "locator": {
+          "title": "Locator",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "locator",
+        "excerpt",
+        "source"
+      ],
+      "title": "EvidenceLocator",
+      "type": "object"
+    },
+    "ExecutionRecord": {
+      "additionalProperties": false,
+      "description": "Minimal execution history for the first vertical slice.",
+      "properties": {
+        "completion_submitted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completion Submitted At"
+        },
+        "mentor_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mentor Ref"
+        },
+        "notes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        }
+      },
+      "title": "ExecutionRecord",
+      "type": "object"
+    },
+    "HumanDecision": {
+      "additionalProperties": false,
+      "description": "Decision command stored separately from the Agent report and auth boundary.",
+      "properties": {
+        "actor_id": {
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "actor_role": {
+          "title": "Actor Role",
+          "type": "string"
+        },
+        "adjustments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ReviewerAdjustment"
+          },
+          "title": "Adjustments",
+          "type": "array"
+        },
+        "authority_context": {
+          "default": "offline_unverified_actor",
+          "title": "Authority Context",
+          "type": "string"
+        },
+        "command": {
+          "title": "Command",
+          "type": "string"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "rationale": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "report_id": {
+          "title": "Report Id",
+          "type": "string"
+        },
+        "source": {
+          "default": "explicit_command_input",
+          "title": "Source",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/ReviewStage"
+        }
+      },
+      "required": [
+        "stage",
+        "command",
+        "actor_id",
+        "actor_role",
+        "rationale",
+        "report_id"
+      ],
+      "title": "HumanDecision",
+      "type": "object"
+    },
+    "NotificationRecord": {
+      "additionalProperties": false,
+      "description": "Recorded administrator approval request.",
+      "properties": {
+        "delivery_status": {
+          "default": "recorded",
+          "title": "Delivery Status",
+          "type": "string"
+        },
+        "dossier_revision": {
+          "minimum": 1,
+          "title": "Dossier Revision",
+          "type": "integer"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "report_id": {
+          "title": "Report Id",
+          "type": "string"
+        },
+        "required_role": {
+          "title": "Required Role",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/ReviewStage"
+        }
+      },
+      "required": [
+        "event_type",
+        "stage",
+        "required_role",
+        "report_id",
+        "dossier_revision"
+      ],
+      "title": "NotificationRecord",
+      "type": "object"
+    },
+    "ProjectStatus": {
+      "enum": [
+        "draft",
+        "registration_ready",
+        "registration_under_review",
+        "registration_hitl_pending",
+        "registration_approved",
+        "registration_rejected",
+        "in_progress",
+        "completion_ready",
+        "completion_approval_pending",
+        "completion_registered",
+        "completion_under_review",
+        "completion_hitl_pending",
+        "completion_accepted",
+        "completion_not_accepted"
+      ],
+      "title": "ProjectStatus",
+      "type": "string"
+    },
+    "ReviewContext": {
+      "additionalProperties": false,
+      "description": "Trusted case metadata retained for policy selection and later audit.",
+      "properties": {
+        "business_unit_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Business Unit Id"
+        },
+        "certification_level": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Certification Level"
+        },
+        "enrollment_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enrollment Id"
+        },
+        "learner_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Learner Ref"
+        },
+        "milestone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Milestone Id"
+        },
+        "program_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Program Id"
+        },
+        "program_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Program Version"
+        },
+        "proposer_org_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposer Org Id"
+        }
+      },
+      "title": "ReviewContext",
+      "type": "object"
+    },
+    "ReviewPolicyStatus": {
+      "description": "Lifecycle of a review policy without implying business approval.",
+      "enum": [
+        "draft",
+        "offline_reference",
+        "published",
+        "retired"
+      ],
+      "title": "ReviewPolicyStatus",
+      "type": "string"
+    },
+    "ReviewProfileRef": {
+      "additionalProperties": false,
+      "description": "Immutable identity of the policy pack used for a case or stage.",
+      "properties": {
+        "policy_id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "source_uri": {
+          "title": "Source Uri",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ReviewPolicyStatus"
+        },
+        "version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_id",
+        "version",
+        "sha256",
+        "status",
+        "source_uri"
+      ],
+      "title": "ReviewProfileRef",
+      "type": "object"
+    },
+    "ReviewStage": {
+      "description": "The two evaluation gates.",
+      "enum": [
+        "registration",
+        "completion"
+      ],
+      "title": "ReviewStage",
+      "type": "string"
+    },
+    "ReviewerAdjustment": {
+      "additionalProperties": false,
+      "description": "Criterion-level human correction that never rewrites the Agent report.",
+      "properties": {
+        "criterion_id": {
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/EvidenceLocator"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "from_assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "to_assessment": {
+          "$ref": "#/$defs/Assessment"
+        }
+      },
+      "required": [
+        "criterion_id",
+        "from_assessment",
+        "to_assessment",
+        "reason"
+      ],
+      "title": "ReviewerAdjustment",
+      "type": "object"
+    },
+    "SnapshotRef": {
+      "additionalProperties": false,
+      "description": "Immutable dossier revision used by one evaluation.",
+      "properties": {
+        "dossier_revision": {
+          "minimum": 1,
+          "title": "Dossier Revision",
+          "type": "integer"
+        },
+        "dossier_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Dossier Sha256",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "dossier_revision",
+        "dossier_sha256",
+        "uri"
+      ],
+      "title": "SnapshotRef",
+      "type": "object"
+    },
+    "StageReview": {
+      "additionalProperties": false,
+      "description": "Dossier section for one gate.",
+      "properties": {
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HumanDecision"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "report_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Id"
+        },
+        "report_json_uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Json Uri"
+        },
+        "report_markdown_uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Markdown Uri"
+        },
+        "review_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewProfileRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "snapshot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnapshotRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "submission_artifact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Submission Artifact Id"
+        }
+      },
+      "title": "StageReview",
+      "type": "object"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/dossier/v1alpha2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Single mutable project record; evaluation inputs are frozen snapshots.",
+  "properties": {
+    "artifacts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ArtifactRef"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "audit_event_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Audit Event Ids",
+      "type": "array"
+    },
+    "completion": {
+      "$ref": "#/$defs/StageReview"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "display_id": {
+      "title": "Display Id",
+      "type": "string"
+    },
+    "effective_config": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EffectiveConfigRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "execution": {
+      "$ref": "#/$defs/ExecutionRecord"
+    },
+    "notifications": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/NotificationRecord"
+      },
+      "title": "Notifications",
+      "type": "array"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "registration": {
+      "$ref": "#/$defs/StageReview"
+    },
+    "review_context": {
+      "$ref": "#/$defs/ReviewContext"
+    },
+    "review_profile": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewProfileRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "axcalib.dossier/v1alpha2",
+      "default": "axcalib.dossier/v1alpha2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ProjectStatus"
+    },
+    "title": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "display_id",
+    "title",
+    "revision",
+    "status"
+  ],
+  "title": "ProjectDossier",
+  "type": "object"
+}

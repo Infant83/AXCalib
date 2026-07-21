@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
-  <title id="title">AXCalib 철학, 조합형 워크플로 라이브러리와 적용 사례</title>
-  <desc id="desc">근거 우선, 편차 보정, 사람 책임이라는 철학에서 요소 모듈과 국소 파이프라인, 버전 워크플로를 거쳐 관리자 웹, 수행자 앱, 멘토 앱, API와 워커로 확장되는 모습을 보여주는 인포그래픽이다. 현재는 G3 Intelligence 참조 slice이며 API, 웹, 앱은 향후 목표다.</desc>
+  <title id="title">AXCalib 철학, 교육 프로그램, 조합형 워크플로 라이브러리와 적용 사례</title>
+  <desc id="desc">근거 우선, 편차 보정, 사람 책임이라는 철학에서 버전 교육 프로그램, 학습자 목표, 프로젝트 인증, 국소 파이프라인을 거쳐 관리자 웹, 학습자 앱, 과정 기획 콘솔, API와 워커로 확장되는 모습을 보여주는 인포그래픽이다. 현재는 교육과 WP-01 로컬 참조 slice이며 API, 웹, 앱은 향후 목표다.</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="#172033" flood-opacity="0.12"/>
@@ -38,7 +38,7 @@
   <!-- Header -->
   <text x="60" y="67" class="title">AXCalib</text>
   <text x="286" y="64" class="sans" font-size="19" font-weight="750" fill="#A50034">AX Certification Agent Library</text>
-  <text x="60" y="104" class="subtitle">근거를 구조화하고, 편차를 보정하며, 최종 책임은 사람에게 남기는 조합형 인증 워크플로 라이브러리</text>
+  <text x="60" y="104" class="subtitle">교육 목표와 프로젝트 근거를 구조화하고, 편차를 보정하며, 최종 책임은 사람에게 남기는 인증 Library</text>
   <rect x="1640" y="42" width="220" height="44" rx="22" fill="#172033"/>
   <text x="1750" y="70" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">VISUAL GUIDE · v0.3-p1</text>
   <line x1="60" y1="130" x2="1860" y2="130" stroke="#D5D0C6" stroke-width="2"/>
@@ -71,8 +71,8 @@
   <rect x="365" y="818" width="225" height="45" rx="12" fill="#FCEAE9" stroke="#F3B9B6"/>
   <text x="477" y="846" class="pill" fill="#A50034">완료평가 · 관리자 HITL</text>
   <rect x="75" y="884" width="515" height="60" rx="14" fill="#172033"/>
-  <text x="332" y="910" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">ONE DOSSIER · MANY IMMUTABLE SNAPSHOTS</text>
-  <text x="332" y="931" class="sans" font-size="12" fill="#CBD1DB" text-anchor="middle">평가와 최종 결정은 분리하고, stale 결과는 자동 병합하지 않는다.</text>
+  <text x="332" y="910" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">ONE PROJECT DOSSIER · VERSIONED ENROLLMENT</text>
+  <text x="332" y="931" class="sans" font-size="12" fill="#CBD1DB" text-anchor="middle">프로젝트 결과와 과정 완료는 분리하고, 사람 Gate에서 확정한다.</text>
 
   <!-- Card 2: library -->
   <circle cx="682" cy="191" r="18" fill="#1E8A75"/>
@@ -94,13 +94,13 @@
   <text x="1169" y="638" class="pill" fill="#2F6BFF">UI</text>
 
   <rect x="675" y="681" width="510" height="49" rx="12" fill="#F6F7F8"/>
-  <text x="692" y="702" class="mini-title">Domain</text><text x="766" y="702" class="mini-note">dossier · evidence · retrieval · evaluation · audit/notice</text>
+  <text x="692" y="702" class="mini-title">Domain</text><text x="766" y="702" class="mini-note">program · enrollment · dossier · evidence · evaluation · audit</text>
   <text x="692" y="720" class="mini-title">Rule</text><text x="746" y="720" class="mini-note">각 모듈은 capability만 제공하고 업무 순서를 결정하지 않는다.</text>
   <rect x="675" y="742" width="510" height="49" rx="12" fill="#EEF8F5"/>
-  <text x="692" y="763" class="mini-title">Pipeline</text><text x="770" y="763" class="mini-note">freeze · prepare · retrieve · evaluate · report · review</text>
+  <text x="692" y="763" class="mini-title">Pipeline</text><text x="770" y="763" class="mini-note">enroll · milestone · freeze · evaluate · report · review</text>
   <text x="692" y="781" class="mini-title">Contract</text><text x="762" y="781" class="mini-note">typed input/output · status · audit · run/arun parity</text>
   <rect x="675" y="803" width="510" height="49" rx="12" fill="#FFF6E8"/>
-  <text x="692" y="824" class="mini-title">Workflow</text><text x="778" y="824" class="mini-note">branch · human wait · checkpoint · resume</text>
+  <text x="692" y="824" class="mini-title">Workflow</text><text x="778" y="824" class="mini-note">program version · project gates · human wait · resume</text>
   <text x="692" y="842" class="mini-title">Guard</text><text x="754" y="842" class="mini-note">state machine과 HITL 불변조건을 우회하지 않는다.</text>
   <rect x="675" y="864" width="510" height="80" rx="14" fill="#172033"/>
   <text x="930" y="890" class="sans" font-size="14" font-weight="750" fill="#FFFFFF" text-anchor="middle">업무 로직은 Library에 한 번만</text>
@@ -123,15 +123,15 @@
   <rect x="1288" y="690" width="71" height="17" rx="8" fill="#EAF2FF"/><text x="1323" y="702" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">DESKTOP</text>
 
   <rect x="1535" y="612" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
-  <text x="1553" y="638" class="mini-title">과제 수행자 App</text>
-  <text x="1553" y="660" class="mini-note">dossier 진행기록 · 증거 참조 갱신</text>
-  <text x="1553" y="681" class="mini-note">현재 Gate와 허용 command 확인</text>
+  <text x="1553" y="638" class="mini-title">학습자 Progress App</text>
+  <text x="1553" y="660" class="mini-note">생성 목표 · 수업 · 점수 · project 확인</text>
+  <text x="1553" y="681" class="mini-note">현재 milestone/Gate와 허용 command</text>
   <rect x="1553" y="690" width="64" height="17" rx="8" fill="#EAF2FF"/><text x="1585" y="702" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">MOBILE</text>
 
   <rect x="1270" y="730" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
-  <text x="1288" y="756" class="mini-title">Mentor App</text>
-  <text x="1288" y="778" class="mini-note">수행 피드백 · 변경 승인 · 완료 동의</text>
-  <text x="1288" y="799" class="mini-note">멘토 미배정 과제는 guard 없이 진행</text>
+  <text x="1288" y="756" class="mini-title">과정 기획자 Console</text>
+  <text x="1288" y="778" class="mini-note">level · milestone · criteria version 설계</text>
+  <text x="1288" y="799" class="mini-note">신규 가입 rollout · 기존 가입 hash 유지</text>
   <rect x="1288" y="808" width="61" height="17" rx="8" fill="#EAF2FF"/><text x="1318" y="820" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">TABLET</text>
 
   <rect x="1535" y="730" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
@@ -142,7 +142,7 @@
 
   <rect x="1270" y="856" width="515" height="88" rx="14" fill="#172033"/>
   <circle cx="1296" cy="884" r="7" fill="#1E8A75"/>
-  <text x="1313" y="889" class="sans" font-size="13" font-weight="750" fill="#FFFFFF">현재 · G3 Intelligence reference slice</text>
+  <text x="1313" y="889" class="sans" font-size="13" font-weight="750" fill="#FFFFFF">현재 · Education + WP-01 local reference</text>
   <circle cx="1296" cy="916" r="7" fill="none" stroke="#77A4FF" stroke-width="2" stroke-dasharray="3 2"/>
   <text x="1313" y="921" class="sans" font-size="13" font-weight="650" fill="#D1D7E0">향후 · API, Worker, Review Web, Owner/Mentor App</text>
 
@@ -155,6 +155,6 @@
   <text x="515" y="1061" class="footer-note">모델·평가자 편차를 측정하되 과거 사례를 정답으로 쓰지 않음</text>
   <line x1="1110" y1="1025" x2="1110" y2="1063" stroke="#465066"/>
   <text x="1155" y="1040" class="footer-kicker">HUMAN DECIDES</text>
-  <text x="1155" y="1061" class="footer-note">두 HITL Gate와 승인요청 알림은 우회 불가</text>
-  <text x="1860" y="1053" class="sans" font-size="11" fill="#8E99AA" text-anchor="end">AI-generated illustration panels · exact labels authored in SVG · no official brand asset</text>
+  <text x="1155" y="1061" class="footer-note">프로젝트 두 Gate와 과정 완료 Gate의 승인요청 알림은 우회 불가</text>
+  <text x="1860" y="1027" class="sans" font-size="10" fill="#8E99AA" text-anchor="end">AI-generated illustration panels · exact labels authored in SVG · no official brand asset</text>
 </svg>

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -156,6 +156,10 @@ class ReviewContext(FrozenModel):
     """Trusted case metadata retained for policy selection and later audit."""
 
     program_id: str | None = None
+    program_version: str | None = None
+    enrollment_id: str | None = None
+    milestone_id: str | None = None
+    learner_ref: str | None = None
     business_unit_id: str | None = None
     proposer_org_id: str | None = None
     certification_level: str | None = None
@@ -204,12 +208,25 @@ class ModelRunManifest(FrozenModel):
     provider: str = "openai_compatible"
     model: str
     api_mode: str
+    structured_output_mode: str = "json_schema"
+    max_output_tokens: int | None = None
     capabilities: tuple[str, ...]
     request_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     response_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     response_id: str | None = None
     latency_ms: int = Field(ge=0)
     live: bool
+
+
+class EffectiveConfigRef(FrozenModel):
+    """Secret-free identity of the resolved runtime configuration."""
+
+    schema_version: str = "axcalib.effective-config/v1alpha1"
+    config_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    effective_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    profile_name: str
+    source_uri: str
+    source_map: dict[str, str] = Field(default_factory=dict)
 
 
 class EvaluationReport(FrozenModel):
@@ -293,7 +310,7 @@ class ExecutionRecord(FrozenModel):
 class ProjectDossier(FrozenModel):
     """Single mutable project record; evaluation inputs are frozen snapshots."""
 
-    schema_version: str = "axcalib.dossier/v1alpha1"
+    schema_version: Literal["axcalib.dossier/v1alpha2"] = "axcalib.dossier/v1alpha2"
     project_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
     display_id: str
     title: str = Field(min_length=1, max_length=300)
@@ -303,6 +320,7 @@ class ProjectDossier(FrozenModel):
     updated_at: datetime = Field(default_factory=utc_now)
     review_context: ReviewContext = Field(default_factory=ReviewContext)
     review_profile: ReviewProfileRef | None = None
+    effective_config: EffectiveConfigRef | None = None
     artifacts: tuple[ArtifactRef, ...] = ()
     registration: StageReview = Field(default_factory=StageReview)
     execution: ExecutionRecord = Field(default_factory=ExecutionRecord)
@@ -338,6 +356,19 @@ class PipelineResult(FrozenModel):
     report_json_uri: str | None = None
     report_markdown_uri: str | None = None
     allowed_commands: tuple[str, ...] = ()
+    message: str
+
+
+class DossierFreezeResult(FrozenModel):
+    """Result of the independent revision-aware freeze pipeline."""
+
+    pipeline_id: str = "dossier.freeze"
+    pipeline_version: str = "v1alpha1"
+    status: PipelineStatus
+    project_id: str
+    expected_revision: int = Field(ge=1)
+    current_revision: int = Field(ge=1)
+    snapshot: SnapshotRef | None = None
     message: str
 
 

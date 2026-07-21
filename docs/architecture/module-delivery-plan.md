@@ -2,37 +2,39 @@
 document_type: module_delivery_plan
 project: AXCalib
 baseline: v0.3-p1
-updated_at: 2026-07-16
-status: g3_intelligence_reference_baseline_verified
+updated_at: 2026-07-22
+status: provider_proxy_registration_verified_exact_pending
 ---
 
 # AXCalib Module별 상세 작업계획
 
 이 문서는 module별 책임, 입력·출력, 의존성, 첫 구현 slice, 검증과 완료증거를 고정한다.
 현재 날짜 기반 일정은 Owner와 공수가 정해지지 않아 약속하지 않으며 dependency Wave와 Exit
-Evidence로 예측 가능성을 확보한다.
+Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정 변경과 작업 이력은 단일
+실행 원장 [PROJECT_STATE.md](../../PROJECT_STATE.md)에서 관리한다.
 
 ## 1. Module Control Board
 
 | ID | Package / Surface | 현재 상태 | 목표 WP | 직접 선행조건 | 다음 Exit Evidence |
 |---|---|---|---|---|---|
-| M00 | `axcalib.pipelines` | offline_reference | WP-01 | P1 harness | full context/idempotency/cancel contract |
-| M01 | `axcalib.dossier` | offline_reference | WP-01 | core/schema contract | JSON Schema + multi-process CAS/lock |
-| M02 | state/approval domain | offline_reference | WP-01 | M01 | persisted transition + outbox integration |
-| M03 | `axcalib.ingest` | offline_reference | WP-02 | ArtifactRef/schema | actual-template + slide-render/VLM gold coverage |
-| M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + embedding/Qdrant contract |
-| M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | gold traceability/unsupported-claim benchmark |
+| M00 | `axcalib.pipelines` | offline_reference | WP-01 | P1 harness | full PipelineContext/checkpoint/cancel contract |
+| M01 | `axcalib.dossier` | contract_verified | WP-01 | core/schema contract | stale-lock recovery + snapshot/report reconciliation |
+| M02 | state/approval domain | offline_reference | WP-01 | M01 | cross-file transition/audit/outbox journal |
+| M03 | `axcalib.ingest` | contract_verified | WP-02 | ArtifactRef/schema | general composed-slide renderer/OCR/VLM + multi-template coverage |
+| M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + real embedding/Qdrant contract |
+| M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | exact Qwen registration/completion + Owner-approved semantic gold benchmark |
 | M06 | `axcalib.calibration` | not_started | WP-05/06 | M05 | disagreement/agreement metric report |
 | M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | golden/redaction/content-hash contract |
-| M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | durable outbox + idempotent retry/recovery |
-| M09 | `axcalib.workflows` | offline_reference | WP-06 | M00~M08 | durable checkpoint/resume exactly once |
-| M10 | `axcalib.runtime` | offline_reference | WP-01/05 | config contract | effective-config hash/source manifest |
-| M11 | scripts / CLI | offline_reference | WP-01/06 | M00, M10, target pipeline; M09 for workflow | Typer CLI and script result parity |
+| M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | cross-file reconciliation + GitLab/email adapter |
+| M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
+| M10 | `axcalib.runtime` | offline_reference | WP-01/05 | config contract | exact on-prem capability/allowlist + endpoint fingerprint guard |
+| M11 | scripts / CLI | offline_reference | WP-01/06 | M00, M10, target pipeline; M09 for workflow | Qwen/generic multimodal probe 포함 Typer CLI/script result parity |
 | M12 | API / worker | not_started | WP-06 | M09, M10 | OpenAPI/202/SSE/resume contract |
 | M13 | Web Review | blocked_policy | WP-07 | M12, FE selection | selected-stack E2E review flow |
 
-`offline_reference`는 제품 module 완료가 아니다. 현재 supplied-PPTX local slice에서 실행되고
-회귀 test가 있다는 뜻이며, 각 행의 다음 Exit Evidence가 남아 있다.
+`offline_reference`는 제품 module 완료가 아니다. 현재 local/synthetic slice에서 실행되고 회귀
+test가 있다는 뜻이다. M01의 `contract_verified`도 filesystem dossier/freeze 계약에 한정하며 운영
+transaction 또는 제품 전체 완료가 아니다. 각 행의 다음 Exit Evidence가 남아 있다.
 
 ### 1.1 2026-07-16 slice evidence
 
@@ -52,6 +54,57 @@ Evidence로 예측 가능성을 확보한다.
 - `tests/integration/test_model_gateway.py`: 두 Gate fake-model/HITL contract와 provider dialect
 - 사용자 승인 비식별 live registration smoke: transport 성공, 7/7 criterion insufficient로
   보수 정규화, 관리자 결정 없이 HITL pending
+
+### 1.2 2026-07-20 education/WP-01 hardening evidence
+
+- `src/axcalib/programs`, `schemas/education.py`: immutable program, revisioned enrollment와 typed
+  milestone conditions
+- `src/axcalib/pipelines/education.py`: allowlisted `education-program-runtime@v1alpha1` commands
+- `examples/education_project_lifecycle`: actual proposal PPTX와 별도 synthetic completion PPTX의
+  project two-gate → program completion three-HITL scenario
+- `dossier.initialize/update/freeze`: revision-aware local pipelines와 thin freeze script
+- generated dossier/program/enrollment JSON Schema Draft 2020-12 artifact
+- filesystem CAS lock, bounded transient atomic-replace retry, local idempotency result store, durable
+  recording outbox dedupe/retry
+- secret-free effective-config hash/source manifest
+- deterministic fake dense path와 external/on-prem model config smoke; 실제 품질 주장은 없음
+- exact program/version/enrollment/milestone/learner project binding 회귀
+
+### 1.3 2026-07-21 WP-02.Q1 actual-PPT evidence-quality evidence
+
+- `src/axcalib/ingest/slide_render.py`: `SlideRenderer` port, restricted full-slide PNG adapter와
+  deterministic 16-slide render manifest
+- `evals/datasets/oled_qc_pptx_evidence_gold.json`: source/sidecar hash에 고정된 13 reviewed locator와
+  12 reference field
+- `src/axcalib/evaluation/evidence_quality.py`: locator recall, field coverage, criterion traceability와
+  unsupported/unresolved reference guard
+- `tests/unit/test_slide_render.py`, `test_evidence_quality.py`: actual fixture 재현성과 fail-closed 회귀
+- `evals/evidence_quality.py`: two-gate criterion 13/13 traceability와 optional Docling 16-page/0-text 확인
+- 범위: 해당 image-only fixture의 provenance/coverage contract이며 general render/VLM 품질이 아님
+
+### 1.4 2026-07-21 WP-05.Q1 Qwen capability evidence
+
+- `src/axcalib/models/capability.py`: provider proxy/deployment scope, exact response-model identity,
+  structured text/vision와 no-CoT-retention report
+- `scripts/pipelines/probe_qwen35_capabilities.py`: SkillBoss import 없이 canonical `OPENAI_*`를 요구하는
+  live entrypoint
+- `json_schema`/`json_object`와 output token limit를 명시적으로 선택하고 조용한 fallback을 금지
+- fake exact endpoint에서 canonical env, text/vision, response identity와 reasoning discard E2E 검증
+- SkillBoss `qwen3.5-plus` proxy에서 text/vision passed, exact 397B identity와 deployment-ready는 false
+- supplied fixture의 당시 full registration payload는 SkillBoss route HTTP 500으로 실패했으며 Q2에서
+  원인확정·복구; on-prem exact endpoint와 completion/gold 재검증 전 M05 품질 승격 금지
+
+### 1.5 2026-07-22 WP-05.Q2 provider compatibility evidence
+
+- `json_object` message의 literal JSON 누락이 upstream 400이고 SkillBoss가 500으로 wrapping함을
+  248-byte 최소 synthetic 요청으로 확인
+- `OpenAICompatibleClient`가 JSON keyword, contract name과 canonical compact schema를 주입하고
+  Pydantic/domain guard를 그대로 유지
+- wrapped upstream detail에서 status/type/code/param만 추출하고 message/evidence를 폐기
+- `MultimodalCapabilityProbe`와 generic canonical-env script 추가; provider scope는 deployment false
+- SkillBoss Qwen Plus supplied-fixture registration이 7 criteria/report/notification/HITL pending까지 통과
+- GPT-4o proxy text/vision과 registration 통과; GLM 4.5V는 text만 통과하고 vision gateway 실패
+- 품질 경계: exact on-prem 397B, completion, official gold/human agreement는 미검증
 
 ## 2. 공통 납품 단위
 
@@ -84,12 +137,12 @@ Evidence로 예측 가능성을 확보한다.
 
 ### M01 — Dossier / Snapshot (`src/axcalib/dossier`)
 
-- 책임: dossier schema, YAML round-trip, revision, canonical hash, atomic write, snapshot
+- 책임: dossier schema, YAML round-trip, revision, canonical hash, atomic write, filesystem CAS lock, snapshot
 - 입력: dossier command, expected_revision, artifact/rubric references
 - 출력: new revision, immutable snapshot, conflict/stale result
 - 의존성: core/schema와 filesystem repository port; local pipeline wrapper는 M00 사용
 - 첫 slice: synthetic dossier의 `dossier.freeze/v1alpha1`
-- 검증: JSON Schema, lossless round-trip, deterministic SHA-256, stale write rejection
+- 검증: generated JSON Schema, lossless round-trip, deterministic SHA-256, stale write/lock rejection
 - 완료증거: working freeze script와 temporary filesystem integration test
 
 ### M02 — State / Approval Domain
@@ -108,9 +161,11 @@ Evidence로 예측 가능성을 확보한다.
 - 입력: ArtifactRef, access context, parser profile
 - 출력: EvidenceDocument/Bundle, locator, parse warning, coverage metric
 - 의존성: ArtifactRef/schema와 artifact store port; Docling/renderer는 optional adapter
-- 첫 slice: Markdown/TXT synthetic fixture, 이후 제한된 PPTX
-- 검증: locator round-trip, unsupported file, malformed input, secret/PII fixture scan
-- 완료증거: parser regression dataset과 required-field coverage
+- 첫 slice: 제한된 image-only PPTX OOXML/sidecar와 embedded-image renderer
+- 검증: 16/16 render, locator/gold round-trip, unsupported composed slide, malformed/hash drift,
+  reproducible manifest
+- 현재 완료증거: supplied fixture locator 13/13, reference field 12/12와 Docling 16-page/0-text
+- 남은 완료증거: 복수 actual template parser regression과 general renderer/OCR/VLM field coverage
 
 ### M04 — Retrieval (`src/axcalib/retrieval`)
 
@@ -158,19 +213,19 @@ Evidence로 예측 가능성을 확보한다.
 - 입력: report ref, target revision, required role, notification profile
 - 출력: waiting_human checkpoint, outbox/delivery ref, decision audit
 - 의존성: M02, M07; GitLab/email은 adapter
-- 첫 slice: RecordingNotifier와 atomic local outbox
+- 첫 slice: RecordingNotifier 앞의 durable local outbox와 deterministic dedupe/retry
 - 검증: notification fail-closed, retry dedupe, unauthorized resume, secret-free payload
-- 완료증거: 두 Gate notification count와 outbox recovery scenario
+- 완료증거: project/program Gate notification count와 outbox recovery scenario
 
-### M09 — Total Workflow Runtime (`src/axcalib/workflows`)
+### M09 — Workflow / Education Composition
 
-- 책임: versioned graph, pipeline 연결, branch, wait/resume, checkpoint, failure propagation
+- 책임: versioned graph, pipeline 연결, branch, wait/resume, checkpoint와 versioned 교육 progression
 - 입력: workflow id/version, request, PipelineRegistry, runtime context
 - 출력: workflow run state, current node, allowed command, checkpoint
 - 의존성: M00~M08의 검증된 contract
-- 첫 slice: `two-gate-standard/v1` synthetic workflow
+- 첫 slice: `two-gate-pptx@v1alpha1`과 `education-program-runtime@v1alpha1`
 - 검증: approve/reject/needs_changes, stale, retry, cancel, resume exactly once
-- 완료증거: workflow scenario dataset과 replayable run manifest
+- 완료증거: workflow scenario dataset, replayable run manifest와 승인된 program rollout policy
 
 ### M10 — Runtime Profiles (`src/axcalib/runtime`)
 
@@ -180,7 +235,7 @@ Evidence로 예측 가능성을 확보한다.
 - 의존성: 각 module의 port; secret 값은 model/report에 전달하지 않음
 - 첫 slice: filesystem + lexical + mock + recording offline profile
 - 검증: runtime JSON Schema, unknown/protected key, missing capability, unknown adapter, literal secret rejection
-- 완료증거: clean terminal에서 같은 profile로 재현되는 container contract와 effective-config hash/source map
+- 완료증거: clean terminal에서 같은 profile로 재현되는 container contract, runtime config validation과 effective-config hash/source map
 
 ### M11 — Working Scripts / CLI
 
@@ -221,19 +276,21 @@ Evidence로 예측 가능성을 확보한다.
   product/manual/API/readiness contract
 - Exit: validate/test/eval, 문서 링크·SVG/config/OpenAPI 검증 완료; 공식 rubric/운영 승인은 별도
 
-### Wave 1 — WP-01 Foundation Vertical Slice
+### Wave 1 — WP-01 Foundation + WP-01E Education Composition
 
-- 상태: supplied-PPTX total flow 안의 offline slice 구현, hardening 미완료
-- 범위: M00, M01, M02, M08 일부, M10 offline, M11 working script
+- 상태: local lock/schema/idempotency/outbox/effective-config와 education composition reference 검증;
+  full runtime/cross-file hardening 미완료
+- 범위: M00, M01, M02, M08, M09 education overlay, M10 offline, M11 working script
 - 시작근거: 2026-07-16 사용자 local/offline 구현 지시
-- 핵심 demo: 한 dossier를 두 Gate에서 freeze하고 같은 revision/hash를 재현
+- 핵심 demo: actual proposal PPTX dossier 두 Gate와 생성된 program milestone을 연결하고 과정 완료
+  관리자 Gate에서 재개
 - 실패기준: stale write 또는 관리자 권한 우회를 허용하면 Gate 실패
-- 남은 Exit: 독립 freeze pipeline, JSON Schema, idempotency와 durable atomic outbox
+- 남은 Exit: full PipelineContext/checkpoint/cancel, stale-lock recovery, cross-file reconciliation과 CLI
 
 ### Wave 2 — WP-02/03 Evidence-to-Report
 
-- 상태: reviewed-sidecar + Docling manifest + policy/structured-model reference 구현;
-  template/parser gold benchmark 미완료
+- 상태: reviewed-sidecar + Docling manifest + restricted actual-PPT renderer/gold quality baseline 구현;
+  general template/VLM과 공식 rubric semantic gold benchmark 미완료
 - 범위: M03, M05 deterministic/structured reference, M07
 - 시작조건: M00/M01 contract_verified
 - 핵심 demo: synthetic 등록자료 → locator → criterion → Markdown/JSON report
@@ -242,7 +299,8 @@ Evidence로 예측 가능성을 확보한다.
 
 ### Wave 3 — WP-04/05 Retrieval·Model·Calibration
 
-- 상태: synthetic lexical metric과 single-model structured contract만 구현; vector/panel/calibration 미완료
+- 상태: synthetic lexical metric, single-model structured contract, Qwen Plus proxy text/vision과
+  registration, GPT-4o alternate probe 구현; exact Qwen completion/gold, vector/panel/calibration 미완료
 - 범위: M04 vector/hybrid, M05 model adapter, M06
 - 시작조건: 승인된 synthetic/labeled dataset과 model/corpus policy
 - 핵심 demo: stage-aware cases + independent model findings + disagreement report
@@ -305,15 +363,16 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-현재 next는 G3 reference 이후 Wave 1 hardening과 G3 품질 benchmark다.
+현재 next는 `WP-02.Q1` 종료 뒤 `WP-01.R1` cross-file transaction journal/reconciliation이다.
 
-1. M01 dossier JSON Schema export와 snapshot manifest 검증
-2. M00 typed context/idempotency key와 stale/cancel/retry 상태 연결
-3. M08 durable local outbox, notification dedupe와 recovery test
-4. M03 실제 template 도착 시 field/locator fixture와 slide-render/VLM coverage 추가
-5. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark
-6. M05 approved gold label의 traceability/unsupported-claim과 on-prem Qwen contract
-7. M11 Typer CLI를 같은 `two-gate-pptx@v1alpha1` pipeline에 연결
-8. `prep.ps1 validate|test|eval`, Ruff, Pyright 회귀
+1. M02/M08 dossier/enrollment/audit/outbox transaction journal과 reconciliation을 설계한다.
+2. M00 full PipelineContext/checkpoint/cancel과 retryable/terminal result를 통합한다.
+3. M09 program publish/retire/rollout/migration 정책과 replayable checkpoint를 고정한다.
+4. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
+5. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
+6. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
+   traceability를 실행한다.
+7. M11 Typer CLI를 같은 project/education pipeline registry에 연결한다.
+8. `prep.ps1 validate|test|eval`, Ruff, Pyright 회귀를 유지한다.
 
 실제 data, 추가 live model, Vector DB, API/Web은 readiness 문서의 승인 Gate를 유지한다.

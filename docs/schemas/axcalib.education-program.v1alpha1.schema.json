@@ -1,0 +1,388 @@
+{
+  "$defs": {
+    "ManualConfirmationRequirement": {
+      "additionalProperties": false,
+      "description": "An instructor, mentor, or administrator confirms an activity.",
+      "properties": {
+        "kind": {
+          "const": "manual_confirmation",
+          "default": "manual_confirmation",
+          "title": "Kind",
+          "type": "string"
+        },
+        "points": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1000.0,
+          "title": "Points",
+          "type": "number"
+        },
+        "required_role": {
+          "default": "instructor",
+          "enum": [
+            "instructor",
+            "mentor",
+            "administrator"
+          ],
+          "title": "Required Role",
+          "type": "string"
+        },
+        "requirement_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "title"
+      ],
+      "title": "ManualConfirmationRequirement",
+      "type": "object"
+    },
+    "MilestoneCompletionRule": {
+      "additionalProperties": false,
+      "description": "Small allowlisted rule; arbitrary expressions are intentionally unsupported.",
+      "properties": {
+        "minimum_points": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 10000.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimum Points"
+        },
+        "mode": {
+          "default": "all_required",
+          "enum": [
+            "all_required",
+            "minimum_points"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "MilestoneCompletionRule",
+      "type": "object"
+    },
+    "MilestoneKind": {
+      "description": "Allowlisted milestone capabilities available to a course designer.",
+      "enum": [
+        "learning_activity",
+        "project_certification",
+        "assessment"
+      ],
+      "title": "MilestoneKind",
+      "type": "string"
+    },
+    "MilestoneSpec": {
+      "additionalProperties": false,
+      "description": "One versioned, composable learner milestone.",
+      "properties": {
+        "completion_rule": {
+          "$ref": "#/$defs/MilestoneCompletionRule"
+        },
+        "kind": {
+          "$ref": "#/$defs/MilestoneKind"
+        },
+        "milestone_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Milestone Id",
+          "type": "string"
+        },
+        "pipeline_id": {
+          "pattern": "^[a-z][a-z0-9._-]{2,127}$",
+          "title": "Pipeline Id",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "pattern": "^v[0-9A-Za-z._-]+$",
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "prerequisites": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "required_for_program_completion": {
+          "default": true,
+          "title": "Required For Program Completion",
+          "type": "boolean"
+        },
+        "requirements": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "manual_confirmation": "#/$defs/ManualConfirmationRequirement",
+                "project_status": "#/$defs/ProjectStatusRequirement",
+                "score_at_least": "#/$defs/ScoreRequirement"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ManualConfirmationRequirement"
+              },
+              {
+                "$ref": "#/$defs/ScoreRequirement"
+              },
+              {
+                "$ref": "#/$defs/ProjectStatusRequirement"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Requirements",
+          "type": "array"
+        },
+        "sequence": {
+          "minimum": 1,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "milestone_id",
+        "title",
+        "sequence",
+        "kind",
+        "pipeline_id",
+        "pipeline_version",
+        "requirements"
+      ],
+      "title": "MilestoneSpec",
+      "type": "object"
+    },
+    "ProgramLevelSpec": {
+      "additionalProperties": false,
+      "description": "Ordered group of milestones representing one course level.",
+      "properties": {
+        "level_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Level Id",
+          "type": "string"
+        },
+        "milestones": {
+          "items": {
+            "$ref": "#/$defs/MilestoneSpec"
+          },
+          "minItems": 1,
+          "title": "Milestones",
+          "type": "array"
+        },
+        "sequence": {
+          "minimum": 1,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level_id",
+        "title",
+        "sequence",
+        "milestones"
+      ],
+      "title": "ProgramLevelSpec",
+      "type": "object"
+    },
+    "ProgramStatus": {
+      "description": "Lifecycle of a program definition, not a learner certification decision.",
+      "enum": [
+        "draft",
+        "offline_reference",
+        "published",
+        "retired"
+      ],
+      "title": "ProgramStatus",
+      "type": "string"
+    },
+    "ProjectStatusRequirement": {
+      "additionalProperties": false,
+      "description": "A milestone condition derived from an actual AXCalib project dossier.",
+      "properties": {
+        "kind": {
+          "const": "project_status",
+          "default": "project_status",
+          "title": "Kind",
+          "type": "string"
+        },
+        "points": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1000.0,
+          "title": "Points",
+          "type": "number"
+        },
+        "required_status": {
+          "default": "completion_accepted",
+          "enum": [
+            "registration_approved",
+            "completion_accepted"
+          ],
+          "title": "Required Status",
+          "type": "string"
+        },
+        "requirement_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "title"
+      ],
+      "title": "ProjectStatusRequirement",
+      "type": "object"
+    },
+    "ScoreRequirement": {
+      "additionalProperties": false,
+      "description": "A trusted evaluator records a score against an explicit threshold.",
+      "properties": {
+        "kind": {
+          "const": "score_at_least",
+          "default": "score_at_least",
+          "title": "Kind",
+          "type": "string"
+        },
+        "passing_score": {
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Passing Score",
+          "type": "number"
+        },
+        "points": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1000.0,
+          "title": "Points",
+          "type": "number"
+        },
+        "required_role": {
+          "default": "instructor",
+          "enum": [
+            "instructor",
+            "mentor",
+            "administrator"
+          ],
+          "title": "Required Role",
+          "type": "string"
+        },
+        "requirement_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "title",
+        "passing_score"
+      ],
+      "title": "ScoreRequirement",
+      "type": "object"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/education-program/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Immutable program blueprint selected when a learner enrolls.",
+  "properties": {
+    "description": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "levels": {
+      "items": {
+        "$ref": "#/$defs/ProgramLevelSpec"
+      },
+      "minItems": 1,
+      "title": "Levels",
+      "type": "array"
+    },
+    "owner_ref": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Owner Ref",
+      "type": "string"
+    },
+    "program_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "title": "Program Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "axcalib.education-program/v1alpha1",
+      "default": "axcalib.education-program/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ProgramStatus",
+      "default": "draft"
+    },
+    "title": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "program_id",
+    "version",
+    "title",
+    "description",
+    "owner_ref",
+    "levels"
+  ],
+  "title": "EducationProgram",
+  "type": "object"
+}

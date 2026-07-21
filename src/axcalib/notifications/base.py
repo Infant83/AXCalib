@@ -14,6 +14,8 @@ class NotificationEvent:
     project_id: str
     stage: str
     required_role: str = "administrator"
+    revision: int | None = None
+    report_ref: str | None = None
 
 
 class NotificationPort(Protocol):

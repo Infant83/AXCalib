@@ -1,0 +1,116 @@
+{
+  "schema_version": "axcalib.evidence-gold/v1alpha1",
+  "dataset_id": "oled-qc-pptx-visual-locators-v1",
+  "source_name": "oled_qc_project_outline.pptx",
+  "source_sha256": "cb0a21ca59330921855f8e7ce4eb6496c47383750332682160ad48188018bd76",
+  "sidecar_sha256": "e35bd8d9e01ba326eb8759c81b4ad0b3f305a841501f2ea0cf0e482fff62a754",
+  "annotation_status": "manual_visual_transcription_for_offline_fixture",
+  "reference_fields": [
+    "comparison",
+    "data",
+    "deliverable_plan",
+    "goal",
+    "kpi_plan",
+    "limitation",
+    "method",
+    "problem",
+    "risk",
+    "roadmap",
+    "scope",
+    "validation_plan"
+  ],
+  "items": [
+    {
+      "evidence_id": "gold-slide-0001",
+      "slide_number": 1,
+      "locator": "pptx://slide/1",
+      "summary_sha256": "0ac278033a2d77362c603eff94548c9f9830392b43bf97c7f76a211cbef0459a",
+      "tags": ["deliverable_plan", "goal", "method", "problem", "scope"]
+    },
+    {
+      "evidence_id": "gold-slide-0002",
+      "slide_number": 2,
+      "locator": "pptx://slide/2",
+      "summary_sha256": "53b7a5ed216d268a62cf984f753073e5929f752a8acd40610f970ff7a5e4465a",
+      "tags": ["data", "method", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0003",
+      "slide_number": 3,
+      "locator": "pptx://slide/3",
+      "summary_sha256": "9c586afe1e045ba60bbdb08cdde1019ad69c06c954d2e0fed7bbd112f061d2fe",
+      "tags": ["goal", "method", "scope", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0004",
+      "slide_number": 4,
+      "locator": "pptx://slide/4",
+      "summary_sha256": "5aacbb0384dc3c2d0b46906b87d9ae33fe43834ca103c851b13d1495c7dcc48f",
+      "tags": ["deliverable_plan", "limitation", "risk", "roadmap", "scope"]
+    },
+    {
+      "evidence_id": "gold-slide-0005",
+      "slide_number": 5,
+      "locator": "pptx://slide/5",
+      "summary_sha256": "ccc364ea590445be81ac20ed20fdddd7f503ed1d3d9afd80a652edebdf10dd45",
+      "tags": ["kpi_plan", "limitation", "risk", "roadmap", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0007",
+      "slide_number": 7,
+      "locator": "pptx://slide/7",
+      "summary_sha256": "485f7747428ac343d60648688f5945fe42d0735782f64c0215f333106ded22c7",
+      "tags": ["problem", "roadmap", "scope"]
+    },
+    {
+      "evidence_id": "gold-slide-0008",
+      "slide_number": 8,
+      "locator": "pptx://slide/8",
+      "summary_sha256": "a3e1dd04081a9498e121b46312afec633570bcaa3d205b9bd71868eed792c1c3",
+      "tags": ["limitation", "method", "risk"]
+    },
+    {
+      "evidence_id": "gold-slide-0009",
+      "slide_number": 9,
+      "locator": "pptx://slide/9",
+      "summary_sha256": "dc875f69e491d792a2cf7b4eb6d00aeca6aebd2bcb1084385b5058ccf254f465",
+      "tags": ["limitation", "method", "risk", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0010",
+      "slide_number": 10,
+      "locator": "pptx://slide/10",
+      "summary_sha256": "d24ba01882fd81a73419da4404f4eaa49f4bf559389092712a028a73b081a36c",
+      "tags": ["data", "limitation", "method", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0011",
+      "slide_number": 11,
+      "locator": "pptx://slide/11",
+      "summary_sha256": "e19b8d50413aede314b5a2fc87276727d1e7f58f4f60ee1ee6e829c716a3c573",
+      "tags": ["data", "method", "risk", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0012",
+      "slide_number": 12,
+      "locator": "pptx://slide/12",
+      "summary_sha256": "f1fe1f3592c65befc428affa957b475f31c372a85a2b45977e0eaf72e07f60a1",
+      "tags": ["limitation", "method", "risk", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0013",
+      "slide_number": 13,
+      "locator": "pptx://slide/13",
+      "summary_sha256": "e809cef74a0c34dfa16f90a4e7a0584499bd43a95add3a06950ccd9912d277c8",
+      "tags": ["comparison", "method", "risk", "validation_plan"]
+    },
+    {
+      "evidence_id": "gold-slide-0014",
+      "slide_number": 14,
+      "locator": "pptx://slide/14",
+      "summary_sha256": "5fdbe123d85598c9fd9a1789f316425d2f173c82667c639394ed491daefcf090",
+      "tags": ["deliverable_plan", "roadmap", "scope", "validation_plan"]
+    }
+  ],
+  "quality_claim": "Hash-bound reviewed locator baseline only; no official rubric, semantic ground-truth, or model-quality claim."
+}

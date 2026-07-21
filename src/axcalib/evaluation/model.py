@@ -167,6 +167,10 @@ class StructuredModelEvaluator:
                     profile_id=self.gateway.config.profile_id,
                     model=gateway_result.model,
                     api_mode=self.gateway.config.api_mode.value,
+                    structured_output_mode=(
+                        self.gateway.config.structured_output_mode.value
+                    ),
+                    max_output_tokens=self.gateway.config.max_output_tokens,
                     capabilities=self.gateway.config.capabilities,
                     request_sha256=gateway_result.request_sha256,
                     response_sha256=gateway_result.response_sha256,

@@ -20,6 +20,7 @@ docling = ["docling>=2.113,<3"]
 dev = [
   "coverage>=7,<8",
   "pyright>=1.1,<2",
+  "python-pptx>=1.0,<2",
   "pytest>=9,<10",
   "ruff>=0.12,<1",
 ]

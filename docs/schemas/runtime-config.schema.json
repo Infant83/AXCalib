@@ -93,6 +93,8 @@
         "api_key_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
         "model_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
         "api_mode_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
+        "structured_output_mode_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
+        "max_output_tokens_env": {"type": "string", "pattern": "^(?:AXCALIB|OPENAI|OPENAPI)_[A-Z0-9_]+$"},
         "default_model": {"type": "string", "minLength": 1},
         "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
         "generation_profile": {"type": "string", "minLength": 1}

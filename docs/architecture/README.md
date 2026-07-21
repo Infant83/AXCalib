@@ -19,11 +19,17 @@
 | [개발 준비 감사](../readiness/development-readiness-audit.md) | supplied-PPTX offline slice 검증과 live/운영 NO-GO |
 | [PPTX demo 기록](../evaluation/oled-qc-pptx-demo.md) | 실제 입력 hash, 등록/완료 결과와 quality-claim 경계 |
 | [G3 Intelligence 개발 리포트](../evaluation/g3-intelligence-development-report.md) | policy/Docling/retrieval/model 구현·live probe·코드리뷰 결과 |
+| [교육 프로그램/WP-01 개발 리포트](../evaluation/education-program-wp01-development-report.md) | actual-PPT lifecycle, program composition, local hardening과 코드리뷰 |
+| [WP-02.Q1 근거 품질 리포트](../evaluation/wp02-actual-ppt-evidence-quality-report.md) | 제한형 actual-PPT render, gold locator, traceability metric과 코드리뷰 경계 |
+| [WP-05.Q1 Qwen capability 리포트](../evaluation/qwen35-capability-validation-report.md) | provider proxy, exact checkpoint identity, on-prem 환경계약과 full-rubric 실패 경계 |
+| [교육 프로젝트 lifecycle](../workflows/education_project_lifecycle.md) | program→enrollment→project two-gate→program HITL 운영계약 |
 | [AXCalib Workflow & Architecture deck](../presentations/AXCalib_Workflow_Architecture_v0.3-p1.pptx) | 두 Gate·pipeline·module·RAG·Wave를 설명하는 12장 검토자료 |
 | [ADR-013](../adr/ADR-013-composable-local-pipelines.md) | 국소 pipeline 조합 방식을 채택한 결정과 결과 |
 | [ADR-014](../adr/ADR-014-progressive-configuration-and-openapi.md) | 최소 facade, expert config와 OpenAPI 제어 경계 |
 | [ADR-015](../adr/ADR-015-image-only-pptx-offline-evidence.md) | image-only PPTX sidecar와 same-hash final 처리 결정 |
 | [ADR-016](../adr/ADR-016-review-policy-and-openai-compatible-evaluator.md) | hash-bound 심사기준, structured model, OpenAI/on-prem 환경계약 |
+| [ADR-017](../adr/ADR-017-education-program-composition.md) | 교육 program/enrollment와 project 인증 경계, version/roll-up 결정 |
+| [ADR-018](../adr/ADR-018-qwen-capability-and-provider-alias.md) | Qwen provider proxy와 exact deployment identity·structured-output 경계 |
 
 ## 권장 읽기 순서
 
@@ -31,7 +37,8 @@
 2. workflow blueprint에서 분기와 사람 승인 지점을 확인한다.
 3. module delivery plan에서 현재 상태와 선행조건을 확인한다.
 4. composable pipeline plan에서 Python 계약과 구현 상세를 확인한다.
-5. 실제 작업 전 `PROJECT_STATE.md`와 `prep.ps1 next`를 확인한다.
+5. 실제 작업 전 단일 실행 원장 `PROJECT_STATE.md`의 P/WP/G Gantt, Active Slice와 최근 이력을
+   확인하고 `prep.ps1 next`로 동일 frontmatter를 요약한다.
 
 ## 상태 표기
 

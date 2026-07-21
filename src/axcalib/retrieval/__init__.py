@@ -9,10 +9,18 @@ from axcalib.retrieval.base import (
     RetrievalResult,
     load_historical_cases,
 )
+from axcalib.retrieval.dense import (
+    DeterministicFakeEmbedder,
+    Embedder,
+    InMemoryVectorRetriever,
+)
 
 __all__ = [
     "CaseRetriever",
     "HistoricalCase",
+    "DeterministicFakeEmbedder",
+    "Embedder",
+    "InMemoryVectorRetriever",
     "LexicalRetriever",
     "NullRetriever",
     "RetrievalHit",

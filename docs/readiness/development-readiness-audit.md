@@ -1,9 +1,9 @@
 ---
 title: AXCalib Development Readiness Audit
-status: g3_reference_implemented
-verdict: G3_REFERENCE_BASELINE_VERIFIED
-baseline: v0.3-p1
-updated_at: 2026-07-16
+status: education_and_g3_reference_implemented
+verdict: EDUCATION_WP01_LOCAL_REFERENCE_VERIFIED
+baseline: v0.3-p1-skillboss-http500-q2
+updated_at: 2026-07-22
 owner_signoff: user_directive_for_g3_and_limited_live_fixture
 ---
 
@@ -11,14 +11,15 @@ owner_signoff: user_directive_for_g3_and_limited_live_fixture
 
 ## 판정
 
-**VERIFIED — 사용자의 명시적 지시 범위에서 supplied-PPTX local/offline vertical slice와 G3
-Intelligence reference baseline이 구현·검증됐다.**
+**VERIFIED — 사용자의 명시적 지시 범위에서 supplied-PPTX local/offline vertical slice, G3
+Intelligence contract, Qwen Plus provider-proxy capability/registration, 교육 program composition과 WP-01 local
+hardening reference가 검증됐다.**
 
-**NO-GO — 실제 데이터, 추가 live model, on-prem 운영승격, 운영 알림, Vector DB 운영,
+**NO-GO — 실제 데이터, exact Qwen registration/completion·gold 품질, on-prem 운영승격, 운영 알림, Vector DB 운영,
 API 배포, Web pilot.**
 
 이 판정은 T1 전체, 제품 기능 완료 또는 모델 품질 검증을 뜻하지 않는다. 실제 rubric,
-template, 승인된 gold label, on-prem model, outbox, CLI/API/Web과 운영 보안은 별도 Gate다.
+template, 승인된 gold label, on-prem model, 운영 notification adapter, CLI/API/Web과 보안은 별도 Gate다.
 
 ## 감사 범위와 결과
 
@@ -26,18 +27,19 @@ template, 승인된 gold label, on-prem model, outbox, CLI/API/Web과 운영 보
 |---|---|---|---|
 | 정체성 | 공식명, Excalibur 비유, 사람 최종권한 | Ready | product brief, concept manual, D-011 |
 | 도메인 | 단일 dossier, 두 Gate, snapshot/stale | Offline slice verified | repository/pipeline integration tests |
+| 교육 progression | versioned program, generated goals, project roll-up, program HITL | Offline reference verified | actual-PPT lifecycle and program tests |
 | 인터페이스 | 최소 sync/async facade와 동일 의미 | Library/script slice verified | `AXCalib`, allowlisted pipeline, working script |
 | 설정 | minimal/expert 분리, unknown/protected key 거부 | Contract ready | TOML 2종, JSON Schema, harness validation |
 | API | typed JSON, idempotency, wait/resume | Contract ready | OpenAPI 3.1 artifact; auth threat model은 WP-06 |
 | 검색 | stage 격리, portion 0 offline, 결손 시 fail | Synthetic lexical verified | stage-filter eval; 품질 주장은 금지 |
 | 심사정책 | 기준 주입, version/hash/status, 사람 수정 분리 | G3 reference verified | policy registry, checklist hash, adjustment tests |
 | 문서 파싱 | parser provenance와 coverage | Docling contract verified | supplied deck 16쪽, text page 0, text char 0 |
-| 모델 | provider 교체, strict output, locator guard | Reference + limited live smoke | mock 두 Gate + 비식별 live registration 1회 |
+| 모델 | provider 교체, identity/dialect, strict output, locator guard | Proxy registration verified; exact pending | Qwen Plus text/vision+registration, GPT-4o comparison pass, GLM vision fail, fake exact E2E |
 | 사람 검토 | 알림, checklist, mentor guard, final actor | Offline integration verified | two notification/decision audit |
 | 데이터·보안 | synthetic-only, env secret, 원문 최소화 | Conditional | 실제 data classification/DPIA 미승인 |
 | 시험 | read-only validation, offline test/eval | Supplied PPTX regression verified | `prep.ps1`과 static checks |
 | 문서·교육 | product brief, manual, diagram, comic | Ready | `docs/manuals`와 시각 자산 |
-| 운영 | outbox/retry/delivery/RBAC/observability | Not ready | WP-06 전 NO-GO |
+| 운영 | local outbox/retry는 reference; provider/RBAC/reconciliation/observability | Not ready | WP-06 전 NO-GO |
 | Frontend | API boundary와 역할은 정의 | Decision pending | 3개 후보 중 stack/design owner 선택 필요 |
 
 ## 이번 감사에서 닫은 결함
@@ -53,6 +55,12 @@ template, 승인된 gold label, on-prem model, outbox, CLI/API/Web과 운영 보
    실패시킨다.
 8. sidecar 파일 자체의 hash도 dossier에 고정해 평가 전 변경을 탐지한다.
 9. repository API의 project ID 경로이탈을 schema 밖에서도 거부한다.
+10. 다른 enrollment/learner의 project binding을 exact education context로 거부한다.
+11. stale update 경쟁 구간을 service CAS와 freeze lock까지 연결한다.
+12. outbox/idempotency error record에서 provider message를 제거한다.
+13. `json_object`의 literal JSON/schema prompt contract를 gateway에 고정하고 wrapped upstream 4xx를
+    안전한 identifier로 진단한다.
+14. Qwen 전용 검증과 별도로 model-independent multimodal provider/deployment scope를 제공한다.
 
 ## 남은 차단 항목
 
@@ -67,6 +75,9 @@ template, 승인된 gold label, on-prem model, outbox, CLI/API/Web과 운영 보
 | B-07 | OpenAPI 3.2 및 TOML 1.1 toolchain 호환 spike | WP-06 전/선택 | Tech Lead |
 | B-08 | on-prem Qwen capability, endpoint allowlist와 data egress 승인 | on-prem/live 운영 전 | Model/Security Owner |
 | B-09 | 실제 template과 labeled retrieval/model gold set | G3 품질승격 전 | Data/Evaluation Owner |
+| B-10 | program publish/retire/migration, 재수강·면제·credential 정책 | 교육 pilot 전 | Course/Product Owner |
+| B-11 | dossier/enrollment/audit/outbox reconciliation | API/worker 전 | Tech/Platform Owner |
+| B-12 | exact `Qwen3.5-397B-A17B` full registration/completion와 deployment fingerprint | G3 품질승격 전 | Model/Evaluation Owner |
 
 ## 구현된 local/offline slice
 
@@ -84,9 +95,15 @@ template, 승인된 gold label, on-prem model, outbox, CLI/API/Web과 운영 보
 9. optional Docling parser manifest와 zero-text 경계
 10. stage-aware synthetic retrieval metric과 OpenAI-compatible structured evaluator
 11. 사용자 승인 비식별 fixture의 단일 live registration transport/HITL smoke
+12. dossier/program/enrollment JSON Schema와 multi-process local CAS lock
+13. local idempotency result store, durable notification outbox와 effective-config manifest
+14. versioned program/enrollment, typed milestone과 actual-PPT project roll-up/program HITL 예제
+15. Qwen Plus와 GPT-4o provider proxy의 supplied-fixture registration report/notification/HITL smoke
+16. generic multimodal text/vision probe와 JSON-object schema compatibility contract
 
-JSON Schema export, idempotent checkpoint, durable outbox와 독립 CLI는 아직 남았다. embedding,
-Qdrant, on-prem Qwen, multi-model calibration, FastAPI, email/GitLab, Web UI는 이 slice에 넣지 않았다.
+full checkpoint/cancel, cross-file reconciliation, stale-lock recovery와 독립 CLI는 아직 남았다.
+embedding, Qdrant, exact on-prem Qwen registration/completion·gold, multi-model calibration, FastAPI, email/GitLab, Web UI는 이 slice에
+넣지 않았다.
 
 ## Owner sign-off checklist
 

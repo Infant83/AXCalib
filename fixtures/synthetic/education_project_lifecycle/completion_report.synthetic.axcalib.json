@@ -1,0 +1,58 @@
+{
+  "schema_version": "axcalib.pptx-sidecar/v1",
+  "source_sha256": "b90c5c2bba18e780730d8b07e5a29c099bbdf92b7f3b5a0c05481178d35cdca8",
+  "annotation_status": "synthetic_fixture_author_annotation",
+  "slides": [
+    {
+      "slide": 1,
+      "summary": "과제: OLED 분자 역설계 프로젝트 결과: 교육 lifecycle과 AXCalib 두 Gate를 검증한 테스트 전용 완료자료 산출물: dossier, 등록·완료 리포트, 감사 로그, 재현 스크립트 주의: 실제 연구성과나 실제 학습자 평가가 아님",
+      "tags": [
+        "deliverable",
+        "result"
+      ]
+    },
+    {
+      "slide": 2,
+      "summary": "등록 목표: SELFIES·surrogate·QUBO를 연결한 역설계 검증 계획 수립 변경: 실제 양자 하드웨어 실험 대신 deterministic offline workflow 검증으로 범위 조정 변경 승인: synthetic 교육 예제 범위에 한정한 관리자 테스트 입력",
+      "tags": [
+        "change",
+        "result"
+      ]
+    },
+    {
+      "slide": 3,
+      "summary": "KPI 1 · 두 HITL 승인요청 기록: target 2건, observed 2건 KPI 2 · 단계 누출: target 0건, observed 0건 KPI 3 · criterion locator 보존: target 100%, observed 100% 측정기간: 단일 offline integration run",
+      "tags": [
+        "result",
+        "quantitative_target",
+        "kpi_plan"
+      ]
+    },
+    {
+      "slide": 4,
+      "summary": "코드 버전과 program version을 실행기록에 고정 PPTX와 sidecar SHA-256 hash를 dossier artifact로 기록 테스트 로그와 JSON·Markdown 리포트를 workspace에 생성 재현 절차: 문서화된 Python library example을 동일 fixture로 실행",
+      "tags": [
+        "deliverable",
+        "result",
+        "reproducibility"
+      ]
+    },
+    {
+      "slide": 5,
+      "summary": "리스크: 실제 embedding·Qdrant·on-prem Qwen 품질은 검증하지 않음 한계: 수동 reviewed sidecar는 OCR/VLM gold label이 아님 후속계획: 평가 책임자 rubric 승인 후 비식별 gold dataset으로 별도 검증",
+      "tags": [
+        "risk",
+        "limitation"
+      ]
+    },
+    {
+      "slide": 6,
+      "summary": "산출물 reference와 content hash를 dossier에서 추적 결과 report는 Agent 제안과 관리자 결정을 분리 재현 테스트는 외부 endpoint 없이 실행 본 문서는 SYNTHETIC EXAMPLE이며 공식 인증서가 아님",
+      "tags": [
+        "deliverable",
+        "result",
+        "reproducibility"
+      ]
+    }
+  ]
+}

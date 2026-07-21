@@ -1,0 +1,97 @@
+# AXCalib 인수인계 안내
+
+이 문서는 AXCalib를 처음 이어받는 사람이 **무엇을 만드는지, 지금 어디까지 됐는지, 다음에 무엇을
+해야 하는지** 짧은 시간 안에 이해하도록 돕는다. 상세 진행상태는 `PROJECT_STATE.md`가 유일한 실행
+기준정보다.
+
+## 1. AXCalib를 한 문장으로 설명하면
+
+AXCalib는 제출된 프로젝트의 근거를 모아 등록심의와 완료평가 초안을 만들고, 판단 편차를 점검한 뒤
+**권한 있는 관리자가 최종 승인하도록 돕는 Python 라이브러리**다.
+
+Agent가 사람 대신 인증하지 않는다. AXCalib의 역할은 다음 세 문장으로 기억하면 된다.
+
+> 근거가 자격을 만들고, 보정이 판단을 맞추며, 권한 있는 사람이 인증한다.
+
+## 2. 쉬운 용어 설명
+
+| 용어 | 쉬운 뜻 |
+|---|---|
+| dossier | 한 프로젝트의 목표, 증거, 심의와 승인 기록을 모은 기록철 |
+| snapshot | 평가 도중 내용이 바뀌지 않도록 특정 revision을 복사해 고정한 파일 |
+| 등록심의 | 프로젝트를 시작해도 되는지 검토하는 첫 번째 Gate |
+| 완료평가 | 처음 승인한 목표와 실제 결과를 비교하는 두 번째 Gate |
+| HITL | Agent 초안을 사람이 확인하고 최종 결정을 내리는 절차 |
+| P / WP / G | Phase는 큰 개발 구간, Work Package는 납품 단위, Gate는 통과 확인점 |
+| provider proxy | 실제 배포 모델과 같다고 보장하지 않는 개인환경의 모델 연결 경로 |
+| transaction journal | 여러 파일을 바꾸는 작업의 준비·적용·완료 상태를 남기는 복구 기록 |
+| reconciliation | 중단 뒤 관련 파일을 다시 대조해 빠진 기록이나 불일치를 안전하게 복구하는 절차 |
+
+## 3. 2026-07-22 현재 상태
+
+- 현재 Phase: P2 Domain hardening
+- 현재 Work Package: WP-01 Dossier and state hardening
+- 다음 실행 slice: WP-01.R1 Transaction Journal / Reconciliation
+- 현재 Gate: G2 offline reference를 통과했지만 운영 hardening은 남아 있음
+- 최근 검증: 79 tests, 8 eval groups, validation 0 errors/0 warnings
+
+현재 가능한 것:
+
+- 제공 PPTX를 dossier로 등록하고 revision을 고정한다.
+- 등록심의 초안, 관리자 알림, 사람의 승인·반려를 분리해 기록한다.
+- 수행 증거를 갱신하고 완료평가 초안과 두 번째 HITL을 진행한다.
+- 교육 프로그램에 가입한 학습자의 milestone과 프로젝트 완료 근거를 연결한다.
+- Qwen3.5 Plus 또는 다른 OpenAI-compatible 모델의 text/vision 계약을 별도로 probe한다.
+
+현재 운영에 쓰면 안 되는 것:
+
+- Agent의 판정을 자동 인증으로 사용하는 것
+- 실제 개인정보나 사내 원문을 승인되지 않은 외부 endpoint로 보내는 것
+- provider proxy 결과를 exact on-prem Qwen 검증으로 표시하는 것
+- 현재 recording outbox를 실제 GitLab/email 운영 알림으로 간주하는 것
+- 공식 rubric과 사람 gold label 없이 모델 품질을 검증 완료로 선언하는 것
+
+## 4. 가장 먼저 읽을 문서
+
+1. `README.md`: 설치, 실행 예제와 전체 문서 지도
+2. `PROJECT_STATE.md`: 현재 P/WP/G, Active Slice, 검증과 작업 이력
+3. `CHANGELOG.md`: 사용자 관점의 주요 변경
+4. `AGENTS.md`: 변경할 때 반드시 지킬 안전·품질 계약
+5. `WORK_SPEC.md`, `GOAL.md`, `DESIGN.md`: 요구사항, 수용기준과 기술 설계
+6. `DECISIONS.md`, `RISK_REGISTER.md`: 이미 내린 결정과 아직 열린 위험
+
+## 5. 로컬에서 상태 확인하기
+
+```powershell
+.\prep.ps1 status
+.\prep.ps1 next
+.\prep.ps1 validate
+.\prep.ps1 test
+.\prep.ps1 eval
+```
+
+기본 test/eval은 외부 모델을 호출하지 않는다. live model은 별도 opt-in이며 승인된 비식별 자료만
+사용한다.
+
+## 6. 다음 작업을 시작하는 방법
+
+WP-01.R1의 첫 목표는 여러 파일 중 일부만 저장되고 프로세스가 중단되는 상황을 복구하는 것이다.
+
+1. project command가 바꾸는 dossier/report/audit/outbox 파일 목록을 고정한다.
+2. `prepared → applying → committed` 상태를 append-only journal에 남긴다.
+3. 각 파일 저장 직후 실패를 강제로 발생시키는 synthetic test를 만든다.
+4. 재시작 후 `reconcile`을 반복해도 알림이나 audit가 중복되지 않는지 확인한다.
+5. 필수 알림이 없거나 revision이 달라지면 사람 승인 상태로 진행하지 않고 차단한다.
+6. 테스트, 위험, 결정, 다이어그램과 `PROJECT_STATE.md`를 같은 변경으로 갱신한다.
+
+## 7. 인수인계할 때 남길 내용
+
+- 어떤 WP와 수용기준을 바꿨는가
+- 실제로 바꾼 파일은 무엇인가
+- 실행한 validate/test/eval과 결과는 무엇인가
+- 실패했거나 실행하지 못한 검증은 무엇인가
+- 품질 주장을 어디까지 할 수 있는가
+- 새 결정·위험과 다음 작업은 무엇인가
+- commit과 push가 완료됐는가
+
+비밀정보, 원문 전체, model reasoning과 `output/` 실행 산출물은 Git에 넣지 않는다.

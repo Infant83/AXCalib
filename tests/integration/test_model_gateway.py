@@ -1,7 +1,10 @@
+import io
 import json
 import threading
+import urllib.error
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from email.message import Message
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -15,6 +18,7 @@ from axcalib.models import (
     ModelApiMode,
     ModelEndpointConfig,
     OpenAICompatibleClient,
+    StructuredOutputMode,
 )
 from axcalib.pipelines import TwoGatePptxRequest
 from axcalib.policies import builtin_default_policy
@@ -29,6 +33,8 @@ SIDECAR = ROOT / "tests" / "sources" / "oled_qc_project_outline.axcalib.json"
 @contextmanager
 def _fake_responses_server(
     output: dict[str, Any] | Callable[[dict[str, Any]], dict[str, Any]],
+    *,
+    reported_model: str | None = "mock-structured-model",
 ) -> Iterator[tuple[str, dict[str, Any]]]:
     captured: dict[str, Any] = {}
 
@@ -43,15 +49,22 @@ def _fake_responses_server(
             selected_output = output(captured["body"]) if callable(output) else output
             text = json.dumps(selected_output, ensure_ascii=False)
             if self.path.endswith("/chat/completions"):
-                envelope = {
+                envelope: dict[str, Any] = {
                     "id": "chat-test-001",
-                    "model": "mock-structured-model",
-                    "choices": [{"message": {"content": text}}],
+                    "choices": [
+                        {
+                            "message": {
+                                "content": text,
+                                "reasoning_content": (
+                                    "PRIVATE_REASONING_MUST_NOT_BE_RETAINED"
+                                ),
+                            }
+                        }
+                    ],
                 }
             else:
                 envelope = {
                     "id": "resp-test-001",
-                    "model": "mock-structured-model",
                     "output": [
                         {
                             "type": "message",
@@ -59,6 +72,8 @@ def _fake_responses_server(
                         }
                     ],
                 }
+            if reported_model is not None:
+                envelope["model"] = reported_model
             data = json.dumps(envelope).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -134,11 +149,15 @@ def test_environment_contract_supports_standard_and_openapi_aliases() -> None:
             "OPENAPI_API_KEY": "present",
             "OPENAPI_BASE_URL": "http://model.internal.example/v1",
             "OPENAI_MODEL": "Qwen3.5-397B-A17B",
+            "OPENAI_STRUCTURED_OUTPUT_MODE": "json_object",
+            "OPENAI_MAX_OUTPUT_TOKENS": "8192",
         }
     )
     assert onprem.api_key_env == "OPENAPI_API_KEY"
     assert onprem.model == "Qwen3.5-397B-A17B"
     assert onprem.api_mode is ModelApiMode.CHAT_COMPLETIONS
+    assert onprem.structured_output_mode is StructuredOutputMode.JSON_OBJECT
+    assert onprem.max_output_tokens == 8192
 
 
 def test_structured_model_report_is_evidence_bound_and_context_free(tmp_path: Path) -> None:
@@ -203,10 +222,102 @@ def test_onprem_chat_compatible_mode_carries_multimodal_and_schema_contract() ->
         )
 
     assert result.model == "mock-structured-model"
+    assert result.model_reported_by_endpoint is True
+    assert "PRIVATE_REASONING_MUST_NOT_BE_RETAINED" not in result.model_dump_json()
     assert captured["path"] == "/v1/chat/completions"
     user_content = captured["body"]["messages"][1]["content"]
     assert [item["type"] for item in user_content] == ["text", "image_url"]
     assert captured["body"]["response_format"]["type"] == "json_schema"
+
+
+def test_endpoint_model_fallback_is_not_treated_as_reported_identity() -> None:
+    with _fake_responses_server({"ok": True}, reported_model=None) as (base_url, _captured):
+        config = ModelEndpointConfig(
+            profile_id="onprem/qwen35",
+            base_url=base_url,
+            model="Qwen3.5-397B-A17B",
+            api_mode=ModelApiMode.CHAT_COMPLETIONS,
+            live=False,
+        )
+        result = OpenAICompatibleClient(config, api_key="dummy").generate_structured(
+            instructions="Return the contract.",
+            input_text="identity probe",
+            schema_name="probe",
+            json_schema={
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["ok"],
+                "properties": {"ok": {"type": "boolean"}},
+            },
+        )
+
+    assert result.model == "Qwen3.5-397B-A17B"
+    assert result.model_reported_by_endpoint is False
+
+
+def test_chat_json_object_mode_is_explicit_and_still_returns_validated_text() -> None:
+    with _fake_responses_server({"ok": True}) as (base_url, captured):
+        config = ModelEndpointConfig(
+            profile_id="onprem/qwen35-json-object",
+            base_url=base_url,
+            model="Qwen3.5-397B-A17B",
+            api_mode=ModelApiMode.CHAT_COMPLETIONS,
+            structured_output_mode=StructuredOutputMode.JSON_OBJECT,
+            max_output_tokens=4096,
+            live=False,
+        )
+        result = OpenAICompatibleClient(config, api_key="dummy").generate_structured(
+            instructions="Return the structured contract.",
+            input_text="object dialect probe",
+            schema_name="probe",
+            json_schema={
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["ok"],
+                "properties": {"ok": {"type": "boolean"}},
+            },
+        )
+
+    assert json.loads(result.output_text) == {"ok": True}
+    assert captured["body"]["response_format"] == {"type": "json_object"}
+    assert captured["body"]["max_tokens"] == 4096
+    instructions = captured["body"]["messages"][0]["content"]
+    assert "Return exactly one valid JSON object" in instructions
+    assert "JSON Schema:" in instructions
+    assert '"required":["ok"]' in instructions
+
+
+def test_wrapped_upstream_error_exposes_identifiers_without_server_message() -> None:
+    body = json.dumps(
+        {
+            "detail": "Failed: 400 "
+            + json.dumps(
+                {
+                    "error": {
+                        "message": "PRIVATE REQUEST DETAILS MUST NOT LEAK",
+                        "type": "invalid_request_error",
+                        "param": None,
+                        "code": "invalid_parameter_error",
+                    }
+                }
+            )
+        }
+    ).encode("utf-8")
+    error = urllib.error.HTTPError(
+        "https://model.example.invalid/v1/chat/completions",
+        500,
+        "Internal Server Error",
+        hdrs=Message(),
+        fp=io.BytesIO(body),
+    )
+
+    diagnostic = OpenAICompatibleClient._safe_http_diagnostic(error)
+
+    assert diagnostic == (
+        " (upstream_status=400, type=invalid_request_error, "
+        "code=invalid_parameter_error)"
+    )
+    assert "PRIVATE REQUEST DETAILS" not in diagnostic
 
 
 def test_model_cannot_cite_an_unavailable_slide(tmp_path: Path) -> None:
@@ -324,6 +435,7 @@ def test_structured_model_runs_both_gates_without_taking_human_authority(
     assert summary.final_status is ProjectStatus.COMPLETION_NOT_ACCEPTED
     assert summary.notification_count == 2
     assert registration.model_run is not None
+    assert registration.model_run.structured_output_mode == "json_schema"
     assert completion.model_run is not None
     completion_request = json.dumps(captured["bodies"][-1], ensure_ascii=False)
     assert "registration_baseline" in completion_request

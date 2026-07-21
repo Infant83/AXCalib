@@ -5,15 +5,15 @@
 | R-001 | Agent의 hallucination 또는 unsupported claim | 잘못된 통과·탈락 제안 | criterion evidence와 관리자 HITL checklist | Open |
 | R-002 | historical case 편향과 outcome leakage | 과거 판단을 답처럼 복제 | stage filter, commonality/difference, 관리자 검토 | Open |
 | R-003 | similarity portion 과대 설정 | 평가기준보다 검색값이 지배 | 기본 0, 0.25 초과 warning, human final decision | Open |
-| R-004 | 승인요청 알림 실패 | 관리자 검토 누락 | 알림 성공 전 HITL pending 전이 금지와 integration test; durable outbox/retry는 미구현 | Mitigated offline; operational open |
+| R-004 | 승인요청 알림 실패 | 관리자 검토 누락 | 알림 성공 전 HITL pending 전이 금지, durable local outbox·dedupe·retry test | Mitigated locally; operational adapter open |
 | R-005 | 선택적 멘토 흐름의 승인 우회 | 완료자료 품질 저하 | mentor가 배정되면 mentor 승인 강제 및 scenario test | Mitigated offline |
-| R-006 | 평가 중 dossier 변경 | stale 결과 자동 반영 | revision/hash snapshot, sequential stale write 거부; multi-process lock/result 격리는 미구현 | Partially mitigated |
+| R-006 | 평가 중 dossier 변경 | stale 결과 자동 반영 | revision/hash snapshot, multi-process CAS lock, revision-aware freeze/update와 stale result | Mitigated locally; stale-lock recovery open |
 | R-007 | 실제 데이터 또는 secret 유출 | 개인정보·보안 사고 | synthetic-only 기본, env 이름만 기록, default test에서 live 제외; 사용자 승인 비식별 smoke만 별도 수행 | Open |
 | R-008 | GitLab MR 또는 email provider 종속 | 운영 이식성 저하 | NotificationPort와 adapter 분리 | Planned |
 | R-009 | 국소 pipeline 과분할 | 경계·버전·운영 복잡도 증가 | 독립 업무결과와 재사용자가 있을 때만 pipeline 승격 | Planned |
 | R-010 | script, CLI, API별 로직 복제 | interface마다 판정과 오류 의미가 달라짐 | working script는 `AXCalib` pipeline만 호출; CLI/API parity는 미구현 | Partially mitigated |
 | R-011 | 범용 workflow engine 조기개발 | Domain MVP 지연과 보안 surface 확대 | 명시적 Python composition과 allowlisted registry 구현 | Mitigated for slice |
-| R-012 | pipeline 사이 부분 side effect | 중복 평가·알림·불일치 상태 | atomic file replace와 fail-closed는 구현; cross-file transaction/outbox/idempotency는 미구현 | Open hardening |
+| R-012 | pipeline 사이 부분 side effect | 중복 평가·알림·불일치 상태 | atomic replace, durable outbox와 local idempotency result store; audit/report/enrollment 사이 단일 transaction은 없음 | Partially mitigated; cross-file recovery open |
 | R-013 | 구조도·module board와 코드 drift | 잘못된 작업순서와 완료판단 | 필수 문서 validation, same-change-set 규칙, Exit Evidence 기반 상태승격 | Mitigated in harness contract |
 | R-014 | Excalibur 비유가 Agent 자동인증으로 해석됨 | 사람 책임 약화·제품 신뢰 훼손 | 고정 문장, 권한 diagram, HITL 경계와 교육용 caption | Mitigated in predev contract |
 | R-015 | 옵션 과다로 첫 사용과 운영 구성이 실패 | adoption 저하·오설정 | minimal facade/default와 별도 expert profile | Mitigated in predev contract |
@@ -27,3 +27,12 @@
 | R-023 | 사업부·소속별 기준 선택이 편향을 숨김 | 차별적 기준과 감사 실패 | ReviewContext와 explicit policy selector 분리, 자동 context mapping 금지, policy hash/owner/approval 기록 | Open until mapping policy approved |
 | R-024 | 임의 model endpoint로 원문 전송 또는 capability 오판 | data egress와 잘못된 평가 | live opt-in, secret-free manifest, structured contract; allowlist/capability probe는 미구현 | Operational open |
 | R-025 | project ID를 이용한 저장경로 이탈 | dossier 외 파일 조회·변조 | schema와 repository 경계에서 strict ID pattern 검증 및 traversal 회귀 test | Mitigated locally |
+| R-026 | 다른 학습자 또는 program version의 과제가 milestone에 연결됨 | 잘못된 진도·인증 근거 | program/version/enrollment/milestone/learner exact-context binding과 회귀 test | Mitigated locally; identity auth open |
+| R-027 | 과정 기획자 config가 임의 code/표현식을 실행 | 보안침해·HITL 우회 | typed requirement union, allowlisted pipeline ID/version, arbitrary import/expression 금지 | Mitigated for reference catalog |
+| R-028 | program version 변경이 진행 중 가입을 조용히 바꿈 | 목표·기준 drift와 감사 실패 | immutable program hash, enrollment pin; migration/rollout은 미구현 | Mitigated against silent drift; rollout policy open |
+| R-029 | dossier·enrollment·audit·notification의 cross-file commit 일부 실패 | orphan event 또는 감사 누락 | 각 파일 atomic/CAS, bounded transient replace retry, idempotency와 outbox; reconciliation/transaction journal 필요 | Open hardening |
+| R-030 | local actor 문자열을 실제 과정 관리자 권한으로 오해 | 무권한 과정 완료 | administrator-only typed command와 `offline_unverified_actor`; API/RBAC 전 운영 금지 | Mitigated in reference; auth open |
+| R-031 | provider alias를 exact Qwen checkpoint로 오인하거나 provider별 structured-output 실패를 숨김 | 다른 모델 검증을 배포 승인으로 오해하거나 평가 실행이 중단됨 | proxy/deployment scope 분리, response model 확인, explicit dialect/output limit, JSON-object schema contract, no-fallback capability report | Proxy registration mitigated; exact on-prem/completion/gold open |
+| R-032 | model endpoint 실패가 dossier audit에 기록되지 않음 | 실패 원인·재시도·비용 추적 누락 | 현재 fail-closed 상태전이; request hash와 safe failure kind를 journal/audit에 기록하는 후속 작업 | Open WP-01.R1/WP-05 |
+| R-033 | provider가 upstream 4xx를 HTTP 500으로 wrapping하거나 `json_object` 요구를 다르게 구현 | retry 오판·원인 은폐·structured output 중단 | JSON keyword/schema prompt contract, wrapped status/type/code safe parse, dialect별 contract test | Mitigated for observed route; provider matrix open |
+| R-034 | 외부 SkillBoss skill pack의 updater/version metadata와 credential 저장 방식 불일치 | 오래된 지침 사용 또는 개발 key 노출 | 공식 repository hash 검증, env 우선, 값 미기록, 제품/on-prem dependency 금지; key rotation은 사용자 계정 작업 | External tool risk open |

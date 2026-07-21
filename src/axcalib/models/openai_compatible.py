@@ -28,6 +28,13 @@ class ModelApiMode(StrEnum):
     CHAT_COMPLETIONS = "chat_completions"
 
 
+class StructuredOutputMode(StrEnum):
+    """Explicit structured-output dialect; the gateway never retries another mode."""
+
+    JSON_SCHEMA = "json_schema"
+    JSON_OBJECT = "json_object"
+
+
 class ModelEndpointConfig(FrozenModel):
     """Secret-free endpoint and capability configuration."""
 
@@ -37,8 +44,10 @@ class ModelEndpointConfig(FrozenModel):
     api_key_env: str = "OPENAI_API_KEY"
     model: str = DEFAULT_OPENAI_MODEL
     api_mode: ModelApiMode = ModelApiMode.RESPONSES
+    structured_output_mode: StructuredOutputMode = StructuredOutputMode.JSON_SCHEMA
     capabilities: tuple[str, ...] = ("text", "image", "structured_output")
     reasoning_effort: str | None = None
+    max_output_tokens: int | None = Field(default=None, ge=128, le=131_072)
     timeout_seconds: int = Field(default=120, ge=1, le=900)
     live: bool = True
 
@@ -85,6 +94,11 @@ class ModelEndpointConfig(FrozenModel):
                 if host in {"api.openai.com", "www.api.openai.com"}
                 else ModelApiMode.CHAT_COMPLETIONS
             )
+        structured_output_mode = StructuredOutputMode(
+            values.get("OPENAI_STRUCTURED_OUTPUT_MODE")
+            or values.get("AXCALIB_MODEL_STRUCTURED_OUTPUT_MODE")
+            or StructuredOutputMode.JSON_SCHEMA
+        )
         return cls(
             profile_id=(
                 "openai/gpt-default"
@@ -95,7 +109,13 @@ class ModelEndpointConfig(FrozenModel):
             api_key_env=api_key_env,
             model=model,
             api_mode=api_mode,
+            structured_output_mode=structured_output_mode,
             reasoning_effort=values.get("OPENAI_REASONING_EFFORT"),
+            max_output_tokens=(
+                int(values["OPENAI_MAX_OUTPUT_TOKENS"])
+                if values.get("OPENAI_MAX_OUTPUT_TOKENS")
+                else None
+            ),
             live=live,
         )
 
@@ -105,6 +125,7 @@ class ModelGatewayResult(FrozenModel):
 
     response_id: str | None = None
     model: str
+    model_reported_by_endpoint: bool = True
     output_text: str
     request_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     response_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
@@ -204,9 +225,11 @@ class OpenAICompatibleClient:
             raise ModelGatewayError(
                 "model endpoint returned an invalid response envelope"
             ) from error
+        reported_model = raw.get("model")
         return ModelGatewayResult(
             response_id=raw.get("id"),
-            model=str(raw.get("model") or self.config.model),
+            model=str(reported_model or self.config.model),
+            model_reported_by_endpoint=bool(reported_model),
             output_text=output_text,
             request_sha256=hashlib.sha256(request_bytes).hexdigest(),
             response_sha256=hashlib.sha256(response_bytes).hexdigest(),
@@ -222,47 +245,84 @@ class OpenAICompatibleClient:
         json_schema: dict[str, Any],
         image_data_urls: tuple[str, ...],
     ) -> dict[str, Any]:
+        effective_instructions = self._structured_instructions(
+            instructions,
+            schema_name=schema_name,
+            json_schema=json_schema,
+        )
         if self.config.api_mode is ModelApiMode.RESPONSES:
             content: list[dict[str, Any]] = [{"type": "input_text", "text": input_text}]
             content.extend(
                 {"type": "input_image", "image_url": image_url, "detail": "low"}
                 for image_url in image_data_urls
             )
+            text_format: dict[str, Any]
+            if self.config.structured_output_mode is StructuredOutputMode.JSON_SCHEMA:
+                text_format = {
+                    "type": "json_schema",
+                    "name": schema_name,
+                    "schema": json_schema,
+                    "strict": True,
+                }
+            else:
+                text_format = {"type": "json_object"}
             payload: dict[str, Any] = {
                 "model": self.config.model,
-                "instructions": instructions,
+                "instructions": effective_instructions,
                 "input": [{"role": "user", "content": content}],
-                "text": {
-                    "format": {
-                        "type": "json_schema",
-                        "name": schema_name,
-                        "schema": json_schema,
-                        "strict": True,
-                    }
-                },
+                "text": {"format": text_format},
             }
             if self.config.reasoning_effort:
                 payload["reasoning"] = {"effort": self.config.reasoning_effort}
+            if self.config.max_output_tokens is not None:
+                payload["max_output_tokens"] = self.config.max_output_tokens
             return payload
         chat_content: list[dict[str, Any]] = [{"type": "text", "text": input_text}]
         chat_content.extend(
             {"type": "image_url", "image_url": {"url": image_url}} for image_url in image_data_urls
         )
-        return {
-            "model": self.config.model,
-            "messages": [
-                {"role": "system", "content": instructions},
-                {"role": "user", "content": chat_content},
-            ],
-            "response_format": {
+        response_format: dict[str, Any]
+        if self.config.structured_output_mode is StructuredOutputMode.JSON_SCHEMA:
+            response_format = {
                 "type": "json_schema",
                 "json_schema": {
                     "name": schema_name,
                     "schema": json_schema,
                     "strict": True,
                 },
-            },
+            }
+        else:
+            response_format = {"type": "json_object"}
+        payload = {
+            "model": self.config.model,
+            "messages": [
+                {"role": "system", "content": effective_instructions},
+                {"role": "user", "content": chat_content},
+            ],
+            "response_format": response_format,
         }
+        if self.config.max_output_tokens is not None:
+            payload["max_tokens"] = self.config.max_output_tokens
+        return payload
+
+    def _structured_instructions(
+        self,
+        instructions: str,
+        *,
+        schema_name: str,
+        json_schema: dict[str, Any],
+    ) -> str:
+        """Make JSON-object mode explicit and carry its otherwise unenforced schema."""
+
+        if self.config.structured_output_mode is StructuredOutputMode.JSON_SCHEMA:
+            return instructions
+        schema = _canonical_json_bytes(json_schema).decode("utf-8")
+        return (
+            f"{instructions.rstrip()}\n\n"
+            "Return exactly one valid JSON object matching the JSON Schema below. "
+            "Do not wrap the JSON in Markdown and do not add properties outside the schema. "
+            f"Contract name: {schema_name}.\nJSON Schema: {schema}"
+        )
 
     def _output_text(self, response: dict[str, Any]) -> str:
         if self.config.api_mode is ModelApiMode.CHAT_COMPLETIONS:
@@ -296,14 +356,39 @@ class OpenAICompatibleClient:
             body = json.loads(error.read(64 * 1024))
         except (json.JSONDecodeError, OSError, TypeError):
             return ""
-        details = body.get("error") if isinstance(body, dict) else None
+        if not isinstance(body, dict):
+            return ""
+        upstream_status: int | None = None
+        details = body.get("error")
+        detail = body.get("detail")
+        if not isinstance(details, dict) and isinstance(detail, dict):
+            details = detail.get("error")
+        if not isinstance(details, dict) and isinstance(detail, str):
+            json_start = detail.find("{")
+            prefix = detail[:json_start].strip() if json_start >= 0 else detail.strip()
+            if prefix.startswith("Failed:"):
+                status = prefix.removeprefix("Failed:").strip()
+                if status.isdigit():
+                    upstream_status = int(status)
+            if json_start >= 0:
+                try:
+                    nested = json.loads(detail[json_start:])
+                except (json.JSONDecodeError, TypeError):
+                    nested = None
+                if isinstance(nested, dict):
+                    details = nested.get("error")
         if not isinstance(details, dict):
             return ""
         fields = []
+        if upstream_status is not None:
+            fields.append(f"upstream_status={upstream_status}")
         for key in ("type", "code", "param"):
             value = details.get(key)
-            if isinstance(value, (str, int)) and str(value):
-                fields.append(f"{key}={value}")
+            rendered = str(value) if isinstance(value, (str, int)) else ""
+            if rendered and len(rendered) <= 128 and all(
+                character.isalnum() or character in "._-/[]" for character in rendered
+            ):
+                fields.append(f"{key}={rendered}")
         return f" ({', '.join(fields)})" if fields else ""
 
 
@@ -315,4 +400,5 @@ __all__ = [
     "ModelGatewayError",
     "ModelGatewayResult",
     "OpenAICompatibleClient",
+    "StructuredOutputMode",
 ]
