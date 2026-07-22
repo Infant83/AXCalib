@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from axcalib.audit import AuditLog
 from axcalib.dossier import DossierRepository, RevisionConflictError, SnapshotRepository
 from axcalib.evaluation import EvidenceEvaluator, OfflineEvidenceEvaluator
-from axcalib.ingest import DoclingPptxParser, PptxEvidenceExtractor
+from axcalib.ingest import DoclingPptxParser, PptxEvidenceExtractor, PptxSourceError
 from axcalib.notifications.base import NotificationEvent, NotificationPort, RecordingNotifier
 from axcalib.notifications.outbox import DurableNotificationOutbox
 from axcalib.pipelines.base import PipelineContext
@@ -53,6 +53,10 @@ from axcalib.workflows.two_gate import (
 
 PIPELINE_ID = "two-gate-pptx"
 PIPELINE_VERSION = "v1alpha1"
+
+
+class ProjectSourceIntegrityError(PptxSourceError):
+    """Raised when supplied project bytes no longer match a frozen integrity claim."""
 
 
 class TwoGatePptxRequest(BaseModel):
@@ -139,6 +143,10 @@ class LocalProjectService:
         project_id: str | None = None,
         review_profile: str | None = None,
         review_context: ReviewContext | None = None,
+        actor_id: str = "submitter:local",
+        actor_role: ActorRole = ActorRole.SUBMITTER,
+        expected_proposal_sha256: str | None = None,
+        expected_sidecar_sha256: str | None = None,
     ) -> ProjectDossier:
         """Create one dossier whose source artifact remains external and hash-addressed."""
 
@@ -152,6 +160,13 @@ class LocalProjectService:
             role="registration_proposal",
             sidecar_path=sidecar_path,
         )
+        if expected_proposal_sha256 is not None and artifact.sha256 != expected_proposal_sha256:
+            raise ProjectSourceIntegrityError("proposal hash changed before dossier registration")
+        if (
+            expected_sidecar_sha256 is not None
+            and artifact.metadata.get("sidecar_sha256") != expected_sidecar_sha256
+        ):
+            raise ProjectSourceIntegrityError("sidecar hash changed before dossier registration")
         event_id = self._event_id()
         dossier = ProjectDossier(
             project_id=identifier,
@@ -173,8 +188,8 @@ class LocalProjectService:
             event_id=event_id,
             project_id=dossier.project_id,
             event_type="project_created",
-            actor_id="submitter:local",
-            actor_role=ActorRole.SUBMITTER.value,
+            actor_id=actor_id,
+            actor_role=actor_role.value,
             dossier_revision=1,
             details={
                 "artifact_id": artifact.artifact_id,
@@ -280,10 +295,15 @@ class LocalProjectService:
         actor_id: str,
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
+        expected_revision: int | None = None,
     ) -> PipelineResult:
         """Apply an explicit administrator registration decision."""
 
         dossier = self.dossiers.load(project_id)
+        if expected_revision is not None and dossier.revision != expected_revision:
+            raise RevisionConflictError(
+                f"expected revision {expected_revision}; current revision is {dossier.revision}"
+            )
         if not rationale.strip():
             raise ValueError("administrator rationale must not be empty")
         trigger = "approve_registration" if command == "approve" else "reject_registration"
@@ -541,10 +561,15 @@ class LocalProjectService:
         actor_id: str,
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
+        expected_revision: int | None = None,
     ) -> PipelineResult:
         """Apply an explicit administrator completion decision."""
 
         dossier = self.dossiers.load(project_id)
+        if expected_revision is not None and dossier.revision != expected_revision:
+            raise RevisionConflictError(
+                f"expected revision {expected_revision}; current revision is {dossier.revision}"
+            )
         if not rationale.strip():
             raise ValueError("administrator rationale must not be empty")
         trigger = "accept_completion" if command == "accept" else "decline_completion"
@@ -787,6 +812,10 @@ class LocalProjectService:
             role=artifact.role,
             sidecar_path=Path(sidecar) if sidecar else None,
         )
+        if evidence.artifact.sha256 != artifact.sha256:
+            raise ProjectSourceIntegrityError(
+                "proposal evidence changed after dossier registration; create a new revision"
+            )
         frozen_sidecar_hash = artifact.metadata.get("sidecar_sha256")
         current_sidecar_hash = evidence.artifact.metadata.get("sidecar_sha256")
         if frozen_sidecar_hash != current_sidecar_hash:
@@ -942,6 +971,7 @@ __all__ = [
     "LocalProjectService",
     "PIPELINE_ID",
     "PIPELINE_VERSION",
+    "ProjectSourceIntegrityError",
     "TwoGatePptxPipeline",
     "TwoGatePptxRequest",
 ]

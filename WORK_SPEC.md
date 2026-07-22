@@ -257,6 +257,7 @@ extensions
 | FR-052 | Structured-output compatibility | `json_object`에 literal JSON과 schema contract를 포함하고 wrapped upstream error를 safe identifier로 진단; model-independent multimodal proxy/deployment probe 제공 | Must |
 | FR-053 | Project transaction recovery | project command의 dossier/audit 변경을 revision/hash-bound append-only journal로 복구하고 HITL report/recorded outbox 불일치와 stale revision을 fail-closed | Must |
 | FR-054 | Local execution and education recovery | PipelineContext/run checkpoint/cancel/result hash, JSONL batch partial status, education enrollment/audit reconcile와 non-destructive stale artifact maintenance를 같은 allowlisted Library registry로 제공 | Must |
+| FR-055 | Principal-bound project API | project register/HITL command는 verified principal role·scope·organization·revision에 bind하고 local path 대신 opaque staged artifact의 size/hash를 검증 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -850,7 +851,8 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 25. 과정별 progress·milestone·프로젝트 인증 조합 | FR-044~049, education lifecycle, ADR-017 | Actual-PPT offline reference implemented; rollout/auth/credential pending |
 | 26. 실제 PPT visual provenance와 근거 품질 회귀 | FR-050~051, ADR-015, evidence-quality eval | Restricted image-only fixture baseline implemented; general render/VLM pending |
 | 27. SkillBoss update, HTTP 500 원인복구와 유사 multimodal 비교 | FR-052, ADR-019, WP-05.Q2 recovery report | Qwen/GPT-4o proxy registration verified; exact on-prem/completion/gold pending |
-| 28. project cross-file transaction journal과 crash recovery | FR-053, ADR-020, WP-01.R1.1 recovery report | Dossier/audit local slice verified; education/producer/stale-lock recovery pending |
+| 28. project cross-file transaction journal과 crash recovery | FR-053~054, ADR-020/021, WP-01.R1 reports | Project/education/stale maintenance local verified; producer/distributed recovery pending |
+| 29. 원격 project 등록·HITL 권한과 경로 격리 | FR-055, ADR-023, API threat model, WP-06.I2a report | In-process project API contract verified; OIDC/immutable upload/education authorization pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 
@@ -892,6 +894,7 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] project dossier/audit append-only transaction journal, HITL artifact prerequisite와 idempotent recovery
 - [x] PipelineContext/checkpoint/result hash/cooperative cancel, JSONL batch와 Alpha Typer CLI
 - [x] education enrollment/audit recovery와 stale-lock/orphan quarantine·committed-journal archive
+- [x] principal-bound project register/두 HITL endpoint와 no-path staged artifact hash contract
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
 - [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
@@ -916,3 +919,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-22 | v0.3-p1 skillboss-http500-q2 | SkillBoss update, JSON-object 500 원인복구, safe wrapped error와 generic multimodal Qwen/GPT-4o/GLM 비교 추가 |
 | 2026-07-22 | v0.3-p1 transaction-r1a | project dossier/audit hash-chain journal, HITL artifact prerequisite와 idempotent reconciliation 추가 |
 | 2026-07-22 | v0.3-p1 library-alpha | local pipeline checkpoint/cancel/result integrity, education reconcile, non-destructive maintenance, JSONL batch와 Alpha CLI 추가 |
+| 2026-07-22 | v0.3-p1 project-api-alpha | verified principal-bound project register/HITL command, staged artifact hash boundary와 API threat model 추가 |

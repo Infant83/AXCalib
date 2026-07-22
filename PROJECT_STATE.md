@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-api-alpha
+baseline: v0.3-p1-g4-project-api-alpha
 phase: P7 Interfaces
 gate: G4 Interfaces
 gate_status: interface_alpha_in_progress
-status: g4_runtime_api_alpha_verified
+status: g4_project_api_verified_education_binding_ready
 current_work_package: WP-06 interface hardening
-active_slice: WP-06.I2 principal-bound-command-contract
+active_slice: WP-06.I2b education-principal-binding-contract
 active_slice_status: ready
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-006
+last_history_id: HIST-2026-07-22-007
 ---
 
 # AXCalib Project Execution Ledger
@@ -61,11 +61,11 @@ last_history_id: HIST-2026-07-22-006
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
 | 현재 Work Package | **WP-06 interface hardening** |
-| Active Slice | **WP-06.I2** (`ready`; principal-bound project/education command contract) |
-| 현재 Gate | **G4 Interfaces in progress**; CLI/batch와 runtime API local Alpha evidence 확보 |
-| 다음 Gate | **G4 Interfaces**; 전용 command/auth/upload와 202 worker evidence 필요 |
+| Active Slice | **WP-06.I2b** (`ready`; education principal/role/scope binding contract) |
+| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/runtime/project API local Alpha evidence 확보 |
+| 다음 Gate | **G4 Interfaces**; education auth, OIDC/immutable upload와 202 worker evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 110 lightweight tests, 10 eval groups, validation 0/0, Ruff, Pyright 0/0 |
+| 최근 회귀 | 115 lightweight tests, 10 eval groups, API 12/12, validation 0/0, Ruff check, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -132,7 +132,7 @@ gantt
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
 | P6 Calibration | WP-05/06 일부 | `not_started` | panel disagreement와 human agreement report |
-| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch와 runtime API local Alpha 완료; 전용 command/OIDC/worker 남음 |
+| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/runtime/project API local Alpha 완료; education auth/OIDC/upload/worker 남음 |
 | P8 Web Review | Web delivery | `blocked_policy` | FE/RBAC 선택, API, reviewer E2E와 G5 |
 | P9 Pilot | pilot package | `not_started` | 승인된 비식별 자료, G6~G7 결정 |
 
@@ -144,7 +144,7 @@ gantt
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
 | G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
-| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor, JSONL batch, fail-closed runtime API/OpenAPI | principal-bound command, OIDC/RBAC, upload와 202 worker/SSE |
+| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor, JSONL batch, fail-closed runtime + principal-bound project API/OpenAPI | education auth, OIDC/RBAC, immutable upload와 202 worker/SSE |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
 | G6 Pilot | `not_started` | 없음 | 승인된 비식별 paired dataset |
 | G7 Go/No-Go | `not_started` | 없음 | Sponsor Continue/Narrow/Stop 결정 |
@@ -279,25 +279,47 @@ Exit Evidence:
 - [x] unknown pipeline/option, auth failure, run conflict와 result status가 구조적으로 구분된다.
 - [x] in-process contract/E2E, Ruff, Pyright, validate/test/eval과 문서/diagram drift 검증이 통과한다.
 
-### 5.6 현재 Active Slice — WP-06.I2 Principal-bound Command Contract
+### 5.6 완료 Slice — WP-06.I2a Principal-bound Project and Artifact Contract
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `ready`; WP-06.I1 checkpoint commit/push 이후 착수 |
-| 목적 | 사람 권한 command를 generic payload가 아니라 인증 principal에 bind한 전용 endpoint로 설계 |
+| 상태 | `verified_local_contract`; WP-06.I1 commit `67a387e` push 이후 2026-07-22 완료 |
+| 목적 | project 생성·HITL command를 인증 principal에 bind하고 remote local-path 입력을 제거 |
 | 대상 Module | M02 state/approval, M09 workflow, M12 API/worker |
-| 입력 | approved role/scope mapping, project/education typed command, artifact staging boundary |
-| 출력 | principal-bound project/education command schema와 authorization contract test |
+| 입력 | project role/scope mapping, staged artifact reference, registration/completion decision command |
+| 출력 | principal-bound project endpoint, staged artifact resolver/hash contract와 authorization test |
 | 목표 Gate | G4 Interfaces |
 | 외부 호출 | 없음; synthetic/in-process only, 실제 OIDC·계정·배포 없음 |
 
 Exit Evidence:
 
-- [ ] administrator/mentor/learner command가 request actor 문자열을 신뢰하지 않고 principal에 bind된다.
-- [ ] project/enrollment/organization scope mismatch가 domain mutation 전에 거부된다.
-- [ ] local filesystem path를 remote request에서 직접 받지 않는 upload/staging/content-hash 계약이 있다.
-- [ ] target OpenAPI 중 구현한 resource만 implemented artifact로 승격한다.
-- [ ] threat model, contract/E2E, validate/test/eval와 diagram/module drift 검증이 통과한다.
+- [x] project owner/administrator command가 request actor 문자열을 신뢰하지 않고 principal에 bind된다.
+- [x] project/organization scope mismatch가 domain mutation 전에 거부된다.
+- [x] local filesystem path를 remote request에서 직접 받지 않는 staging/content-hash 계약이 있다.
+- [x] target OpenAPI 중 구현한 resource만 implemented artifact로 승격한다.
+- [x] threat model, contract/E2E, validate/test/eval와 diagram/module drift 검증이 통과한다.
+- [x] education learner/mentor/instructor binding은 후속 WP-06.I2b로 범위와 선행조건이 기록된다.
+
+### 5.7 현재 Active Slice — WP-06.I2b Education Principal Binding Contract
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `ready`; WP-06.I2a checkpoint push 후 착수 가능 |
+| 목적 | education command의 learner/mentor/instructor/administrator를 enrollment/program/project context에 bind |
+| 대상 Module | M02 state/approval, M09 education workflow, M12 API/worker |
+| 입력 | approved role vocabulary, program/enrollment scope matrix, immutable program version과 current project API principal contract |
+| 출력 | principal-bound education typed command endpoint와 authorization regression |
+| 목표 Gate | G4 Interfaces |
+| 외부 호출 | 없음; synthetic/in-process로 시작, 실제 OIDC·계정·배포 없음 |
+
+Exit Evidence:
+
+- [ ] request actor 문자열 없이 verified principal이 education audit actor가 된다.
+- [ ] learner/mentor/instructor/administrator command별 role·scope matrix가 명시된다.
+- [ ] program version, enrollment learner, mentor, organization mismatch가 mutation 전에 거부된다.
+- [ ] project completion 근거 연결은 기존 dossier context/state guard를 우회하지 않는다.
+- [ ] implemented education resource만 runtime OpenAPI에 추가하고 contract/E2E가 통과한다.
+- [ ] approved OIDC claim mapping과 실제 계정/배포는 별도 운영 Gate로 유지한다.
 
 ## 6. 일정·작업 Queue
 
@@ -315,13 +337,15 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 7 | P4 / WP-04 | embedding/Qdrant/rerank benchmark | `blocked_policy` | approved corpus와 labels | TBD | TBD | G3 quality |
 | 8 | P5-P6 / WP-05 | exact on-prem Qwen/panel/calibration | `blocked_endpoint_policy` | exact endpoint·gold label 승인 | TBD | TBD | G3 quality |
 | 9 | P7 / WP-06 | minimal API/OpenAPI parity | `verified_local_alpha` | CLI/batch Alpha와 auth contract | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
-| 10 | P7 / WP-06 | principal-bound command/upload/auth contract | `ready` | runtime API Alpha, role/scope policy | TBD | TBD | G4 |
-| 11 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
+| 10 | P7 / WP-06 | principal-bound project command/artifact contract | `verified_local_contract` | runtime API Alpha, role/scope policy | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
+| 11 | P7 / WP-06 | education principal binding contract | `ready` | project API contract, education domain reference | TBD | TBD | G4 |
+| 12 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-22 | WP-06.I2a principal-bound project API | project/runtime API contract, full test/eval, Ruff, Pyright, validate, SVG/PNG visual audit | API 12/12, full 115 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0 | in-process project command/staging port; actual OIDC/upload/server 미포함 |
 | 2026-07-22 | WP-06.I1 runtime API Alpha | contract pytest, clean core/API wheel, full test/eval, Ruff/Pyright/validate | API 7/7, full 110 passed, 10 eval groups, 0/0 static/validate | in-process sync API; OIDC/RBAC/upload/worker/server 미포함 |
 | 2026-07-22 | WP-01.R1.2 Library MVP/Alpha | lightweight `prep test/eval`, Ruff, low-memory Pyright, validate, clean wheel/CLI/actual-PPTX | 103 passed, 10 eval groups, Alpha 8/8, Ruff, Pyright 0/0, validate 0/0 | single-host offline Alpha; Docling current-turn rerun·API/RBAC/운영 미포함 |
 | 2026-07-22 | WP-01.R1.1 project transaction recovery | 3-boundary crash eval, full test/eval, Ruff/Pyright | 88 passed, 9 eval groups, recovery 3/3, Ruff passed, Pyright 0/0 | local project dossier/audit only; broader recovery pending |
@@ -660,6 +684,41 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 관련 근거: [ADR-022](docs/adr/ADR-022-fail-closed-runtime-api.md),
   [WP-06.I1 리포트](docs/evaluation/wp06-i1-minimal-api-parity-report.md), D-035,
   R-010/R-016/R-017/R-021/R-038/R-039와 M02/M09/M10/M12 Module Control Board.
+
+### HIST-2026-07-22-007
+
+- Phase / WP / Gate: P7 / WP-06.I2a / G4 Interfaces
+- 상태: `verified_local_project_api_contract_g4_remaining`
+- 작업: `POST /v1/projects`가 verified project owner/administrator, `projects:create` scope와 organization을
+  요구하고 opaque staged PPTX/sidecar의 media·size·SHA-256을 검증하도록 구현했다. 등록·완료 HITL
+  decision endpoint는 request actor 없이 administrator principal, explicit project scope, dossier
+  organization과 expected revision을 domain service까지 bind한다. stable principal/idempotency key의
+  replay는 request/context/artifact hash와 creation audit exact match만 허용한다.
+- 변경 파일: `src/axcalib/api` artifact/auth/model/app, client/project service revision·actor contract,
+  project/runtime API tests와 generated OpenAPI, ADR-023·API threat model·I2a 개발리포트, README/API/
+  HANDOFF/GOAL/WORK_SPEC/DESIGN/AGENTS/CHANGELOG/memory bank, decision/risk, module plan·workflow Mermaid·
+  SVG/PNG와 이 원장.
+- 검증: project API 5 passed, combined API 12 passed, full lightweight offline 115 passed, 10 eval groups
+  passed, Ruff check passed, new API/project/test module format check passed, low-memory Pyright 0 errors/0 warnings,
+  `prep validate` 0 errors/0 warnings. clean `[api]` wheel은 FastAPI 0.139.2/OpenAPI 3.1/7 routes를
+  확인했고 두 SVG는 Edge headless로 렌더해 clipping/상태 라벨을 확인했다.
+- 특이사항: 첫 replay가 새 random transaction event를 만들며 `dossier_target_missing_event`로 충돌한
+  문제를 발견해 domain create 전에 existing project exact match를 확인하도록 수정했다. 부분 commit의
+  dossier를 정상 replay로 오인하지 않도록 principal-bound creation audit도 필수로 검사한다. replay는
+  staging 만료 뒤에도 exact persisted match로 동작하며 신규 create는 expected hash를 domain transaction
+  직전까지 전달하고 평가 전 frozen proposal hash도 재검증한다. 저장소
+  전체 `ruff format --check`는 기존 53개 파일의 포맷 부채를 보고해 범위 밖 일괄 변경은 하지 않았다.
+  첫 wheel smoke는 PowerShell 인용 SyntaxError였고 설치 환경을 재사용한 짧은 명령으로 해소했다.
+- 미검증: 실제 OIDC/JWKS와 claim mapping, immutable object upload/ACL/malware scan, hash 확인 뒤 file
+  교체 TOCTOU 제거, project read/list/report authorization, socket server/rate limit, education principal
+  binding, administrator decision semantic replay, distributed 202 worker/SSE. Docling/live model/실데이터/
+  운영 notification은 호출하지 않았다.
+- 다음 작업: commit/push checkpoint 후 WP-06.I2b에서 learner/mentor/instructor/administrator를 program
+  version·enrollment·milestone·learner/organization context에 bind하는 synthetic contract를 진행한다.
+- 관련 근거: [ADR-023](docs/adr/ADR-023-principal-bound-project-api.md),
+  [API Threat Model](docs/security/api-alpha-threat-model.md),
+  [WP-06.I2a 리포트](docs/evaluation/wp06-i2a-principal-bound-project-api-report.md), D-036,
+  R-016/R-021/R-038/R-039/R-041/R-042와 M02/M09/M12 Module Control Board.
 
 ## 10. 단계 종료 업데이트 템플릿
 

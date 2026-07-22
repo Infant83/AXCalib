@@ -404,6 +404,10 @@ class AXCalib:
         project_id: str | None = None,
         review_profile: str | None = None,
         review_context: ReviewContext | None = None,
+        actor_id: str = "submitter:local",
+        actor_role: Literal["submitter", "project_owner", "administrator"] = "submitter",
+        expected_proposal_sha256: str | None = None,
+        expected_sidecar_sha256: str | None = None,
     ) -> ProjectDossier:
         """Register source evidence as one policy-bound AXCalib dossier."""
 
@@ -414,6 +418,10 @@ class AXCalib:
             project_id=project_id,
             review_profile=review_profile,
             review_context=review_context,
+            actor_id=actor_id,
+            actor_role=ActorRole(actor_role),
+            expected_proposal_sha256=expected_proposal_sha256,
+            expected_sidecar_sha256=expected_sidecar_sha256,
         )
 
     def create_project(
@@ -425,6 +433,10 @@ class AXCalib:
         project_id: str | None = None,
         review_profile: str | None = None,
         review_context: ReviewContext | None = None,
+        actor_id: str = "submitter:local",
+        actor_role: Literal["submitter", "project_owner", "administrator"] = "submitter",
+        expected_proposal_sha256: str | None = None,
+        expected_sidecar_sha256: str | None = None,
     ) -> ProjectDossier:
         """Backward-compatible alias for :meth:`register_case`."""
 
@@ -435,6 +447,10 @@ class AXCalib:
             project_id=project_id,
             review_profile=review_profile,
             review_context=review_context,
+            actor_id=actor_id,
+            actor_role=actor_role,
+            expected_proposal_sha256=expected_proposal_sha256,
+            expected_sidecar_sha256=expected_sidecar_sha256,
         )
 
     def submit_registration(self, project_id: str) -> PipelineResult:
@@ -511,6 +527,7 @@ class AXCalib:
         actor_id: str,
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
+        expected_revision: int | None = None,
     ) -> PipelineResult:
         """Resume registration with an explicit administrator command."""
 
@@ -520,6 +537,7 @@ class AXCalib:
             actor_id=actor_id,
             rationale=rationale,
             adjustments=adjustments,
+            expected_revision=expected_revision,
         )
 
     def decide_completion(
@@ -530,6 +548,7 @@ class AXCalib:
         actor_id: str,
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
+        expected_revision: int | None = None,
     ) -> PipelineResult:
         """Resume completion with an explicit administrator command."""
 
@@ -539,6 +558,7 @@ class AXCalib:
             actor_id=actor_id,
             rationale=rationale,
             adjustments=adjustments,
+            expected_revision=expected_revision,
         )
 
 

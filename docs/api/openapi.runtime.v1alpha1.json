@@ -1,6 +1,18 @@
 {
   "components": {
     "schemas": {
+      "Assessment": {
+        "description": "One criterion assessment without a final certification decision.",
+        "enum": [
+          "met",
+          "partially_met",
+          "not_met",
+          "insufficient_evidence",
+          "not_applicable"
+        ],
+        "title": "Assessment",
+        "type": "string"
+      },
       "CancelRunResponse": {
         "additionalProperties": false,
         "description": "Acknowledgement of a cooperative cancellation request.",
@@ -28,6 +40,77 @@
           "status"
         ],
         "title": "CancelRunResponse",
+        "type": "object"
+      },
+      "CompletionDecisionRequest": {
+        "additionalProperties": false,
+        "description": "Administrator completion command; actor identity comes from auth.",
+        "properties": {
+          "adjustments": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ReviewerAdjustment"
+            },
+            "title": "Adjustments",
+            "type": "array"
+          },
+          "command": {
+            "enum": [
+              "accept",
+              "not_accept"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "rationale": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "command",
+          "rationale"
+        ],
+        "title": "CompletionDecisionRequest",
+        "type": "object"
+      },
+      "EvidenceLocator": {
+        "additionalProperties": false,
+        "description": "Auditable source location with a short allowed excerpt.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "excerpt": {
+            "maxLength": 500,
+            "title": "Excerpt",
+            "type": "string"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "locator",
+          "excerpt",
+          "source"
+        ],
+        "title": "EvidenceLocator",
         "type": "object"
       },
       "PipelineCatalogResponse": {
@@ -280,6 +363,344 @@
         "title": "Problem",
         "type": "object"
       },
+      "ProjectArtifactView": {
+        "additionalProperties": false,
+        "description": "Hash metadata safe to return without a deployment-local URI.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "byte_size": {
+            "minimum": 0.0,
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "role",
+          "media_type",
+          "sha256",
+          "byte_size"
+        ],
+        "title": "ProjectArtifactView",
+        "type": "object"
+      },
+      "ProjectCommandResponse": {
+        "additionalProperties": false,
+        "description": "Filesystem-neutral domain command result.",
+        "properties": {
+          "allowed_commands": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Commands",
+            "type": "array"
+          },
+          "dossier_revision": {
+            "minimum": 1.0,
+            "title": "Dossier Revision",
+            "type": "integer"
+          },
+          "dossier_status": {
+            "$ref": "#/components/schemas/ProjectStatus"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "schema_version": {
+            "default": "axcalib.api-project-command/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "status",
+          "dossier_status",
+          "dossier_revision",
+          "message"
+        ],
+        "title": "ProjectCommandResponse",
+        "type": "object"
+      },
+      "ProjectRegistrationRequest": {
+        "additionalProperties": false,
+        "description": "Register a staged PPTX without accepting a caller-controlled local path.",
+        "properties": {
+          "certification_level": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certification Level"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/StagedArtifactRef"
+          },
+          "review_profile": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9][a-z0-9._-]{2,127}@\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Profile"
+          },
+          "sidecar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StagedArtifactRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "proposal"
+        ],
+        "title": "ProjectRegistrationRequest",
+        "type": "object"
+      },
+      "ProjectRegistrationResponse": {
+        "additionalProperties": false,
+        "description": "Filesystem-neutral result of one principal-bound project registration.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ProjectArtifactView"
+          },
+          "display_id": {
+            "title": "Display Id",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "proposer_org_id": {
+            "title": "Proposer Org Id",
+            "type": "string"
+          },
+          "replayed": {
+            "default": false,
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "default": "axcalib.api-project/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProjectStatus"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "display_id",
+          "title",
+          "status",
+          "revision",
+          "proposer_org_id",
+          "artifact"
+        ],
+        "title": "ProjectRegistrationResponse",
+        "type": "object"
+      },
+      "ProjectStatus": {
+        "enum": [
+          "draft",
+          "registration_ready",
+          "registration_under_review",
+          "registration_hitl_pending",
+          "registration_approved",
+          "registration_rejected",
+          "in_progress",
+          "completion_ready",
+          "completion_approval_pending",
+          "completion_registered",
+          "completion_under_review",
+          "completion_hitl_pending",
+          "completion_accepted",
+          "completion_not_accepted"
+        ],
+        "title": "ProjectStatus",
+        "type": "string"
+      },
+      "RegistrationDecisionRequest": {
+        "additionalProperties": false,
+        "description": "Administrator registration command; actor identity comes from auth.",
+        "properties": {
+          "adjustments": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ReviewerAdjustment"
+            },
+            "title": "Adjustments",
+            "type": "array"
+          },
+          "command": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "rationale": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "command",
+          "rationale"
+        ],
+        "title": "RegistrationDecisionRequest",
+        "type": "object"
+      },
+      "ReviewerAdjustment": {
+        "additionalProperties": false,
+        "description": "Criterion-level human correction that never rewrites the Agent report.",
+        "properties": {
+          "criterion_id": {
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EvidenceLocator"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "from_assessment": {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "to_assessment": {
+            "$ref": "#/components/schemas/Assessment"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "from_assessment",
+          "to_assessment",
+          "reason"
+        ],
+        "title": "ReviewerAdjustment",
+        "type": "object"
+      },
+      "StagedArtifactRef": {
+        "additionalProperties": false,
+        "description": "Opaque reference to bytes already accepted by a deployment staging service.",
+        "properties": {
+          "artifact_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "byte_size": {
+            "minimum": 1.0,
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "media_type": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Media Type",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "sha256",
+          "byte_size",
+          "media_type"
+        ],
+        "title": "StagedArtifactRef",
+        "type": "object"
+      },
       "ValidationIssue": {
         "additionalProperties": false,
         "description": "Redacted validation location and code without rejected input values.",
@@ -491,6 +912,331 @@
         "summary": "Run Pipeline"
       }
     },
+    "/v1/projects": {
+      "post": {
+        "operationId": "registerProject",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRegistrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "413": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Register Project"
+      }
+    },
+    "/v1/projects/{project_id}/decisions/completion": {
+      "post": {
+        "operationId": "decideProjectCompletion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletionDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Decide Project Completion"
+      }
+    },
+    "/v1/projects/{project_id}/decisions/registration": {
+      "post": {
+        "operationId": "decideProjectRegistration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Decide Project Registration"
+      }
+    },
     "/v1/runs/{run_id}": {
       "get": {
         "operationId": "getRun",
@@ -689,8 +1435,9 @@
     }
   ],
   "x-axcalib-contract": {
-    "authority": "domain HITL and final-decision guards remain in the library",
-    "scope": "pipeline catalog, synchronous run, status, cooperative cancel",
+    "artifact_boundary": "opaque staged artifact ID with byte-size and SHA-256 verification; caller local paths are forbidden",
+    "authority": "verified principal, role, scope, organization and domain HITL guards are all required",
+    "scope": "pipeline catalog/run/status/cancel plus principal-bound project registration and HITL decisions",
     "status": "implemented-local-alpha"
   }
 }

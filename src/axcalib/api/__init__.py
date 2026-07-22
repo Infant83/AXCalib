@@ -1,6 +1,11 @@
 """Optional authenticated FastAPI adapter for the local pipeline runtime."""
 
 from axcalib.api.app import create_app
+from axcalib.api.artifacts import (
+    ArtifactPurpose,
+    RejectAllStagedArtifactResolver,
+    StagedArtifactResolver,
+)
 from axcalib.api.auth import (
     ApiPipelineGrant,
     ApiPrincipal,
@@ -10,22 +15,37 @@ from axcalib.api.auth import (
 )
 from axcalib.api.models import (
     CancelRunResponse,
+    CompletionDecisionRequest,
     PipelineCatalogResponse,
     PipelineRunRequest,
     PipelineRunView,
     Problem,
+    ProjectCommandResponse,
+    ProjectRegistrationRequest,
+    ProjectRegistrationResponse,
+    RegistrationDecisionRequest,
+    StagedArtifactRef,
 )
 
 __all__ = [
     "ApiPipelineGrant",
     "ApiPrincipal",
     "ApiRole",
+    "ArtifactPurpose",
     "CancelRunResponse",
+    "CompletionDecisionRequest",
     "PipelineCatalogResponse",
     "PipelineRunRequest",
     "PipelineRunView",
     "Problem",
+    "ProjectCommandResponse",
+    "ProjectRegistrationRequest",
+    "ProjectRegistrationResponse",
+    "RegistrationDecisionRequest",
+    "RejectAllStagedArtifactResolver",
     "RejectAllTokenVerifier",
     "TokenVerifier",
+    "StagedArtifactRef",
+    "StagedArtifactResolver",
     "create_app",
 ]

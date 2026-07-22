@@ -5,8 +5,8 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 
 - [전체 제품 목표 계약](openapi.v1alpha1.json): project evaluation/HITL까지 포함하는
   **pre-implementation target**
-- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1의 pipeline catalog/run/status/cancel
-  **implemented local Alpha**
+- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime과 WP-06.I2a의
+  principal-bound project registration/HITL command **implemented local Alpha**
 
 목표 계약에만 존재하는 endpoint를 실행 가능하다고 간주하지 않는다. 구현 artifact는 FastAPI가
 생성한 schema와 contract test에서 byte 의미 수준으로 비교한다.
@@ -20,10 +20,15 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
   `TokenVerifier`로 주입하며 verifier가 없으면 fail closed한다.
 - registry 등록은 HTTP 공개를 뜻하지 않는다. exact `ApiPipelineGrant`가 있어야 catalog와 run에
   노출된다.
-- run 조회·취소는 owner, administrator 또는 명시적 cross-run scope만 허용한다. organization,
-  project, access classification의 운영 RBAC mapping은 아직 미완료다.
+- run 조회·취소는 owner, administrator 또는 명시적 cross-run scope만 허용한다.
+- project 등록은 project owner/administrator role, `projects:create` scope와 verified organization을
+  모두 요구한다. 두 HITL 결정은 administrator role, project decision scope, dossier organization과
+  expected revision을 모두 검사한다.
 - generic pipeline payload가 `actor_id`, `actor_role` 또는 관리자 결정을 전달하는 것은 거부한다.
-  사람 권한 command는 인증 principal을 bind하는 전용 endpoint가 필요하다.
+  전용 project decision endpoint에는 actor field가 없으며 검증된 principal subject만 audit actor가 된다.
+- remote project request는 local path를 받지 않는다. deployment-owned `StagedArtifactResolver`가 opaque
+  artifact ID를 access-check하고 API가 media type, byte size와 SHA-256을 재검증한다. 기본 resolver는
+  모두 거부한다.
 - OpenAPI 3.2는 최신 표준이지만 WP-06에서 code generator, Swagger UI, client 호환성을 spike한
   뒤 별도 ADR로 승격한다.
 
@@ -48,7 +53,7 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 - [완료평가 평가 요청](examples/completion-evaluation.request.json)
 - [202 응답](examples/run-accepted.response.json)
 
-위 예시는 전체 제품 **target interface contract**다. 현재 실행 가능한 runtime route는 다음뿐이다.
+위 예시는 전체 제품 **target interface contract**다. 현재 실행 가능한 runtime route는 다음이다.
 
 | Method | Route | 현재 의미 |
 |---|---|---|
@@ -56,6 +61,9 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 | POST | `/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs` | Library async entrypoint를 호출하고 local checkpoint 결과 반환 |
 | GET | `/v1/runs/{run_id}` | result path/hash를 검증한 status/output 조회 |
 | POST | `/v1/runs/{run_id}/cancel` | process kill이 아닌 cooperative marker |
+| POST | `/v1/projects` | principal-bound project 등록; required idempotency key와 staged PPTX hash 검증 |
+| POST | `/v1/projects/{project_id}/decisions/registration` | 관리자 등록 승인/반려; scope/org/revision guard |
+| POST | `/v1/projects/{project_id}/decisions/completion` | 관리자 완료 수용/미수용; scope/org/revision guard |
 
 구현 artifact 재생성:
 
@@ -64,13 +72,19 @@ uv run --no-sync python scripts/pipelines/export_runtime_openapi.py
 ~~~
 
 TestClient 계약은 실제 socket이나 외부 인증 endpoint를 열지 않는다. 운영 server, OIDC/JWKS,
-rate limit, tenant/project authorization, worker/202/SSE는 후속 WP-06 범위다.
+rate limit, immutable upload service, project read/list/report authorization, worker/202/SSE는 후속
+WP-06 범위다. 운영 NO-GO와 공격면은 [API Alpha Threat Model](../security/api-alpha-threat-model.md)을
+따른다.
+
+현재 decision endpoint의 expected revision은 중복 mutation을 막지만, commit 뒤 HTTP 응답 유실을
+같은 응답으로 replay하는 idempotency record와 authorized project GET은 아직 없다. 운영 client 계약
+전에 반드시 보강한다.
 
 ## 교육 프로그램 확장 경계
 
 `EducationProgram`, `EducationEnrollment`과 `education-program-runtime@v1alpha1` typed command는
 현재 Python Library에서 실행된다. program/enrollment JSON Schema Draft 2020-12 artifact도
-생성되지만 이 v1alpha1 OpenAPI 문서에는 아직 endpoint를 추가하지 않았다. WP-06에서 다음
+생성되지만 implemented OpenAPI에는 아직 endpoint를 추가하지 않았다. WP-06.I2b에서 다음
 resource/command를 같은 schema와 idempotency 의미로 노출한다.
 
 - immutable program publish/show/retire

@@ -13,6 +13,7 @@ class ApiRole(StrEnum):
 
     VIEWER = "viewer"
     OPERATOR = "operator"
+    PROJECT_OWNER = "project_owner"
     ADMINISTRATOR = "administrator"
 
 
@@ -44,6 +45,8 @@ class ApiPipelineGrant(BaseModel):
             raise ValueError("execute_roles must not be empty")
         if ApiRole.VIEWER in self.execute_roles:
             raise ValueError("viewer cannot be granted pipeline execution")
+        if ApiRole.PROJECT_OWNER in self.execute_roles:
+            raise ValueError("project_owner must use a principal-bound resource command endpoint")
         return self
 
 

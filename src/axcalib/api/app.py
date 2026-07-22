@@ -17,6 +17,7 @@ from axcalib.client import AXCalib
 from axcalib.pipelines import PipelineContext
 from axcalib.runtime import PipelineRunConflictError, PipelineRunIntegrityError
 
+from .artifacts import RejectAllStagedArtifactResolver, StagedArtifactResolver
 from .auth import (
     ApiPipelineGrant,
     ApiPrincipal,
@@ -32,6 +33,8 @@ from .models import (
     Problem,
     ValidationIssue,
 )
+from .problems import ApiProblemError, problem_response, problem_responses
+from .project_routes import create_project_router
 
 PROBLEM_TYPE_BASE = "https://axcalib.local/problems"
 JSON_SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
@@ -46,46 +49,6 @@ RESERVED_AUTHORITY_FIELDS = frozenset(
         "approval_actor_role",
     }
 )
-
-
-class ApiProblemError(Exception):
-    """Internal signal converted to a redacted problem response."""
-
-    def __init__(
-        self,
-        *,
-        status: int,
-        code: str,
-        title: str,
-        detail: str | None = None,
-        issues: tuple[ValidationIssue, ...] = (),
-    ) -> None:
-        super().__init__(code)
-        self.status = status
-        self.code = code
-        self.title = title
-        self.detail = detail
-        self.issues = issues
-
-
-def _problem_response(problem: Problem) -> JSONResponse:
-    headers = {"WWW-Authenticate": "Bearer"} if problem.status == 401 else None
-    return JSONResponse(
-        status_code=problem.status,
-        content=problem.model_dump(mode="json"),
-        media_type="application/problem+json",
-        headers=headers,
-    )
-
-
-def _problem_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
-    return {
-        status: {
-            "model": Problem,
-            "description": "Structured AXCalib API problem",
-        }
-        for status in statuses
-    }
 
 
 def _stable_run_id(
@@ -120,10 +83,12 @@ def create_app(
     *,
     token_verifier: TokenVerifier | None = None,
     pipeline_grants: tuple[ApiPipelineGrant, ...] = (),
+    artifact_resolver: StagedArtifactResolver | None = None,
 ) -> FastAPI:
     """Create a fail-closed HTTP adapter over one configured AXCalib client."""
 
     verifier = token_verifier or RejectAllTokenVerifier()
+    staged_artifacts = artifact_resolver or RejectAllStagedArtifactResolver()
     grants: dict[tuple[str, str], ApiPipelineGrant] = {}
     registered = frozenset(client.registry.keys())
     for grant in pipeline_grants:
@@ -161,9 +126,7 @@ def create_app(
         try:
             raw_principal = verifier.verify(credentials.credentials)
             principal = (
-                ApiPrincipal.model_validate(raw_principal)
-                if raw_principal is not None
-                else None
+                ApiPrincipal.model_validate(raw_principal) if raw_principal is not None else None
             )
         except Exception as error:
             raise ApiProblemError(
@@ -181,7 +144,7 @@ def create_app(
 
     @app.exception_handler(ApiProblemError)
     async def handle_api_problem(_request: Request, error: ApiProblemError) -> JSONResponse:
-        return _problem_response(
+        return problem_response(
             Problem(
                 type=f"{PROBLEM_TYPE_BASE}/{error.code}",
                 title=error.title,
@@ -204,7 +167,7 @@ def create_app(
             )
             for item in error.errors()
         )
-        return _problem_response(
+        return problem_response(
             Problem(
                 type=f"{PROBLEM_TYPE_BASE}/request-invalid",
                 title="Request validation failed",
@@ -218,7 +181,7 @@ def create_app(
         "/v1/pipelines",
         operation_id="listPipelines",
         response_model=PipelineCatalogResponse,
-        responses=_problem_responses(401, 503),
+        responses=problem_responses(401, 503),
     )
     async def list_pipelines(
         _principal: Annotated[ApiPrincipal, Depends(authenticate)],
@@ -230,11 +193,19 @@ def create_app(
         )
         return PipelineCatalogResponse(pipelines=pipelines)
 
+    app.include_router(
+        create_project_router(
+            client,
+            authenticate=authenticate,
+            artifact_resolver=staged_artifacts,
+        )
+    )
+
     @app.post(
         "/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs",
         operation_id="runPipeline",
         response_model=PipelineRunView,
-        responses=_problem_responses(401, 403, 404, 409, 422, 503),
+        responses=problem_responses(401, 403, 404, 409, 422, 503),
     )
     async def run_pipeline(
         request: PipelineRunRequest,
@@ -357,7 +328,7 @@ def create_app(
         "/v1/runs/{run_id}",
         operation_id="getRun",
         response_model=PipelineRunView,
-        responses=_problem_responses(401, 403, 404, 409, 422, 503),
+        responses=problem_responses(401, 403, 404, 409, 422, 503),
     )
     async def get_run(
         run_id: Annotated[
@@ -406,7 +377,7 @@ def create_app(
         "/v1/runs/{run_id}/cancel",
         operation_id="cancelRun",
         response_model=CancelRunResponse,
-        responses=_problem_responses(401, 403, 404, 409, 422, 503),
+        responses=problem_responses(401, 403, 404, 409, 422, 503),
     )
     async def cancel_run(
         run_id: Annotated[
@@ -462,8 +433,18 @@ def create_app(
         schema["servers"] = [{"url": "/", "description": "Deployment-relative base URL"}]
         schema["x-axcalib-contract"] = {
             "status": "implemented-local-alpha",
-            "scope": "pipeline catalog, synchronous run, status, cooperative cancel",
-            "authority": "domain HITL and final-decision guards remain in the library",
+            "scope": (
+                "pipeline catalog/run/status/cancel plus principal-bound project "
+                "registration and HITL decisions"
+            ),
+            "authority": (
+                "verified principal, role, scope, organization and domain HITL guards "
+                "are all required"
+            ),
+            "artifact_boundary": (
+                "opaque staged artifact ID with byte-size and SHA-256 verification; "
+                "caller local paths are forbidden"
+            ),
         }
         for path_item in schema.get("paths", {}).values():
             for operation in path_item.values():

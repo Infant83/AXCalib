@@ -91,9 +91,11 @@ Intelligence reference contract가 통과했다. hash-bound review policy regist
 manifest, 작은 synthetic lexical retrieval baseline, strict structured model evaluator와 사용자 승인
 하의 live registration smoke를 포함한다. 독립 freeze/update pipeline, dossier JSON Schema,
 filesystem lock, local idempotency, durable recording outbox와 effective-config manifest도 reference
-수준으로 검증했고 project dossier/audit transaction recovery도 R1.1에서 통과했다. 단, T1의 full
-PipelineContext/checkpoint/cancel, Typer CLI, education/report-outbox producer/stale-lock recovery와
-운영 품질평가는 남아 있으므로 T1 전체 완료로 기록하지 않는다.
+수준으로 검증했다. 2026-07-22 R1/I1/I2a에서 project·education transaction recovery,
+PipelineContext/checkpoint/cancel, Typer CLI/batch, non-destructive maintenance, fail-closed runtime API와
+principal-bound project register/HITL contract까지 local Alpha로 검증했다. 단, report/outbox producer,
+OIDC/JWKS·immutable upload·distributed worker와 운영 품질평가는 남아 있으므로 제품 전체나 운영
+MVP 완료로 기록하지 않는다.
 
 2026-07-21 `WP-02.Q1`에서는 제공 PPTX의 16/16 slide를 제한형 embedded-image renderer로
 재현하고, 13개 reviewed locator와 12개 reference field를 source/sidecar hash에 고정한 품질
@@ -131,7 +133,7 @@ dossier 생성
 - notification: offline RecordingNotifier
 - storage: local filesystem
 - output: updated dossier, immutable snapshot, structured JSON, Markdown report
-- interface: Python API와 Typer CLI
+- interface: Python API, Typer CLI와 in-process FastAPI project/runtime Alpha
 - public facade: `AXCalib().evaluate/aevaluate`, expert `from_toml(...)`
 - pipeline kernel: typed context/result/status/registry와 sync/async parity
 - working scripts: dossier freeze, 등록심의, 완료평가, two-gate synthetic entrypoint
@@ -343,8 +345,9 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 ### WP-06 Async, Batch, API
 
 현재 local Alpha evidence: sync/async executor, bounded JSONL batch, Alpha CLI, fail-closed FastAPI
-catalog/run/status/cancel과 generated runtime OpenAPI. 아래 항목 중 principal-bound domain command,
-OIDC/RBAC, 202 worker/SSE와 full workflow parity는 아직 남아 있다.
+catalog/run/status/cancel, principal-bound project register/registration/completion decision과 generated
+runtime OpenAPI. education principal binding, approved OIDC/RBAC, immutable upload service, 202 worker/SSE와
+full workflow parity는 아직 남아 있다.
 
 - sync/async parity
 - bounded concurrency와 cancellation
@@ -353,6 +356,7 @@ OIDC/RBAC, 202 worker/SSE와 full workflow parity는 아직 남아 있다.
 - FastAPI OpenAPI 3.1
 - OpenAPI 3.1.0 artifact-first contract, JSON Schema 2020-12와 generated client parity
 - allowlisted per-request options, bearer auth/RBAC boundary와 Problem Details
+- project owner/admin principal·scope·organization·revision binding과 no-path staged artifact hash contract
 - OpenAPI 3.2/TOML 1.1 toolchain compatibility spike
 - worker queue port와 in-process reference adapter
 

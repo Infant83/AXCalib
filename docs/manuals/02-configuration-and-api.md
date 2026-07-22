@@ -25,7 +25,7 @@
 | `config/review_profiles/*.yaml` | version/hash-bound 등록·완료 심사기준 |
 | `docs/schemas/runtime-config.schema.json` | 허용 키·타입·범위 |
 | `docs/api/openapi.v1alpha1.json` | full evaluation/HITL API 목표 계약, pre-implementation |
-| `docs/api/openapi.runtime.v1alpha1.json` | 실제 runtime API local Alpha 계약 |
+| `docs/api/openapi.runtime.v1alpha1.json` | 실제 runtime + principal-bound project API local Alpha 계약 |
 
 지원하는 작성 문법은 Python 3.12 `tomllib`과 맞는 TOML 1.0 범위다. unknown key는 경고 후
 무시하지 않고 validation error로 처리한다.
@@ -70,6 +70,7 @@ verifier와 pipeline grant 기본값은 모두 닫혀 있다. generic payload의
 - `POST /v1/runs/{run_id}/commands`: 권한 있는 사람이 wait 상태를 재개
 - `GET /v1/capabilities`: 서버가 허용한 profile과 limit 조회
 
-`202 Accepted`는 인증 승인이 아니라 실행 요청 접수다. 현재 runtime API는 synchronous local
-Alpha이며, 위 목표 route와 OIDC/RBAC/worker는 WP-06 후속 threat model과 함께 확정한다. 오류는
+`202 Accepted`는 인증 승인이 아니라 실행 요청 접수다. 현재 runtime/project API는 synchronous local
+Alpha이며 project 등록과 두 HITL command만 전용 route로 추가됐다. education/full 목표 route와
+OIDC/RBAC/immutable upload/worker는 WP-06 후속 범위다. 오류는
 현재 구현에서도 redacted RFC 9457-shaped Problem code로 구분한다.

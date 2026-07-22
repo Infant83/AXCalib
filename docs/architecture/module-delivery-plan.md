@@ -285,12 +285,17 @@ Evidence가 남아 있다.
 - 출력: filesystem-neutral typed response와 workflow status event
 - 의존성: M09, M10; FastAPI/queue는 delivery adapter
 - 첫 slice: implemented local FastAPI catalog/run/status/cooperative-cancel adapter
+- 두 번째 slice: principal-bound project register와 registration/completion administrator decision,
+  no-path staged artifact resolver/hash boundary
 - 검증: generated OpenAPI 3.1/Draft 2020-12, fail-closed verifier/grant, reserved authority field
-  rejection, owner/scope, unknown option, deterministic idempotent retry, run conflict와 cancellation
+  rejection, principal/role/scope/organization/revision, staged hash, unknown option, deterministic idempotent
+  retry, run conflict와 cancellation
 - 현재 완료증거: `tests/contract/test_runtime_api_contract.py`,
-  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022
-- 남은 완료증거: principal-bound project/education command endpoint, upload/staging, approved OIDC/RBAC,
-  202 worker/SSE와 script/CLI/API workflow result parity
+  `tests/contract/test_project_api_contract.py`, `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023와
+  API Alpha threat model
+- 남은 완료증거: education principal-bound command, immutable upload/staging service, approved OIDC/RBAC,
+  project read/list/report authorization와 decision semantic replay, 202 worker/SSE 및 script/CLI/API
+  workflow result parity
 
 ### M13 — Web Review
 
@@ -398,18 +403,20 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-Library/CLI/runtime API local Alpha checkpoint 다음은 G4 Interfaces의 principal-bound contract slice다.
+Library/CLI/runtime/project API local Alpha checkpoint 다음은 G4 Interfaces의 education authority slice다.
 
-1. M12의 generic runtime API 위에 인증 principal과 actor를 bind하는 project/education 전용 command
-   endpoint, upload/staging 경계와 approved OIDC/RBAC contract를 설계한다.
-2. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
-3. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
-4. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
-5. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
-6. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
-7. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
-8. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
+1. M12의 project principal binding을 기준으로 learner/mentor/instructor/administrator를 program version,
+   enrollment, milestone과 organization scope에 bind하는 education 전용 command를 설계한다.
+2. approved OIDC/JWKS claim mapping과 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
+   분리한다.
+3. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
+4. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
+5. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
+6. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
+7. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
+8. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
+9. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
    traceability를 실행한다.
-9. `prep.ps1 validate|test|eval`, Ruff, Pyright와 별도 Docling contract를 유지한다.
+10. `prep.ps1 validate|test|eval`, Ruff, Pyright와 별도 Docling contract를 유지한다.
 
 실제 data, 추가 live model, Vector DB, 운영 API/Web은 readiness 문서의 승인 Gate를 유지한다.

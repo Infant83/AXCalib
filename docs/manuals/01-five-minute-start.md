@@ -98,7 +98,7 @@ result = client.run_pptx(request)
 - optional Docling manifest와 opt-in structured model evaluator
 
 local idempotent resume, durable recording outbox와 multi-process filesystem lock은 Alpha 범위에서
-있다. 실제 OCR/VLM, 운영 notification/database, principal-bound full API·OIDC/worker와 Web은 다음
+있다. 실제 OCR/VLM, 운영 notification/database, education/full API·OIDC/immutable upload/worker와 Web은 다음
 hardening 범위다.
 
 사업별 심사기준과 OpenAI/on-prem endpoint 설정은

@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from axcalib.pipelines import PipelineDescriptor
 from axcalib.runtime import PipelineExecutionResult, PipelineRunStatus
+from axcalib.schemas import ReviewerAdjustment
+from axcalib.workflows.two_gate import ProjectStatus
+
+PPTX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
 
 class PipelineCatalogResponse(BaseModel):
@@ -86,6 +90,97 @@ class CancelRunResponse(BaseModel):
     cancellation_requested: bool = True
 
 
+class StagedArtifactRef(BaseModel):
+    """Opaque reference to bytes already accepted by a deployment staging service."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    artifact_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    byte_size: int = Field(ge=1)
+    media_type: str = Field(min_length=1, max_length=200)
+
+
+class ProjectRegistrationRequest(BaseModel):
+    """Register a staged PPTX without accepting a caller-controlled local path."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    title: str = Field(min_length=1, max_length=300)
+    proposal: StagedArtifactRef
+    sidecar: StagedArtifactRef | None = None
+    review_profile: str | None = Field(
+        default=None,
+        pattern=r"^[a-z0-9][a-z0-9._-]{2,127}@\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$",
+    )
+    certification_level: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class ProjectArtifactView(BaseModel):
+    """Hash metadata safe to return without a deployment-local URI."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    artifact_id: str
+    role: str
+    media_type: str
+    sha256: str
+    byte_size: int = Field(ge=0)
+
+
+class ProjectRegistrationResponse(BaseModel):
+    """Filesystem-neutral result of one principal-bound project registration."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "axcalib.api-project/v1alpha1"
+    project_id: str
+    display_id: str
+    title: str
+    status: ProjectStatus
+    revision: int = Field(ge=1)
+    proposer_org_id: str
+    artifact: ProjectArtifactView
+    replayed: bool = False
+
+
+class RegistrationDecisionRequest(BaseModel):
+    """Administrator registration command; actor identity comes from auth."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    expected_revision: int = Field(ge=1)
+    command: Literal["approve", "reject"]
+    rationale: str = Field(min_length=1, max_length=4000)
+    adjustments: tuple[ReviewerAdjustment, ...] = ()
+
+
+class CompletionDecisionRequest(BaseModel):
+    """Administrator completion command; actor identity comes from auth."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    expected_revision: int = Field(ge=1)
+    command: Literal["accept", "not_accept"]
+    rationale: str = Field(min_length=1, max_length=4000)
+    adjustments: tuple[ReviewerAdjustment, ...] = ()
+
+
+class ProjectCommandResponse(BaseModel):
+    """Filesystem-neutral domain command result."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "axcalib.api-project-command/v1alpha1"
+    project_id: str
+    status: str
+    dossier_status: ProjectStatus
+    dossier_revision: int = Field(ge=1)
+    report_id: str | None = None
+    allowed_commands: tuple[str, ...] = ()
+    message: str
+
+
 class ValidationIssue(BaseModel):
     """Redacted validation location and code without rejected input values."""
 
@@ -110,9 +205,17 @@ class Problem(BaseModel):
 
 __all__ = [
     "CancelRunResponse",
+    "CompletionDecisionRequest",
     "PipelineCatalogResponse",
     "PipelineRunRequest",
     "PipelineRunView",
     "Problem",
+    "ProjectArtifactView",
+    "ProjectCommandResponse",
+    "ProjectRegistrationRequest",
+    "ProjectRegistrationResponse",
+    "PPTX_MEDIA_TYPE",
+    "RegistrationDecisionRequest",
+    "StagedArtifactRef",
     "ValidationIssue",
 ]

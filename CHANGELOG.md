@@ -22,6 +22,8 @@
 - optional `api` extra의 fail-closed FastAPI factory와 pipeline catalog/run/status/cancel route
 - deployment-owned bearer `TokenVerifier`, exact `ApiPipelineGrant`, run owner/scope authorization
 - 실제 route에서 생성한 `openapi.runtime.v1alpha1.json`과 API contract regression
+- principal-bound project registration과 registration/completion administrator decision endpoint
+- local path를 받지 않는 `StagedArtifactResolver`, media/size/SHA-256 verification과 API threat model
 
 ### 변경
 
@@ -33,19 +35,23 @@
 - persisted pipeline result path/SHA-256과 batch manifest SHA-256이 바뀌면 fail-closed한다.
 - Library registry 등록과 HTTP 공개 grant를 분리하고 generic actor/admin decision payload를 거부한다.
 - API idempotency body/header, semantic default와 typed revision context를 같은 run checkpoint에 고정한다.
+- project 등록 audit와 HITL decision actor를 verified bearer principal에 bind하고 role·scope·organization·
+  expected revision을 domain mutation 전에 확인한다.
+- project create idempotency replay는 stable principal/key project ID의 request/hash/context/creation audit가
+  모두 일치할 때만 허용한다.
 
 ### 현재 검증
 
-- lightweight offline test 110개, 10개 evaluation group, workspace validation 0/0, Ruff와 Pyright
-  0/0이 통과했다. targeted runtime API contract는 7/7이다.
-- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/4 routes를
+- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. project API
+  targeted contract 5/5, runtime+project API contract 12/12와 Pyright 0/0이 통과했다.
+- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/7 routes를
   구성한다. actual-PPTX quickstart는 이전 Alpha checkpoint evidence를 유지한다.
 - project/education local state recovery와 stale artifact maintenance는 검증했지만 report/outbox producer,
   database/distributed worker, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
 
 ### 다음 변경 후보
 
-- G4: principal-bound project/education endpoint, upload/staging과 approved OIDC/RBAC
+- G4: education principal binding, immutable upload service와 approved OIDC/RBAC
 - durable 202 worker, poll/SSE와 resume
 - report/outbox producer와 database/distributed transaction hardening
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증

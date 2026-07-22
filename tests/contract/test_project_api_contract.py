@@ -1,0 +1,377 @@
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+from typing import Any
+
+import pytest
+from fastapi.testclient import TestClient
+
+from axcalib import AXCalib
+from axcalib.api import (
+    ApiPrincipal,
+    ApiRole,
+    ArtifactPurpose,
+    StagedArtifactRef,
+    create_app,
+)
+from axcalib.api.models import PPTX_MEDIA_TYPE
+from axcalib.ingest.pptx import sha256_file
+from axcalib.pipelines import ProjectSourceIntegrityError
+
+
+class _TokenVerifier:
+    def verify(self, token: str) -> ApiPrincipal | None:
+        principals = {
+            "owner-token": ApiPrincipal(
+                subject="user:owner",
+                role=ApiRole.PROJECT_OWNER,
+                organization_id="org:alpha",
+                scopes=frozenset({"projects:create"}),
+            ),
+            "admin-token": ApiPrincipal(
+                subject="user:administrator",
+                role=ApiRole.ADMINISTRATOR,
+                organization_id="org:alpha",
+                scopes=frozenset({"projects:decide:any"}),
+            ),
+            "other-admin-token": ApiPrincipal(
+                subject="user:other-administrator",
+                role=ApiRole.ADMINISTRATOR,
+                organization_id="org:other",
+                scopes=frozenset({"projects:decide:any"}),
+            ),
+            "unscoped-admin-token": ApiPrincipal(
+                subject="user:unscoped-administrator",
+                role=ApiRole.ADMINISTRATOR,
+                organization_id="org:alpha",
+            ),
+        }
+        return principals.get(token)
+
+
+class _ArtifactResolver:
+    def __init__(self, artifacts: dict[str, Path]) -> None:
+        self.artifacts = artifacts
+        self.calls: list[tuple[str, str, str]] = []
+
+    def resolve(
+        self,
+        artifact: StagedArtifactRef,
+        *,
+        principal: ApiPrincipal,
+        purpose: ArtifactPurpose,
+    ) -> Path | None:
+        self.calls.append((artifact.artifact_id, principal.subject, purpose))
+        return self.artifacts.get(artifact.artifact_id)
+
+
+def _auth(token: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": "registration-request-1",
+    }
+
+
+def _artifact(path: Path, artifact_id: str, media_type: str) -> dict[str, Any]:
+    return {
+        "artifact_id": artifact_id,
+        "sha256": sha256_file(path),
+        "byte_size": path.stat().st_size,
+        "media_type": media_type,
+    }
+
+
+def _registration_request() -> tuple[dict[str, Any], dict[str, Path]]:
+    proposal = Path("tests/sources/oled_qc_project_outline.pptx").resolve()
+    sidecar = Path("tests/sources/oled_qc_project_outline.axcalib.json").resolve()
+    return (
+        {
+            "title": "Synthetic principal-bound project",
+            "proposal": _artifact(proposal, "staged-proposal-1", PPTX_MEDIA_TYPE),
+            "sidecar": _artifact(sidecar, "staged-sidecar-1", "application/json"),
+            "certification_level": "AX-L1",
+        },
+        {
+            "staged-proposal-1": proposal,
+            "staged-sidecar-1": sidecar,
+        },
+    )
+
+
+def _project_client(tmp_path: Path) -> tuple[AXCalib, TestClient, _ArtifactResolver]:
+    _, source_paths = _registration_request()
+    staging = tmp_path / "staging"
+    staging.mkdir(parents=True)
+    paths: dict[str, Path] = {}
+    for artifact_id, source in source_paths.items():
+        target = staging / source.name
+        shutil.copy2(source, target)
+        paths[artifact_id] = target
+    resolver = _ArtifactResolver(paths)
+    runtime = AXCalib(tmp_path / "workspace")
+    app = create_app(
+        runtime,
+        token_verifier=_TokenVerifier(),
+        artifact_resolver=resolver,
+    )
+    return runtime, TestClient(app), resolver
+
+
+def _register(client: TestClient) -> dict[str, Any]:
+    request, _ = _registration_request()
+    response = client.post("/v1/projects", headers=_auth("owner-token"), json=request)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_project_registration_binds_principal_and_opaque_artifacts(tmp_path: Path) -> None:
+    runtime, client, resolver = _project_client(tmp_path)
+    request, _ = _registration_request()
+
+    registered = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=request,
+    )
+    assert registered.status_code == 200, registered.text
+    body = registered.json()
+    assert body["proposer_org_id"] == "org:alpha"
+    assert body["artifact"]["sha256"] == request["proposal"]["sha256"]
+    assert "uri" not in body["artifact"]
+    assert str(Path("tests/sources").resolve()) not in registered.text
+    assert resolver.calls == [
+        ("staged-proposal-1", "user:owner", "registration_proposal"),
+        ("staged-sidecar-1", "user:owner", "pptx_sidecar"),
+    ]
+
+    dossier = runtime.service.dossiers.load(str(body["project_id"]))
+    assert dossier.review_context.proposer_org_id == "org:alpha"
+    created = next(
+        event
+        for event in runtime.service.audit.entries()
+        if event["event_type"] == "project_created"
+    )
+    assert created["actor_id"] == "user:owner"
+    assert created["actor_role"] == "project_owner"
+
+    resolver.artifacts.clear()
+    replay = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=request,
+    )
+    assert replay.status_code == 200
+    assert replay.json()["project_id"] == body["project_id"]
+    assert replay.json()["replayed"] is True
+    assert len(resolver.calls) == 2
+
+    changed = dict(request)
+    changed["title"] = "Different request with reused key"
+    conflict = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=changed,
+    )
+    assert conflict.status_code == 409
+    assert conflict.json()["code"] == "project_registration_conflict"
+
+    runtime.service.audit.path.write_text("", encoding="utf-8")
+    incomplete = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=request,
+    )
+    assert incomplete.status_code == 409
+    assert incomplete.json()["code"] == "project_registration_integrity_failure"
+
+
+def test_project_registration_rejects_paths_and_integrity_failures(tmp_path: Path) -> None:
+    _, client, _ = _project_client(tmp_path)
+    request, _ = _registration_request()
+
+    with_path = dict(request)
+    with_path["proposal"] = dict(request["proposal"])
+    with_path["proposal"]["path"] = "C:/sensitive/proposal.pptx"
+    invalid_path = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=with_path,
+    )
+    assert invalid_path.status_code == 422
+    assert invalid_path.json()["code"] == "request_invalid"
+    assert "sensitive" not in invalid_path.text
+
+    bad_hash = dict(request)
+    bad_hash["proposal"] = dict(request["proposal"])
+    bad_hash["proposal"]["sha256"] = "0" * 64
+    integrity = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token") | {"Idempotency-Key": "bad-hash"},
+        json=bad_hash,
+    )
+    assert integrity.status_code == 409
+    assert integrity.json()["code"] == "staged_artifact_integrity_failure"
+
+    no_resolver = TestClient(
+        create_app(AXCalib(tmp_path / "reject-all"), token_verifier=_TokenVerifier())
+    )
+    unavailable = no_resolver.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=request,
+    )
+    assert unavailable.status_code == 404
+    assert unavailable.json()["code"] == "staged_artifact_not_found"
+
+
+def test_project_source_hash_is_rechecked_before_create_and_evaluation(
+    tmp_path: Path,
+) -> None:
+    runtime, client, resolver = _project_client(tmp_path)
+    request, _ = _registration_request()
+    request.pop("sidecar")
+
+    with pytest.raises(ProjectSourceIntegrityError, match="before dossier registration"):
+        runtime.register_case(
+            resolver.artifacts["staged-proposal-1"],
+            title="Rejected pre-transaction source",
+            expected_proposal_sha256="0" * 64,
+        )
+    assert not tuple(runtime.service.dossiers.root.glob("*.yaml"))
+
+    registered = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token"),
+        json=request,
+    )
+    assert registered.status_code == 200, registered.text
+    project_id = registered.json()["project_id"]
+    runtime.submit_registration(project_id)
+    with resolver.artifacts["staged-proposal-1"].open("ab") as stream:
+        stream.write(b"tampered-after-registration")
+    with pytest.raises(ProjectSourceIntegrityError, match="after dossier registration"):
+        runtime.evaluate(project_id, "registration")
+    assert runtime.service.dossiers.load(project_id).status == "registration_ready"
+
+
+def test_registration_decision_binds_admin_scope_org_and_revision(tmp_path: Path) -> None:
+    runtime, client, _ = _project_client(tmp_path)
+    registered = _register(client)
+    project_id = str(registered["project_id"])
+    runtime.submit_registration(project_id)
+    runtime.evaluate(project_id, "registration")
+    current = runtime.service.dossiers.load(project_id)
+    decision_path = f"/v1/projects/{project_id}/decisions/registration"
+    request = {
+        "expected_revision": current.revision,
+        "command": "approve",
+        "rationale": "Evidence and reviewer checklist were checked.",
+    }
+
+    owner = client.post(decision_path, headers=_auth("owner-token"), json=request)
+    assert owner.status_code == 403
+    assert owner.json()["code"] == "administrator_role_required"
+
+    unscoped = client.post(
+        decision_path,
+        headers=_auth("unscoped-admin-token"),
+        json=request,
+    )
+    assert unscoped.status_code == 403
+    assert unscoped.json()["code"] == "project_decision_scope_forbidden"
+
+    wrong_org = client.post(
+        decision_path,
+        headers=_auth("other-admin-token"),
+        json=request,
+    )
+    assert wrong_org.status_code == 403
+    assert wrong_org.json()["code"] == "project_organization_forbidden"
+    assert runtime.service.dossiers.load(project_id).revision == current.revision
+
+    stale = client.post(
+        decision_path,
+        headers=_auth("admin-token"),
+        json=request | {"expected_revision": current.revision - 1},
+    )
+    assert stale.status_code == 409
+    assert stale.json()["code"] == "stale_project_revision"
+    assert runtime.service.dossiers.load(project_id).revision == current.revision
+
+    impersonation = client.post(
+        decision_path,
+        headers=_auth("admin-token"),
+        json=request | {"actor_id": "user:impersonated"},
+    )
+    assert impersonation.status_code == 422
+    assert "impersonated" not in impersonation.text
+
+    approved = client.post(
+        decision_path,
+        headers=_auth("admin-token"),
+        json=request,
+    )
+    assert approved.status_code == 200, approved.text
+    assert approved.json()["dossier_status"] == "registration_approved"
+    assert "dossier_uri" not in approved.json()
+    event = runtime.service.audit.entries()[-1]
+    assert event["event_type"] == "registration_decided"
+    assert event["actor_id"] == "user:administrator"
+    assert event["actor_role"] == "administrator"
+
+
+def test_completion_decision_uses_same_principal_and_revision_guard(tmp_path: Path) -> None:
+    runtime, client, _ = _project_client(tmp_path)
+    registered = _register(client)
+    project_id = str(registered["project_id"])
+    runtime.submit_registration(project_id)
+    runtime.evaluate(project_id, "registration")
+    registration = runtime.service.dossiers.load(project_id)
+    client.post(
+        f"/v1/projects/{project_id}/decisions/registration",
+        headers=_auth("admin-token"),
+        json={
+            "expected_revision": registration.revision,
+            "command": "approve",
+            "rationale": "Registration evidence checked.",
+        },
+    ).raise_for_status()
+    runtime.start_execution(project_id)
+    final_path = Path(
+        "fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.pptx"
+    )
+    sidecar_path = Path(
+        "fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.axcalib.json"
+    )
+    runtime.submit_completion(project_id, final_path, sidecar_path=sidecar_path)
+    runtime.evaluate(project_id, "completion")
+    completion = runtime.service.dossiers.load(project_id)
+    decision_path = f"/v1/projects/{project_id}/decisions/completion"
+
+    stale = client.post(
+        decision_path,
+        headers=_auth("admin-token"),
+        json={
+            "expected_revision": completion.revision - 1,
+            "command": "accept",
+            "rationale": "Completion evidence checked.",
+        },
+    )
+    assert stale.status_code == 409
+    assert stale.json()["code"] == "stale_project_revision"
+
+    accepted = client.post(
+        decision_path,
+        headers=_auth("admin-token"),
+        json={
+            "expected_revision": completion.revision,
+            "command": "accept",
+            "rationale": "Completion evidence checked.",
+        },
+    )
+    assert accepted.status_code == 200, accepted.text
+    assert accepted.json()["dossier_status"] == "completion_accepted"
+    event = runtime.service.audit.entries()[-1]
+    assert event["event_type"] == "completion_decided"
+    assert event["actor_id"] == "user:administrator"

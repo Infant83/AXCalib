@@ -67,8 +67,7 @@ def test_api_is_fail_closed_and_role_checked(tmp_path: Path) -> None:
     catalog = client.get("/v1/pipelines", headers=_auth("viewer-token"))
     assert catalog.status_code == 200
     assert any(
-        item["pipeline_id"] == "workspace.maintenance"
-        for item in catalog.json()["pipelines"]
+        item["pipeline_id"] == "workspace.maintenance" for item in catalog.json()["pipelines"]
     )
 
     forbidden = client.post(
@@ -284,6 +283,9 @@ def test_generated_runtime_openapi_matches_committed_artifact(tmp_path: Path) ->
     assert set(schema["paths"]) == {
         "/v1/pipelines",
         "/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs",
+        "/v1/projects",
+        "/v1/projects/{project_id}/decisions/completion",
+        "/v1/projects/{project_id}/decisions/registration",
         "/v1/runs/{run_id}",
         "/v1/runs/{run_id}/cancel",
     }
@@ -293,10 +295,7 @@ def test_generated_runtime_openapi_matches_committed_artifact(tmp_path: Path) ->
 
 def test_core_import_does_not_load_optional_fastapi() -> None:
     script = (
-        "import sys; "
-        "sys.path.insert(0, 'src'); "
-        "import axcalib; "
-        "assert 'fastapi' not in sys.modules"
+        "import sys; sys.path.insert(0, 'src'); import axcalib; assert 'fastapi' not in sys.modules"
     )
     result = subprocess.run(
         [sys.executable, "-c", script],

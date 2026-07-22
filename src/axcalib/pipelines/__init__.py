@@ -27,6 +27,7 @@ from axcalib.pipelines.education import (
 )
 from axcalib.pipelines.project import (
     LocalProjectService,
+    ProjectSourceIntegrityError,
     TwoGatePptxPipeline,
     TwoGatePptxRequest,
 )
@@ -53,6 +54,7 @@ __all__ = [
     "DossierUpdatePipeline",
     "DossierUpdateRequest",
     "LocalProjectService",
+    "ProjectSourceIntegrityError",
     "PipelineRegistry",
     "TwoGatePptxPipeline",
     "TwoGatePptxRequest",

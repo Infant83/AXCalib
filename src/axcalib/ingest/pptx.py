@@ -98,6 +98,8 @@ class PptxEvidenceExtractor:
                 raise PptxSourceError(f"PPTX sidecar does not exist: {resolved_sidecar}")
             metadata["sidecar_uri"] = str(resolved_sidecar)
             metadata["sidecar_sha256"] = sha256_file(resolved_sidecar)
+            metadata["sidecar_byte_size"] = str(resolved_sidecar.stat().st_size)
+            metadata["sidecar_media_type"] = "application/json"
         return ArtifactRef(
             artifact_id=f"artifact-{role}-{digest[:16]}",
             role=role,

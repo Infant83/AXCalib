@@ -971,6 +971,14 @@ route와 working script에서 model call, file parse, 상태판정을 직접 수
   거부한다. verifier와 grant 기본값은 fail closed다.
 - generic pipeline route는 request actor/admin decision을 받지 않는다. 사람 권한 command는
   verified principal을 domain actor에 bind하는 전용 endpoint에서만 노출한다.
+- 구현된 project Alpha에서 등록은 verified `project_owner|administrator` + `projects:create` +
+  organization을 요구한다. 등록/완료 결정은 `administrator` + project decision scope + dossier
+  organization + expected revision을 모두 확인한 뒤 principal subject를 domain actor로 전달한다.
+- remote project request에는 local path field가 없다. opaque staged artifact ID와 claimed size/hash를
+  deployment resolver가 principal/purpose별로 해석하고 API가 suffix, media, size, SHA-256을 재검증한다.
+  기본 resolver는 모두 거부하며 운영 구현은 immutable content-addressed object version이어야 한다.
+- project 등록 replay는 principal+idempotency key로 만든 stable project ID에서 request/context/artifact
+  hash와 principal-bound creation audit가 모두 같을 때만 성공한다.
 - run status/cancel은 owner, administrator 또는 explicit cross-run scope로 제한한다.
 - 짧은 read/write: 동기 HTTP response
 - parse/evaluation/index: 202 + run_id
@@ -1008,6 +1016,11 @@ HTTP message와 내부 stack trace를 분리하고 trace_id를 제공한다.
 - operator: job/corpus 운영
 - auditor: read-only audit
 - administrator: rubric/model/access 설정
+
+HTTP Alpha의 `project_owner`, `operator`, `administrator`, `viewer`는 전달계층 역할이다. project
+decision의 administrator는 domain HITL guard와 함께 사용하지만, 이 역할을 education learner/mentor/
+instructor 또는 전사 운영권한으로 자동 승격하지 않는다. claim mapping과 역할 조합은 승인된
+OIDC/RBAC 정책 전까지 deployment-ready가 아니다.
 
 역할만으로 충분하지 않으며 project/organization/access_classification scope를 함께 검사한다.
 

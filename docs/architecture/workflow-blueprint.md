@@ -3,15 +3,16 @@ document_type: workflow_blueprint
 project: AXCalib
 baseline: v0.3-p1-g4-api-alpha
 updated_at: 2026-07-22
-status: library_cli_api_local_alpha_exact_model_pending
+status: library_cli_project_api_local_alpha_exact_model_pending
 ---
 
 # AXCalib Workflow Blueprint
 
 이 문서는 AXCalib의 전체 workflow, 국소 pipeline, module dependency, 사람 승인과 실패·재개
 경로를 시각적으로 고정한다. 0절은 현재 실행되는 slice이고, 나머지 다이어그램에는 향후
-Docling/model/outbox/worker/Web Target도 포함된다. FastAPI node는 local Alpha 범위만 구현됐으며
-운영 OIDC/RBAC·202 worker가 완료된 것으로 해석하지 않는다.
+Docling/model/outbox/worker/Web Target도 포함된다. FastAPI node는 runtime과 principal-bound project
+command의 local Alpha 범위만 구현됐으며 운영 OIDC/RBAC·immutable upload·202 worker가 완료된 것으로
+해석하지 않는다.
 P/WP/G 일정, Active Slice와 작업 이력은 단일 실행 원장
 [PROJECT_STATE.md](../../PROJECT_STATE.md)에서 관리한다.
 
@@ -57,11 +58,12 @@ flowchart LR
 deterministic evaluator이고, 명시적 opt-in에서 Docling과 OpenAI-compatible structured evaluator를
 같은 application service에 주입한다. image-only slide의 sidecar는 수동 검토 fixture이며
 OCR/VLM 품질을 뜻하지 않는다. 현재 retrieval metric은 작은 synthetic lexical 회귀다. durable
-local outbox, idempotency result store, effective-config와 multi-process file lock은 reference로
-추가됐다. 별도 `evals/evidence_quality.py`는 runtime을 우회하지 않고 두 Gate report를 읽어 restricted
+local outbox, idempotency result store, effective-config, multi-process file lock, transaction recovery,
+pipeline checkpoint/cancel, CLI/batch와 project API는 reference로 추가됐다. 별도
+`evals/evidence_quality.py`는 runtime을 우회하지 않고 두 Gate report를 읽어 restricted
 render 16/16, gold locator 13/13, reference field 12/12, criterion traceability 13/13과 unsupported
-claim 0건을 회귀한다. 이 경로는 공식 rubric/VLM 의미 정확도를 주장하지 않는다. full
-checkpoint/cancel, cross-file recovery, Vector DB와 운영 adapter는 다음 범위다.
+claim 0건을 회귀한다. 이 경로는 공식 rubric/VLM 의미 정확도를 주장하지 않는다. Vector DB,
+exact model, education/full API와 운영 adapter는 다음 범위다.
 
 ### 0.1 현재 실행되는 교육 프로그램 → 프로젝트 인증 roll-up
 
@@ -147,6 +149,34 @@ Library registry 등록은 HTTP 공개를 의미하지 않는다. verifier와 gr
 generic route는 request가 선언한 사람 identity나 관리자 결정을 신뢰하지 않는다. 기존
 `openapi.v1alpha1.json`은 전체 제품 target, `openapi.runtime.v1alpha1.json`은 실제 구현된 route의
 generated contract다.
+
+### 0.4 WP-06.I2a principal-bound project command boundary
+
+```mermaid
+flowchart LR
+    OWNER["Project owner/admin principal"] --> CREATE{"role + projects:create<br/>+ verified organization?"}
+    CREATE -->|deny| STOP["403 · no mutation"]
+    CREATE -->|allow| REF["opaque staged ID<br/>media + size + SHA-256"]
+    REF --> RESOLVE["Deployment resolver<br/>principal + purpose"]
+    RESOLVE --> VERIFY["suffix/size/hash recheck"]
+    VERIFY --> REGISTER["Library register_case<br/>principal-bound creation audit"]
+    ADMIN["Administrator principal"] --> SCOPE{"decision scope + org<br/>+ expected revision?"}
+    SCOPE -->|deny/stale| STOP
+    SCOPE -->|allow| DECIDE["Library HITL decision<br/>actor = principal subject"]
+    REGISTER --> DOS["Dossier + audit"]
+    DECIDE --> DOS
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class OWNER,REF,RESOLVE,VERIFY,REGISTER,ADMIN,DECIDE,DOS safe;
+    class CREATE,SCOPE wait;
+    class STOP stop;
+```
+
+HTTP request에는 actor나 local path가 없다. 같은 idempotency key의 replay는 proposal/sidecar hash,
+review context와 principal-bound creation audit가 모두 같을 때만 성공한다. education learner/mentor/
+instructor 권한, 실제 OIDC와 immutable staging service는 이 그림의 완료 범위가 아니다.
 
 ## 1. 전체 계층
 
@@ -385,7 +415,7 @@ flowchart TB
     subgraph I["Delivery Interfaces"]
         direction LR
         M11["M11 Script / CLI"]
-        M12["M12 API / Worker"] --> M13["M13 Web Review"]
+        M12["M12 Runtime + Project API / Worker"] --> M13["M13 Web Review"]
     end
 
     M00 --> PC
@@ -516,7 +546,7 @@ flowchart LR
     W1["Wave 1 — WP-01 + WP-01E\nLocal hardening + education composition"]
     W2["Wave 2 — WP-02/03\nRestricted PPT Q1 verified + rubric hardening"]
     W3["Wave 3 — WP-04/05\nRetrieval + Model + Calibration"]
-    W4["Wave 4 — WP-06\nCLI + API local Alpha · Worker next"]
+    W4["Wave 4 — WP-06\nCLI + Project API Alpha · Education/Worker next"]
     W5["Wave 5 — WP-07/08\nWeb Review + Pilot"]
 
     W0 --> W1 --> W2 --> W3 --> W4 --> W5
