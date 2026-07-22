@@ -342,6 +342,10 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 
 ### WP-06 Async, Batch, API
 
+현재 local Alpha evidence: sync/async executor, bounded JSONL batch, Alpha CLI, fail-closed FastAPI
+catalog/run/status/cancel과 generated runtime OpenAPI. 아래 항목 중 principal-bound domain command,
+OIDC/RBAC, 202 worker/SSE와 full workflow parity는 아직 남아 있다.
+
 - sync/async parity
 - bounded concurrency와 cancellation
 - JSONL batch manifest, idempotency, checkpoint/resume

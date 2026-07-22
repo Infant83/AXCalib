@@ -1,16 +1,17 @@
 ---
 document_type: workflow_blueprint
 project: AXCalib
-baseline: v0.3-p1
+baseline: v0.3-p1-g4-api-alpha
 updated_at: 2026-07-22
-status: provider_proxy_registration_verified_exact_pending
+status: library_cli_api_local_alpha_exact_model_pending
 ---
 
 # AXCalib Workflow Blueprint
 
 이 문서는 AXCalib의 전체 workflow, 국소 pipeline, module dependency, 사람 승인과 실패·재개
 경로를 시각적으로 고정한다. 0절은 현재 실행되는 slice이고, 나머지 다이어그램에는 향후
-Docling/model/outbox/API/Web Target도 포함된다. Target node를 구현 완료로 해석하지 않는다.
+Docling/model/outbox/worker/Web Target도 포함된다. FastAPI node는 local Alpha 범위만 구현됐으며
+운영 OIDC/RBAC·202 worker가 완료된 것으로 해석하지 않는다.
 P/WP/G 일정, Active Slice와 작업 이력은 단일 실행 원장
 [PROJECT_STATE.md](../../PROJECT_STATE.md)에서 관리한다.
 
@@ -117,6 +118,35 @@ SkillBoss는 개인환경의 `provider_proxy` route로만 사용한다. 현재 `
 supplied-fixture registration, GPT-4o text/vision 대조는 통과했다. GLM 4.5V vision은 실패했고 exact
 `Qwen3.5-397B-A17B` identity와 completion/gold 품질은 통과하지 않았으므로 READY node의 deployment
 의미로 승격하지 않는다. raw output와 `reasoning_content`는 저장하지 않는다.
+
+### 0.3 WP-06.I1 authenticated runtime API boundary
+
+```mermaid
+flowchart LR
+    CALLER["Bearer caller"] --> VERIFY["Injected TokenVerifier\nfail closed"]
+    VERIFY --> PRINCIPAL["ApiPrincipal\nsubject · role · scopes"]
+    PRINCIPAL --> GRANT{"Exact ApiPipelineGrant?"}
+    GRANT -->|no| HIDE["404 · not exposed"]
+    GRANT -->|yes| AUTHZ{"Role + owner/scope"}
+    AUTHZ -->|deny| FORBID["403 problem"]
+    AUTHZ -->|allow| FIELD{"Authority field in payload?"}
+    FIELD -->|yes| STOP["422 · dedicated endpoint required"]
+    FIELD -->|no| REG["Same PipelineRegistry validation"]
+    REG --> EXEC["LocalPipelineExecutor\nrequest hash · checkpoint"]
+    EXEC --> VIEW["Filesystem-neutral run view"]
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class VERIFY,PRINCIPAL,REG,EXEC,VIEW safe;
+    class GRANT,AUTHZ,FIELD wait;
+    class HIDE,FORBID,STOP stop;
+```
+
+Library registry 등록은 HTTP 공개를 의미하지 않는다. verifier와 grant 기본값은 모두 닫혀 있고,
+generic route는 request가 선언한 사람 identity나 관리자 결정을 신뢰하지 않는다. 기존
+`openapi.v1alpha1.json`은 전체 제품 target, `openapi.runtime.v1alpha1.json`은 실제 구현된 route의
+generated contract다.
 
 ## 1. 전체 계층
 
@@ -486,7 +516,7 @@ flowchart LR
     W1["Wave 1 — WP-01 + WP-01E\nLocal hardening + education composition"]
     W2["Wave 2 — WP-02/03\nRestricted PPT Q1 verified + rubric hardening"]
     W3["Wave 3 — WP-04/05\nRetrieval + Model + Calibration"]
-    W4["Wave 4 — WP-06\nCLI Alpha · API/Worker next"]
+    W4["Wave 4 — WP-06\nCLI + API local Alpha · Worker next"]
     W5["Wave 5 — WP-07/08\nWeb Review + Pilot"]
 
     W0 --> W1 --> W2 --> W3 --> W4 --> W5

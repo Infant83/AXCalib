@@ -964,8 +964,14 @@ route와 working script에서 model call, file parse, 상태판정을 직접 수
 
 ### 16.2 API 처리 패턴
 
-- pre-implementation 기준 artifact는 `docs/api/openapi.v1alpha1.json`이다.
+- 전체 제품 target artifact는 `docs/api/openapi.v1alpha1.json`, 실제 runtime 구현 artifact는
+  `docs/api/openapi.runtime.v1alpha1.json`이다.
 - OpenAPI 3.1.0과 JSON Schema Draft 2020-12를 사용한다.
+- Library registry 등록과 HTTP 공개를 분리하고 exact delivery grant가 없으면 route 실행을 404로
+  거부한다. verifier와 grant 기본값은 fail closed다.
+- generic pipeline route는 request actor/admin decision을 받지 않는다. 사람 권한 command는
+  verified principal을 domain actor에 bind하는 전용 endpoint에서만 노출한다.
+- run status/cancel은 owner, administrator 또는 explicit cross-run scope로 제한한다.
 - 짧은 read/write: 동기 HTTP response
 - parse/evaluation/index: 202 + run_id
 - 진행상태: SSE 우선, polling fallback

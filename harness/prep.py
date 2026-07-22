@@ -865,14 +865,14 @@ def show_status() -> int:
         "  data/model mode: synthetic default; approved limited live proxy probes; "
         "no Vector DB"
     )
-    print("  architecture control: 9 Mermaid views + 2 SVGs + M00-M13 module board")
+    print("  architecture control: required Mermaid views + 2 SVGs + M00-M13 module board")
     print(
         "  implemented: actual-PPT project gates + evidence Q1 + Qwen proxy capability + "
-        "education goals + WP-01 local hardening"
+        "education goals + Library/CLI/batch/API local Alpha"
     )
     print(
-        "  boundary: exact Qwen/full-rubric quality, credential, CLI/API/Web and "
-        "operations are not complete"
+        "  boundary: exact Qwen/full-rubric quality, credential, full API/OIDC/worker/Web "
+        "and operations are not complete"
     )
     return 0
 

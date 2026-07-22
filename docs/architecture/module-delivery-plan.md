@@ -1,9 +1,9 @@
 ---
 document_type: module_delivery_plan
 project: AXCalib
-baseline: v0.3-p1-library-mvp-alpha
+baseline: v0.3-p1-g4-api-alpha
 updated_at: 2026-07-22
-status: library_mvp_alpha_verified_g4_interfaces_next
+status: library_cli_api_local_alpha_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -29,12 +29,14 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 | M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
 | M10 | `axcalib.runtime` | contract_verified | WP-01/05 | config, M01/M02/M08 | distributed lease/worker + exact on-prem capability/allowlist |
 | M11 | scripts / CLI | contract_verified | WP-01/06 | M00, M10, target pipeline; M09 for workflow | full product command tree와 API parity |
-| M12 | API / worker | not_started | WP-06 | M09, M10 | OpenAPI/202/SSE/resume contract |
+| M12 | API / worker | contract_verified | WP-06 | M09, M10 | OIDC/RBAC, upload boundary, 202 worker/SSE/resume |
 | M13 | Web Review | blocked_policy | WP-07 | M12, FE selection | selected-stack E2E review flow |
 
 `offline_reference`는 제품 module 완료가 아니다. 현재 local/synthetic slice에서 실행되고 회귀
 test가 있다는 뜻이다. M01의 `contract_verified`도 filesystem dossier/freeze 계약에 한정하며 운영
-transaction 또는 제품 전체 완료가 아니다. 각 행의 다음 Exit Evidence가 남아 있다.
+transaction 또는 제품 전체 완료가 아니다. M12의 `contract_verified`는 fail-closed in-process
+catalog/run/status/cancel 계약에 한정하며 운영 인증·worker 완료가 아니다. 각 행의 다음 Exit
+Evidence가 남아 있다.
 
 ### 1.1 2026-07-16 slice evidence
 
@@ -278,13 +280,17 @@ transaction 또는 제품 전체 완료가 아니다. 각 행의 다음 Exit Evi
 
 ### M12 — API / Worker
 
-- 책임: auth/HTTP boundary, async job, 202/run_id, SSE/poll, worker resume
-- 입력: OpenAPI command, expected revision, Idempotency-Key
-- 출력: typed response와 workflow status event
+- 책임: auth/HTTP boundary, delivery allowlist, async job, 202/run_id, SSE/poll, worker resume
+- 입력: verified principal, exact pipeline grant, typed command, expected revision와 idempotency key
+- 출력: filesystem-neutral typed response와 workflow status event
 - 의존성: M09, M10; FastAPI/queue는 delivery adapter
-- 첫 slice: in-process worker의 registration evaluation job
-- 검증: versioned OpenAPI 3.1 artifact/example, unknown option rejection, auth scope, idempotent retry, partial failure, cancellation
-- 완료증거: API contract test와 script/CLI/API result parity
+- 첫 slice: implemented local FastAPI catalog/run/status/cooperative-cancel adapter
+- 검증: generated OpenAPI 3.1/Draft 2020-12, fail-closed verifier/grant, reserved authority field
+  rejection, owner/scope, unknown option, deterministic idempotent retry, run conflict와 cancellation
+- 현재 완료증거: `tests/contract/test_runtime_api_contract.py`,
+  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022
+- 남은 완료증거: principal-bound project/education command endpoint, upload/staging, approved OIDC/RBAC,
+  202 worker/SSE와 script/CLI/API workflow result parity
 
 ### M13 — Web Review
 
@@ -392,17 +398,18 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-Library MVP/Alpha checkpoint 다음은 G4 Interfaces의 가장 작은 contract-first slice다.
+Library/CLI/runtime API local Alpha checkpoint 다음은 G4 Interfaces의 principal-bound contract slice다.
 
-1. M12에서 현재 registry/run checkpoint를 호출하는 minimal authenticated FastAPI adapter와 OpenAPI
-   implementation parity를 만든다. 운영 배포나 계정 생성은 하지 않는다.
-2. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
-3. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
-4. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
-5. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
-6. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
-7. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
+1. M12의 generic runtime API 위에 인증 principal과 actor를 bind하는 project/education 전용 command
+   endpoint, upload/staging 경계와 approved OIDC/RBAC contract를 설계한다.
+2. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
+3. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
+4. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
+5. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
+6. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
+7. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
+8. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
    traceability를 실행한다.
-8. `prep.ps1 validate|test|eval`, Ruff, Pyright와 별도 Docling contract를 유지한다.
+9. `prep.ps1 validate|test|eval`, Ruff, Pyright와 별도 Docling contract를 유지한다.
 
-실제 data, 추가 live model, Vector DB, API/Web은 readiness 문서의 승인 Gate를 유지한다.
+실제 data, 추가 live model, Vector DB, 운영 API/Web은 readiness 문서의 승인 Gate를 유지한다.

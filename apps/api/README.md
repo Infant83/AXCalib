@@ -1,12 +1,53 @@
-# API runtime
+# AXCalib API runtime
 
-향후 `axcalib.api`의 FastAPI factory를 조립하는 얇은 실행 진입점이다. P1에서는 API와
-운영 endpoint를 구현하지 않는다.
+`axcalib.api.create_app(...)`은 Library의 allowlisted pipeline registry와 durable run checkpoint를
+직접 호출하는 optional FastAPI adapter다. 현재 WP-06.I1은 local/in-process Alpha이며 운영 서버,
+OIDC issuer 설정, 계정, database worker 또는 배포를 포함하지 않는다.
 
-Pre-implementation HTTP 계약은 [OpenAPI artifact](../../docs/api/openapi.v1alpha1.json)와
-[API 설명](../../docs/api/README.md)을 기준으로 한다. FastAPI 구현은 이 artifact와 request
-example을 contract test로 검증하며 임의 옵션을 추가하지 않는다.
+## 조립 계약
 
-Route는 HTTP/auth 입력을 typed command로 변환하고 `src/axcalib`의 versioned
-pipeline/workflow facade를 직접 호출한다. working Python script를 subprocess로 실행하거나
-등록·완료 평가 로직을 이 폴더에 복제하지 않는다.
+~~~python
+from axcalib import AXCalib
+from axcalib.api import ApiPipelineGrant, TokenVerifier, create_app
+
+runtime = AXCalib("output/api-local")
+approved_verifier: TokenVerifier = deployment_owned_verifier
+
+app = create_app(
+    runtime,
+    token_verifier=approved_verifier,
+    pipeline_grants=(
+        ApiPipelineGrant(
+            pipeline_id="workspace.maintenance",
+            pipeline_version="v1alpha1",
+        ),
+    ),
+)
+~~~
+
+`deployment_owned_verifier`는 예시 placeholder다. 실제 배포 계층이 OIDC 또는 사내 인증 결과를
+`ApiPrincipal`로 변환해 주입해야 한다. AXCalib는 bearer token 값을 checkpoint, 로그 또는 OpenAPI
+artifact에 기록하지 않는다.
+
+안전 기본값은 다음과 같다.
+
+- verifier를 주입하지 않으면 모든 token을 거부한다.
+- `pipeline_grants`를 주입하지 않으면 catalog는 비어 있고 어떤 pipeline도 HTTP로 실행할 수 없다.
+- generic payload의 `actor_id`, `actor_role`, 관리자 결정 필드는 거부한다. 사람 권한이 필요한
+  command는 인증 principal을 명시적으로 bind하는 전용 endpoint가 생기기 전까지 노출하지 않는다.
+- run 조회·취소는 owner, administrator 또는 명시적 `runs:*:any` scope만 허용한다.
+- HTTP 응답은 local checkpoint/result 경로를 제거한다.
+
+## 현재 구현 route
+
+| Method | Path | 의미 |
+|---|---|---|
+| GET | `/v1/pipelines` | API delivery allowlist catalog |
+| POST | `/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs` | 같은 Library pipeline 동기 실행·checkpoint |
+| GET | `/v1/runs/{run_id}` | hash-verified result/status 조회 |
+| POST | `/v1/runs/{run_id}/cancel` | cooperative cancellation marker 기록 |
+
+개발환경은 `uv sync --locked --dev --extra api`로 설치한다. 실제 socket server 실행은 이 slice의
+검증범위가 아니다. in-process 검증과 구현 계약은
+`tests/contract/test_runtime_api_contract.py`와
+`docs/api/openapi.runtime.v1alpha1.json`을 기준으로 한다.

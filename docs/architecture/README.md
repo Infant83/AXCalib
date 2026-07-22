@@ -27,6 +27,7 @@
 | [AXCalib Workflow & Architecture deck](../presentations/AXCalib_Workflow_Architecture_v0.3-p1.pptx) | 두 Gate·pipeline·module·RAG·Wave를 설명하는 12장 검토자료 |
 | [ADR-013](../adr/ADR-013-composable-local-pipelines.md) | 국소 pipeline 조합 방식을 채택한 결정과 결과 |
 | [ADR-014](../adr/ADR-014-progressive-configuration-and-openapi.md) | 최소 facade, expert config와 OpenAPI 제어 경계 |
+| [ADR-022](../adr/ADR-022-fail-closed-runtime-api.md) | runtime API의 fail-closed verifier/grant와 target/implemented 계약 분리 |
 | [ADR-015](../adr/ADR-015-image-only-pptx-offline-evidence.md) | image-only PPTX sidecar와 same-hash final 처리 결정 |
 | [ADR-016](../adr/ADR-016-review-policy-and-openai-compatible-evaluator.md) | hash-bound 심사기준, structured model, OpenAI/on-prem 환경계약 |
 | [ADR-017](../adr/ADR-017-education-program-composition.md) | 교육 program/enrollment와 project 인증 경계, version/roll-up 결정 |

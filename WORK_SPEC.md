@@ -334,9 +334,12 @@ request options > policy guard`다. 관리자 HITL, 승인요청 알림, 사람 
 guard와 mentor guard는 설정 가능한 값이 아니며 TOML/OpenAPI 양쪽에서 보호 필드를 제공하지
 않는다. 적용된 설정에는 secret을 제외한 effective-config hash와 source map을 남긴다.
 
-API pre-implementation contract는 `docs/api/openapi.v1alpha1.json`을 기준으로 한다. OpenAPI
-3.1.0과 JSON Schema Draft 2020-12를 사용하며 unknown request field를 거부한다. Python 3.12
-표준 parser 호환을 위해 TOML 작성 문법은 1.0 범위로 제한한다. 자세한 결정은 ADR-014다.
+전체 제품 API target은 `docs/api/openapi.v1alpha1.json`, 실제 구현된 local runtime surface는
+FastAPI-generated `docs/api/openapi.runtime.v1alpha1.json`을 기준으로 한다. OpenAPI 3.1.0과 JSON
+Schema Draft 2020-12를 사용하며 unknown request field를 거부한다. Library registry와 HTTP
+delivery grant는 분리하고 generic API가 request actor/admin decision을 신뢰하지 않는다. Python
+3.12 표준 parser 호환을 위해 TOML 작성 문법은 1.0 범위로 제한한다. 자세한 결정은 ADR-014와
+ADR-022다.
 
 ### 9.3 교육 프로그램 Composition
 

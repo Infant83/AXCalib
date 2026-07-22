@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
   <title id="title">AXCalib 철학, 교육 프로그램, 조합형 워크플로 라이브러리와 적용 사례</title>
-  <desc id="desc">근거 우선, 편차 보정, 사람 책임이라는 철학에서 버전 교육 프로그램, 학습자 목표, 프로젝트 인증, 국소 파이프라인을 거쳐 관리자 웹, 학습자 앱, 과정 기획 콘솔, API와 워커로 확장되는 모습을 보여주는 인포그래픽이다. 현재는 교육과 WP-01 로컬 참조 slice이며 API, 웹, 앱은 향후 목표다.</desc>
+  <desc id="desc">근거 우선, 편차 보정, 사람 책임이라는 철학에서 버전 교육 프로그램, 학습자 목표, 프로젝트 인증, 국소 파이프라인을 거쳐 관리자 웹, 학습자 앱, 과정 기획 콘솔, API와 워커로 확장되는 모습을 보여주는 인포그래픽이다. 현재는 Library, CLI와 인증형 runtime API의 로컬 Alpha이며 운영 워커, 웹과 앱은 향후 목표다.</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="#172033" flood-opacity="0.12"/>
@@ -114,7 +114,7 @@
   <image x="1270" y="230" width="530" height="353" href="assets/axcalib-application-cases.jpg" xlink:href="assets/axcalib-application-cases.jpg" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCases)"/>
   <rect x="1270" y="230" width="530" height="353" rx="18" fill="none" stroke="#B8C6DD" stroke-dasharray="8 6"/>
   <rect x="1608" y="538" width="177" height="31" rx="15" fill="#F7FAFF" fill-opacity="0.96" stroke="#8EB0F8" stroke-dasharray="5 4" filter="url(#softShadow)"/>
-  <text x="1696" y="559" class="sans" font-size="12" font-weight="750" fill="#2F6BFF" text-anchor="middle">API · WEB · APP TARGET</text>
+  <text x="1696" y="559" class="sans" font-size="12" font-weight="750" fill="#2F6BFF" text-anchor="middle">API α · WEB/APP TARGET</text>
 
   <rect x="1270" y="612" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
   <text x="1288" y="638" class="mini-title">관리자 Review Web</text>
@@ -135,16 +135,16 @@
   <rect x="1288" y="808" width="61" height="17" rx="8" fill="#EAF2FF"/><text x="1318" y="820" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">TABLET</text>
 
   <rect x="1535" y="730" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
-  <text x="1553" y="756" class="mini-title">API + Async Worker</text>
-  <text x="1553" y="778" class="mini-note">기존 인증시스템 연동 · batch 실행</text>
-  <text x="1553" y="799" class="mini-note">202 + run_id · progress · resume</text>
+  <text x="1553" y="756" class="mini-title">Runtime API + Worker</text>
+  <text x="1553" y="778" class="mini-note">현재 · catalog/run/status/cancel Alpha</text>
+  <text x="1553" y="799" class="mini-note">후속 · 202 worker · progress · resume</text>
   <rect x="1553" y="808" width="76" height="17" rx="8" fill="#EAF2FF"/><text x="1591" y="820" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">INTEGRATION</text>
 
   <rect x="1270" y="856" width="515" height="88" rx="14" fill="#172033"/>
   <circle cx="1296" cy="884" r="7" fill="#1E8A75"/>
-  <text x="1313" y="889" class="sans" font-size="13" font-weight="750" fill="#FFFFFF">현재 · Education + WP-01 local reference</text>
+  <text x="1313" y="889" class="sans" font-size="13" font-weight="750" fill="#FFFFFF">현재 · Education + Lib/CLI/API local Alpha</text>
   <circle cx="1296" cy="916" r="7" fill="none" stroke="#77A4FF" stroke-width="2" stroke-dasharray="3 2"/>
-  <text x="1313" y="921" class="sans" font-size="13" font-weight="650" fill="#D1D7E0">향후 · API, Worker, Review Web, Owner/Mentor App</text>
+  <text x="1313" y="921" class="sans" font-size="13" font-weight="650" fill="#D1D7E0">향후 · OIDC/RBAC, Worker, Review Web, Owner/Mentor App</text>
 
   <!-- Footer -->
   <rect x="0" y="1008" width="1920" height="72" fill="#172033"/>

@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-library-mvp-alpha
+baseline: v0.3-p1-g4-api-alpha
 phase: P7 Interfaces
 gate: G4 Interfaces
 gate_status: interface_alpha_in_progress
-status: library_mvp_alpha_verified_g4_ready
-current_work_package: WP-06 minimal API parity
-active_slice: WP-06.I1 minimal-api-parity
+status: g4_runtime_api_alpha_verified
+current_work_package: WP-06 interface hardening
+active_slice: WP-06.I2 principal-bound-command-contract
 active_slice_status: ready
-next_gate: G4 Interfaces entry
+next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-005
+last_history_id: HIST-2026-07-22-006
 ---
 
 # AXCalib Project Execution Ledger
@@ -60,13 +60,13 @@ last_history_id: HIST-2026-07-22-005
 | 항목 | 현재 값 |
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
-| 현재 Work Package | **WP-06.I1 minimal API parity** |
-| Active Slice | **WP-06.I1** (`ready`; Library/CLI/batch checkpoint 이후 시작) |
-| 현재 Gate | **G4 Interfaces in progress**; CLI/batch Alpha evidence 확보 |
-| 다음 Gate | **G4 Interfaces**; minimal API/OpenAPI implementation parity 필요 |
+| 현재 Work Package | **WP-06 interface hardening** |
+| Active Slice | **WP-06.I2** (`ready`; principal-bound project/education command contract) |
+| 현재 Gate | **G4 Interfaces in progress**; CLI/batch와 runtime API local Alpha evidence 확보 |
+| 다음 Gate | **G4 Interfaces**; 전용 command/auth/upload와 202 worker evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 103 lightweight tests, 10 eval groups, validation 0/0, Ruff, Pyright 0/0 |
-| 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·CLI/API/Web·운영 인증 미완료 |
+| 최근 회귀 | 110 lightweight tests, 10 eval groups, validation 0/0, Ruff, Pyright 0/0 |
+| 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
 Library 호출로 연결했다. 제출 프로젝트의 `completion_accepted`는 교육 milestone 근거가 되지만,
@@ -132,7 +132,7 @@ gantt
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
 | P6 Calibration | WP-05/06 일부 | `not_started` | panel disagreement와 human agreement report |
-| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch Alpha 완료; API/OpenAPI handler parity와 worker 남음 |
+| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch와 runtime API local Alpha 완료; 전용 command/OIDC/worker 남음 |
 | P8 Web Review | Web delivery | `blocked_policy` | FE/RBAC 선택, API, reviewer E2E와 G5 |
 | P9 Pilot | pilot package | `not_started` | 승인된 비식별 자료, G6~G7 결정 |
 
@@ -144,7 +144,7 @@ gantt
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
 | G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
-| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor와 JSONL local batch | minimal API/OpenAPI parity, auth contract와 worker |
+| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor, JSONL batch, fail-closed runtime API/OpenAPI | principal-bound command, OIDC/RBAC, upload와 202 worker/SSE |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
 | G6 Pilot | `not_started` | 없음 | 승인된 비식별 paired dataset |
 | G7 Go/No-Go | `not_started` | 없음 | Sponsor Continue/Narrow/Stop 결정 |
@@ -259,11 +259,11 @@ Exit Evidence:
 - [x] Qwen/GPT-4o route로 structured text/vision과 registration smoke를 검증하고 GLM vision 실패를 기록한다.
 - [x] 전체 offline test/eval/validate, Ruff, Pyright 회귀와 단계 리포트를 남긴다.
 
-### 5.5 현재 Active Slice — WP-06.I1 Minimal API Parity
+### 5.5 완료 Slice — WP-06.I1 Minimal API Parity
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `ready`; Library MVP/Alpha checkpoint commit/push 후 구현 시작 |
+| 상태 | `verified_local_alpha`; Library MVP/Alpha checkpoint `a03a633` push 후 2026-07-22 완료 |
 | 목적 | committed OpenAPI 3.1과 실제 HTTP handler가 같은 Library registry/run checkpoint를 호출하게 함 |
 | 대상 Module | M10 runtime, M12 API/worker; M00/M11 의미 재사용 |
 | 입력 | typed pipeline request, run context, bearer auth contract, existing OpenAPI artifact |
@@ -273,11 +273,31 @@ Exit Evidence:
 
 Exit Evidence:
 
-- [ ] FastAPI는 optional `api` extra이고 Core/Domain module이 이를 import하지 않는다.
-- [ ] OpenAPI 3.1 artifact와 실제 route/request/response 의미가 일치한다.
-- [ ] handler는 script subprocess나 domain 로직 복제 없이 `AXCalib` registry/executor를 호출한다.
-- [ ] unknown pipeline/option, auth failure, run conflict와 result status가 구조적으로 구분된다.
-- [ ] in-process contract/E2E, Ruff, Pyright, validate/test/eval과 문서/diagram drift 검증이 통과한다.
+- [x] FastAPI는 optional `api` extra이고 Core/Domain module이 이를 import하지 않는다.
+- [x] OpenAPI 3.1 artifact와 실제 route/request/response 의미가 일치한다.
+- [x] handler는 script subprocess나 domain 로직 복제 없이 `AXCalib` registry/executor를 호출한다.
+- [x] unknown pipeline/option, auth failure, run conflict와 result status가 구조적으로 구분된다.
+- [x] in-process contract/E2E, Ruff, Pyright, validate/test/eval과 문서/diagram drift 검증이 통과한다.
+
+### 5.6 현재 Active Slice — WP-06.I2 Principal-bound Command Contract
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `ready`; WP-06.I1 checkpoint commit/push 이후 착수 |
+| 목적 | 사람 권한 command를 generic payload가 아니라 인증 principal에 bind한 전용 endpoint로 설계 |
+| 대상 Module | M02 state/approval, M09 workflow, M12 API/worker |
+| 입력 | approved role/scope mapping, project/education typed command, artifact staging boundary |
+| 출력 | principal-bound project/education command schema와 authorization contract test |
+| 목표 Gate | G4 Interfaces |
+| 외부 호출 | 없음; synthetic/in-process only, 실제 OIDC·계정·배포 없음 |
+
+Exit Evidence:
+
+- [ ] administrator/mentor/learner command가 request actor 문자열을 신뢰하지 않고 principal에 bind된다.
+- [ ] project/enrollment/organization scope mismatch가 domain mutation 전에 거부된다.
+- [ ] local filesystem path를 remote request에서 직접 받지 않는 upload/staging/content-hash 계약이 있다.
+- [ ] target OpenAPI 중 구현한 resource만 implemented artifact로 승격한다.
+- [ ] threat model, contract/E2E, validate/test/eval와 diagram/module drift 검증이 통과한다.
 
 ## 6. 일정·작업 Queue
 
@@ -294,13 +314,15 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 6 | P7 / CLI | project/education/runtime pipeline parity | `verified_alpha` | WP-01.R, stable pipeline result | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 7 | P4 / WP-04 | embedding/Qdrant/rerank benchmark | `blocked_policy` | approved corpus와 labels | TBD | TBD | G3 quality |
 | 8 | P5-P6 / WP-05 | exact on-prem Qwen/panel/calibration | `blocked_endpoint_policy` | exact endpoint·gold label 승인 | TBD | TBD | G3 quality |
-| 9 | P7 / WP-06 | minimal API/OpenAPI parity | `ready` | CLI/batch Alpha와 auth contract | TBD | TBD | G4 |
-| 10 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
+| 9 | P7 / WP-06 | minimal API/OpenAPI parity | `verified_local_alpha` | CLI/batch Alpha와 auth contract | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
+| 10 | P7 / WP-06 | principal-bound command/upload/auth contract | `ready` | runtime API Alpha, role/scope policy | TBD | TBD | G4 |
+| 11 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-22 | WP-06.I1 runtime API Alpha | contract pytest, clean core/API wheel, full test/eval, Ruff/Pyright/validate | API 7/7, full 110 passed, 10 eval groups, 0/0 static/validate | in-process sync API; OIDC/RBAC/upload/worker/server 미포함 |
 | 2026-07-22 | WP-01.R1.2 Library MVP/Alpha | lightweight `prep test/eval`, Ruff, low-memory Pyright, validate, clean wheel/CLI/actual-PPTX | 103 passed, 10 eval groups, Alpha 8/8, Ruff, Pyright 0/0, validate 0/0 | single-host offline Alpha; Docling current-turn rerun·API/RBAC/운영 미포함 |
 | 2026-07-22 | WP-01.R1.1 project transaction recovery | 3-boundary crash eval, full test/eval, Ruff/Pyright | 88 passed, 9 eval groups, recovery 3/3, Ruff passed, Pyright 0/0 | local project dossier/audit only; broader recovery pending |
 | 2026-07-22 | WP-05.Q2 단계 종료 offline 회귀 | `prep test`, `prep eval`, Ruff, Pyright | 79 passed, 8 eval groups, Ruff passed, Pyright 0/0 | fake/offline contract; live quality 아님 |
@@ -333,8 +355,9 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 2. Windows 전역 Pytest 임시 link 정리의 `WinError 5`가 반복됐다. assertion 실패와 분리했고
    `prep test`가 실행별 `output/pytest-runs/run-{pid}`를 쓰도록 보강했다. 이어 atomic replace에서
    일시적 lock 1건이 재현돼 bounded retry를 추가한 뒤 76 tests가 통과했다.
-3. 2026-07-20 교육 composition과 R1.1 project recovery는 commit `ebd74ed`까지 반영됐다. R1.2
-   Library Alpha change set은 사용자 승인에 따라 검증 직후 checkpoint commit/push한다.
+3. 2026-07-20 교육 composition과 R1.1 project recovery는 commit `ebd74ed`, R1.2 Library Alpha는
+   commit `a03a633`까지 `origin/main`에 반영됐다. WP-06.I1은 현재 change set 검증 후 별도
+   checkpoint commit/push한다.
 4. SkillBoss catalog에는 exact `Qwen3.5-397B-A17B`가 없고 `qwen3.5-plus`만 있다. 기존 full
    registration HTTP 500의 직접 원인은 `json_object` 메시지에 literal `JSON`이 없던 AXCalib 요청과
    upstream 400을 500으로 감싼 proxy mapping 조합으로 확인됐다. exact on-prem 검증은 여전히 필수다.
@@ -347,6 +370,12 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 8. maintenance test가 traceback 없이 종료된 직접 원인은 Windows의 `os.kill(pid, 0)` self-termination
    이었다. read-only Win32 process query로 교체해 회귀를 통과했다. 당시 가용 메모리 408~833 MiB는
    2차 위험이므로 Docling contract를 기본 test에서 분리하고 검증을 순차 실행한다.
+9. WP-06.I1 첫 `uv sync`는 이전 불완전 설치의 read-only dist-info 때문에 access denied가 났다.
+   실행 중 Python process가 없음을 확인하고 `.venv` 내부 metadata attribute만 복구한 뒤 sync와
+   `RECORD`/import를 재검증했다. 소스·dossier·실제 데이터는 변경하지 않았다.
+10. 첫 G4 전체 test의 2개 실패는 아직 생성 전이던 개발리포트 link validation뿐이었고 나머지
+    108개는 통과했다. 리포트를 추가한 최종 재실행은 110/110 통과했다. Docling/live model/socket
+    server는 이번 slice에서 호출하지 않았다.
 
 ## 9. 작업 이력
 
@@ -603,6 +632,34 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 관련 근거: [ADR-021](docs/adr/ADR-021-local-pipeline-execution-and-alpha-cli.md),
   [WP-01.R1.2 리포트](docs/evaluation/wp01-r1-2-library-mvp-alpha-report.md), D-034,
   R-006/R-010/R-012/R-029/R-036/R-037와 M00/M01/M02/M08/M10/M11 Module Control Board.
+
+### HIST-2026-07-22-006
+
+- Phase / WP / Gate: P7 / WP-06.I1 / G4 Interfaces
+- 상태: `verified_local_runtime_api_alpha_g4_remaining`
+- 작업: optional FastAPI app factory가 같은 Library registry/executor를 호출하도록 pipeline
+  catalog, synchronous run, hash-verified status와 cooperative cancel route를 구현했다. injected bearer
+  verifier와 exact delivery grant는 기본 fail closed이며 generic actor/admin decision field, cross-run
+  access, idempotency/revision conflict를 구조적으로 차단했다. target과 implemented OpenAPI artifact를
+  분리하고 architecture diagram/infographic를 실제 상태에 맞췄다.
+- 변경 파일: `src/axcalib/api`, runtime `inspect`, API contract tests/export/OpenAPI, pyproject/lock,
+  ADR-022, API/README/CHANGELOG/HANDOFF·개발리포트, decision/risk, module plan·workflow Mermaid/SVG/PNG와
+  이 원장.
+- 검증: targeted API 7 passed; full lightweight offline 110 passed; 10 eval groups passed; Ruff passed;
+  Pyright 0 errors/0 warnings; `prep validate` 0 errors/0 warnings. clean core wheel은 FastAPI 미설치 import,
+  clean `[api]` wheel은 FastAPI 0.139.2와 OpenAPI 3.1/4 routes import를 확인했다.
+- 특이사항: 초기 코드리뷰에서 registry allowlist를 HTTP 권한으로 오인한 설계를 발견해 별도
+  `ApiPipelineGrant`와 authority-field 거부로 수정했다. 첫 venv sync access denied는 read-only
+  dist-info metadata 복구 후 해결했다. 첫 full test 2건은 아직 없던 report link뿐이었고 최종
+  110/110으로 해소했다.
+- 미검증: 실제 OIDC/JWKS·tenant/project RBAC, principal-bound HITL/education command, upload/staging,
+  request/rate limits, socket server, 202 worker/SSE/resume, 운영 배포. Docling/live Qwen은 이 slice에서
+  호출하지 않았다.
+- 다음 작업: checkpoint commit/push 후 Active Slice `WP-06.I2 principal-bound-command-contract`를
+  시작한다. 정책 승인 전 synthetic/in-process contract만 진행한다.
+- 관련 근거: [ADR-022](docs/adr/ADR-022-fail-closed-runtime-api.md),
+  [WP-06.I1 리포트](docs/evaluation/wp06-i1-minimal-api-parity-report.md), D-035,
+  R-010/R-016/R-017/R-021/R-038/R-039와 M02/M09/M10/M12 Module Control Board.
 
 ## 10. 단계 종료 업데이트 템플릿
 

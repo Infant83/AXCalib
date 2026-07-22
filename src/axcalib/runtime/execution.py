@@ -272,6 +272,11 @@ class LocalPipelineExecutor:
             raise FileNotFoundError(f"pipeline run not found: {run_id}")
         return PipelineRunRecord.model_validate_json(path.read_text(encoding="utf-8"))
 
+    def inspect(self, run_id: str) -> PipelineExecutionResult:
+        """Return a hash-verified execution envelope without running the pipeline."""
+
+        return self._result_from_record(self.load(run_id))
+
     def _prepare(
         self,
         pipeline_id: str,
@@ -282,15 +287,12 @@ class LocalPipelineExecutor:
         path = self._record_path(context.run_id)
         with exclusive_file_lock(path):
             if path.exists():
-                current = PipelineRunRecord.model_validate_json(
-                    path.read_text(encoding="utf-8")
-                )
+                current = PipelineRunRecord.model_validate_json(path.read_text(encoding="utf-8"))
                 if (
                     current.pipeline_id != pipeline_id
                     or current.pipeline_version != pipeline_version
                     or current.request_sha256 != request_sha256
-                    or self._context_identity(current.context)
-                    != self._context_identity(context)
+                    or self._context_identity(current.context) != self._context_identity(context)
                 ):
                     raise PipelineRunConflictError(
                         "run ID was reused for a different pipeline or request"
@@ -442,12 +444,15 @@ class LocalPipelineExecutor:
 
     @staticmethod
     def _write_record(path: Path, record: PipelineRunRecord) -> None:
-        content = json.dumps(
-            record.model_dump(mode="json"),
-            ensure_ascii=False,
-            sort_keys=True,
-            indent=2,
-        ) + "\n"
+        content = (
+            json.dumps(
+                record.model_dump(mode="json"),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+            + "\n"
+        )
         atomic_write_text(path, content)
 
 

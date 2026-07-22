@@ -14,6 +14,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+api = ["fastapi>=0.139,<0.140"]
 cli = [
   "rich>=13,<16",
   "typer>=0.16,<1",
@@ -26,6 +27,8 @@ axcalib = "axcalib.cli:main"
 [dependency-groups]
 dev = [
   "coverage>=7,<8",
+  "fastapi>=0.139,<0.140",
+  "httpx2>=2.7,<3",
   "pyright>=1.1,<2",
   "python-pptx>=1.0,<2",
   "pytest>=9,<10",

@@ -94,7 +94,8 @@ config로 끌 수 없다.
 | 관리자 Review Web | 관리자·평가자 | criterion별 근거 비교, checklist, 보완요청, 최종 decision | evaluation result 조회, review request/decision command | Target, 미구현 |
 | 과제 수행자 App | 과제 Owner | dossier 진행기록, evidence reference 추가, 현재 Gate와 allowed command 확인 | dossier update/freeze, completion submit | Target, 미구현 |
 | Mentor App | 배정 Mentor | comment, 변경 승인, 완료 제출 동의 | mentor event, completion guard | Target, 미구현 |
-| API | 기존 인증시스템 | revision-aware command, result/report 조회, OpenAPI client | 같은 pipeline/workflow registry | Target, 미구현 |
+| Runtime API | 플랫폼 개발자 | bearer + exact grant 아래 catalog/run/status/cancel | 같은 pipeline registry/checkpoint | Local Alpha |
+| Evaluation/HITL API | 기존 인증시스템 | revision-aware command, result/report 조회, OpenAPI client | principal-bound project/workflow command | Target, 미구현 |
 | Async/Batch Worker | 운영자·연동시스템 | `202 + run_id`, progress, item별 retry/resume | long-running parse/evaluate workflow | Target, 미구현 |
 | Python/Offline Harness | 개발자·설계 검토자 | supplied-PPTX 두 Gate, policy/Docling/retrieval/model report, fail-closed 확인 | `AXCalib`, `two-gate-pptx@v1alpha1` | G3 reference slice |
 | 과정 기획 Harness | 과정 기획자·관리자 | versioned level/milestone 구성, 가입 목표, project roll-up과 과정 완료 HITL 확인 | `publish_program`, `education-program-runtime@v1alpha1` | Offline reference |
@@ -108,14 +109,14 @@ Web은 chatbot이 아니라 **review cockpit**이 주 화면이다. Web/App은 d
 ## 4. 현재와 향후를 읽는 법
 
 - 실선·진한 코어: 현재 문서화되거나 local/offline slice에서 검증된 계약
-- 점선·옅은 적용면: API, Worker, Web/App 등 향후 Target
+- 점선·옅은 적용면: full Evaluation API, Worker, Web/App 등 향후 Target
 - 붉은 Gate: 등록심의와 완료평가의 관리자 HITL
 - 중앙 dossier/snapshot: 사용자 기준 dossier 하나와 평가 시점의 immutable revision
 
 이 자료는 제품 전체가 구현됐다는 표시가 아니다. 현재는 dossier/snapshot, hash-bound policy,
 제한된 PPTX/Docling manifest, synthetic lexical retrieval, deterministic/structured evaluator와 두
-HITL을 연결한 **G3 reference slice**다. on-prem/multi-model 품질, Vector DB, durable 운영
-notification, API와 Web/App은 아직 구현되지 않았다.
+HITL을 연결한 **G3 reference**, Library/CLI/API **local Alpha**다. on-prem/multi-model 품질, Vector
+DB, durable 운영 notification, principal-bound full API/OIDC/worker와 Web/App은 아직 구현되지 않았다.
 
 ## 5. 생성 자산과 재현 기록
 
