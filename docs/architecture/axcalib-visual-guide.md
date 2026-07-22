@@ -4,16 +4,15 @@
 
 이 자료는 AXCalib를 단순한 “AI 평가 화면”이 아니라 **근거를 구조화하고, 평가 편차를
 보정하며, 두 번의 사람 승인 Gate를 지키는 조합형 Python Library**로 이해하기 위한 시각
-가이드다. SVG가 편집 가능한 현재 기준본이다. 기존 PNG는 교육 composition 추가 전 v0.3-p1
-렌더이므로 새 배포본으로 사용하지 않는다.
+가이드다. SVG가 편집 가능한 현재 기준본이며 PNG는 같은 SVG의 현재 checkpoint 렌더다.
 
 Excalibur의 “권한 있는 사람만 칼을 뽑는다”는 이미지는 **기억 장치**다. 공식 어원이나
 Agent 자동인증을 뜻하지 않는다. 제품 문장은 “근거가 자격을 만들고, 보정이 판단을 맞추며,
 권한 있는 사람이 인증한다”다.
 
 - [편집 가능한 SVG](diagrams/axcalib-ecosystem-infographic.svg)
-- [기존 v0.3-p1 PNG snapshot](diagrams/axcalib-ecosystem-infographic.png)
-- [기존 module/workflow 한 장 구조도](diagrams/workflow-at-a-glance.svg)
+- [현재 PNG snapshot](diagrams/axcalib-ecosystem-infographic.png)
+- [module/workflow 한 장 구조도](diagrams/workflow-at-a-glance.svg)
 
 ## 1. AXCalib의 철학
 

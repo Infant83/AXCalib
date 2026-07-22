@@ -293,6 +293,7 @@ def test_generated_runtime_openapi_matches_committed_artifact(tmp_path: Path) ->
         "/v1/programs/{program_id}/versions/{program_version}",
         "/v1/programs/{program_id}/versions/{program_version}/enrollments",
         "/v1/projects",
+        "/v1/projects/{project_id}",
         "/v1/projects/{project_id}/decisions/completion",
         "/v1/projects/{project_id}/decisions/registration",
         "/v1/runs/{run_id}",

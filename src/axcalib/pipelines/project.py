@@ -296,6 +296,7 @@ class LocalProjectService:
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
         expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> PipelineResult:
         """Apply an explicit administrator registration decision."""
 
@@ -319,6 +320,7 @@ class LocalProjectService:
             rationale=rationale.strip(),
             report_id=report_id,
             adjustments=adjustments,
+            authority_context=authority_context,
         )
         updated = dossier.model_copy(
             update={
@@ -562,6 +564,7 @@ class LocalProjectService:
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
         expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> PipelineResult:
         """Apply an explicit administrator completion decision."""
 
@@ -585,6 +588,7 @@ class LocalProjectService:
             rationale=rationale.strip(),
             report_id=report_id,
             adjustments=adjustments,
+            authority_context=authority_context,
         )
         updated = dossier.model_copy(
             update={

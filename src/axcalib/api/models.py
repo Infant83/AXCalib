@@ -151,6 +151,55 @@ class ProjectRegistrationResponse(BaseModel):
     replayed: bool = False
 
 
+class ProjectStageView(BaseModel):
+    """Review-gate state without report paths, snapshots, rationale, or source text."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    submission_artifact_id: str | None = None
+    report_id: str | None = None
+    review_profile_selector: str | None = None
+    review_profile_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[a-f0-9]{64}$",
+    )
+    decision_command: str | None = None
+    decision_recorded_at: datetime | None = None
+
+
+class ProjectExecutionView(BaseModel):
+    """Progress summary that deliberately excludes free-form notes and mentor identity."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    started_at: datetime | None = None
+    completion_submitted_at: datetime | None = None
+    mentor_assigned: bool = False
+    progress_note_count: int = Field(ge=0)
+
+
+class ProjectResourceView(BaseModel):
+    """Authorized current project state with every deployment-local URI removed."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "axcalib.api-project-resource/v1alpha1"
+    project_id: str
+    display_id: str
+    title: str
+    status: ProjectStatus
+    revision: int = Field(ge=1)
+    created_at: datetime
+    updated_at: datetime
+    proposer_org_id: str
+    certification_level: str | None = None
+    artifacts: tuple[ProjectArtifactView, ...] = ()
+    registration: ProjectStageView
+    execution: ProjectExecutionView
+    completion: ProjectStageView
+    notification_event_types: tuple[str, ...] = ()
+
+
 class RegistrationDecisionRequest(BaseModel):
     """Administrator registration command; actor identity comes from auth."""
 
@@ -317,8 +366,11 @@ __all__ = [
     "Problem",
     "ProjectArtifactView",
     "ProjectCommandResponse",
+    "ProjectExecutionView",
     "ProjectRegistrationRequest",
     "ProjectRegistrationResponse",
+    "ProjectResourceView",
+    "ProjectStageView",
     "PPTX_MEDIA_TYPE",
     "RegistrationDecisionRequest",
     "StagedArtifactRef",

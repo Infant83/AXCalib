@@ -25,7 +25,7 @@
 | `config/review_profiles/*.yaml` | version/hash-bound 등록·완료 심사기준 |
 | `docs/schemas/runtime-config.schema.json` | 허용 키·타입·범위 |
 | `docs/api/openapi.v1alpha1.json` | full evaluation/HITL API 목표 계약, pre-implementation |
-| `docs/api/openapi.runtime.v1alpha1.json` | 실제 runtime + principal-bound project·education API local Alpha 계약 |
+| `docs/api/openapi.runtime.v1alpha1.json` | 실제 runtime + principal-bound project·education read/command/replay local Alpha 계약 |
 
 지원하는 작성 문법은 Python 3.12 `tomllib`과 맞는 TOML 1.0 범위다. unknown key는 경고 후
 무시하지 않고 validation error로 처리한다.
@@ -59,7 +59,9 @@
 - `POST /v1/pipelines/{pipeline_id}/versions/{version}/runs`: 같은 Library pipeline 동기 실행
 - `GET /v1/runs/{run_id}`: owner/admin/scope 기반 hash-verified 결과 조회
 - `POST /v1/runs/{run_id}/cancel`: cooperative cancellation marker
-- `POST /v1/projects`와 두 `/decisions/{stage}`: staged hash 등록과 관리자 HITL
+- `POST /v1/projects`: staged hash 기반 principal-bound 등록
+- `GET /v1/projects/{project_id}`: owner/admin scope·organization 기반 URI/free-text redacted 조회
+- 두 `/decisions/{stage}`: required idempotency key의 관리자 HITL과 exact successful replay
 - `GET /v1/programs/{id}/versions/{version}`와 `POST .../enrollments`: exact program 조회·self 가입
 - `/v1/enrollments/{id}/milestones/...`: learner 시작, 배정 reviewer 확인/점수, project bind/sync
 - `POST /v1/enrollments/{id}/completion-decisions`: 관리자 과정 완료 승인/보완반려
@@ -67,6 +69,11 @@
 verifier와 pipeline grant 기본값은 모두 닫혀 있다. generic payload의 actor/admin decision은
 거부하며 교육 runtime은 generic grant 자체를 허용하지 않는다. bearer token과 local checkpoint,
 dossier, enrollment URI는 결과나 OpenAPI에 기록하지 않는다.
+
+project decision의 `Idempotency-Key`는 같은 principal, project, stage, expected revision, command,
+rationale와 adjustment 재시도에만 사용할 수 있다. exact retry는 같은 semantic 결과를 반환하고 다른
+actor/resource/payload 재사용은 409다. 이 record는 local Alpha filesystem 범위이며 distributed
+transaction 보장은 아니다.
 
 ## 향후 제품 OpenAPI 목표
 

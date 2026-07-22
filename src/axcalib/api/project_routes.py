@@ -18,9 +18,22 @@ from axcalib.dossier import (
 from axcalib.ingest import PptxSourceError
 from axcalib.ingest.pptx import sha256_file
 from axcalib.pipelines import ProjectSourceIntegrityError
-from axcalib.runtime import TransactionBlockedError
-from axcalib.schemas import PipelineResult, ProjectDossier, ReviewContext
-from axcalib.workflows.two_gate import WorkflowError
+from axcalib.runtime import (
+    IdempotencyConflictError,
+    IdempotencyError,
+    TransactionBlockedError,
+    TransactionConflictError,
+    TransactionIntegrityError,
+)
+from axcalib.schemas import (
+    PipelineResult,
+    PipelineStatus,
+    ProjectDossier,
+    ReviewContext,
+    ReviewStage,
+    StageReview,
+)
+from axcalib.workflows.two_gate import ProjectStatus, WorkflowError
 
 from .artifacts import ArtifactPurpose, StagedArtifactResolver
 from .auth import ApiPrincipal, ApiRole
@@ -29,8 +42,11 @@ from .models import (
     CompletionDecisionRequest,
     ProjectArtifactView,
     ProjectCommandResponse,
+    ProjectExecutionView,
     ProjectRegistrationRequest,
     ProjectRegistrationResponse,
+    ProjectResourceView,
+    ProjectStageView,
     RegistrationDecisionRequest,
     StagedArtifactRef,
 )
@@ -46,6 +62,12 @@ AuthenticationDependency = Callable[..., Awaitable[ApiPrincipal]]
 def _project_id(principal: ApiPrincipal, idempotency_key: str) -> str:
     identity = f"{principal.subject}\0projects:create\0{idempotency_key}".encode()
     return f"api-{hashlib.sha256(identity).hexdigest()[:32]}"
+
+
+def _decision_idempotency_key(raw_key: str) -> str:
+    """Keep one caller key globally conflict-detectable without persisting it."""
+
+    return f"api-project-decision-{hashlib.sha256(raw_key.encode()).hexdigest()[:40]}"
 
 
 def _project_command_view(value: PipelineResult) -> ProjectCommandResponse:
@@ -84,6 +106,55 @@ def _project_registration_view(
             byte_size=artifact.byte_size,
         ),
         replayed=replayed,
+    )
+
+
+def _project_stage_view(review: StageReview) -> ProjectStageView:
+    profile = review.review_profile
+    decision = review.decision
+    return ProjectStageView(
+        submission_artifact_id=review.submission_artifact_id,
+        report_id=review.report_id,
+        review_profile_selector=profile.selector if profile is not None else None,
+        review_profile_sha256=profile.sha256 if profile is not None else None,
+        decision_command=decision.command if decision is not None else None,
+        decision_recorded_at=decision.decided_at if decision is not None else None,
+    )
+
+
+def _project_resource_view(dossier: ProjectDossier) -> ProjectResourceView:
+    organization_id = dossier.review_context.proposer_org_id
+    if organization_id is None:
+        raise RuntimeError("API-readable dossier is missing proposer organization")
+    return ProjectResourceView(
+        project_id=dossier.project_id,
+        display_id=dossier.display_id,
+        title=dossier.title,
+        status=dossier.status,
+        revision=dossier.revision,
+        created_at=dossier.created_at,
+        updated_at=dossier.updated_at,
+        proposer_org_id=organization_id,
+        certification_level=dossier.review_context.certification_level,
+        artifacts=tuple(
+            ProjectArtifactView(
+                artifact_id=artifact.artifact_id,
+                role=artifact.role,
+                media_type=artifact.media_type,
+                sha256=artifact.sha256,
+                byte_size=artifact.byte_size,
+            )
+            for artifact in dossier.artifacts
+        ),
+        registration=_project_stage_view(dossier.registration),
+        execution=ProjectExecutionView(
+            started_at=dossier.execution.started_at,
+            completion_submitted_at=dossier.execution.completion_submitted_at,
+            mentor_assigned=dossier.execution.mentor_ref is not None,
+            progress_note_count=len(dossier.execution.notes),
+        ),
+        completion=_project_stage_view(dossier.completion),
+        notification_event_types=tuple(item.event_type for item in dossier.notifications),
     )
 
 
@@ -255,6 +326,77 @@ def create_project_router(
             )
         return principal.organization_id
 
+    def load_project(project_id: str) -> ProjectDossier:
+        try:
+            return client.service.dossiers.load(project_id)
+        except DossierNotFoundError as error:
+            raise ApiProblemError(
+                status=404,
+                code="project_not_found",
+                title="Project was not found",
+            ) from error
+
+    def require_project_organization(
+        principal: ApiPrincipal,
+        dossier: ProjectDossier,
+    ) -> None:
+        organization_id = dossier.review_context.proposer_org_id
+        organization_allowed = (
+            "organizations:any" in principal.scopes
+            or (
+                organization_id is not None
+                and f"organization:{organization_id}:access" in principal.scopes
+            )
+            or (organization_id is not None and principal.organization_id == organization_id)
+        )
+        if not organization_allowed:
+            raise ApiProblemError(
+                status=403,
+                code="project_organization_forbidden",
+                title="Caller organization cannot access this project",
+            )
+
+    def load_authorized_read_project(
+        principal: ApiPrincipal,
+        project_id: str,
+    ) -> ProjectDossier:
+        if principal.role is ApiRole.PROJECT_OWNER:
+            if "projects:read:own" not in principal.scopes:
+                raise ApiProblemError(
+                    status=403,
+                    code="project_read_scope_forbidden",
+                    title="Project owner read scope is required",
+                )
+        elif principal.role is ApiRole.ADMINISTRATOR:
+            if (
+                "projects:read:any" not in principal.scopes
+                and f"project:{project_id}:read" not in principal.scopes
+            ):
+                raise ApiProblemError(
+                    status=403,
+                    code="project_read_scope_forbidden",
+                    title="Administrator project read scope is required",
+                )
+        else:
+            raise ApiProblemError(
+                status=403,
+                code="project_read_role_forbidden",
+                title="Project owner or administrator role is required",
+            )
+        dossier = load_project(project_id)
+        require_project_organization(principal, dossier)
+        if principal.role is ApiRole.PROJECT_OWNER and not _has_principal_creation_audit(
+            client,
+            dossier,
+            principal,
+        ):
+            raise ApiProblemError(
+                status=403,
+                code="project_owner_read_forbidden",
+                title="Caller is not the recorded owner of this project",
+            )
+        return dossier
+
     def load_authorized_decision_project(
         principal: ApiPrincipal,
         project_id: str,
@@ -274,30 +416,72 @@ def create_project_router(
                 code="project_decision_scope_forbidden",
                 title="Project decision scope is required",
             )
-        try:
-            dossier = client.service.dossiers.load(project_id)
-        except DossierNotFoundError as error:
-            raise ApiProblemError(
-                status=404,
-                code="project_not_found",
-                title="Project was not found",
-            ) from error
-        organization_id = dossier.review_context.proposer_org_id
-        organization_allowed = (
-            "organizations:any" in principal.scopes
-            or (
-                organization_id is not None
-                and f"organization:{organization_id}:access" in principal.scopes
-            )
-            or (organization_id is not None and principal.organization_id == organization_id)
-        )
-        if not organization_allowed:
-            raise ApiProblemError(
-                status=403,
-                code="project_organization_forbidden",
-                title="Caller organization cannot access this project",
-            )
+        dossier = load_project(project_id)
+        require_project_organization(principal, dossier)
         return dossier
+
+    def verify_decision_result(
+        result: PipelineResult,
+        *,
+        project_id: str,
+        stage: ReviewStage,
+        principal: ApiPrincipal,
+        request: RegistrationDecisionRequest | CompletionDecisionRequest,
+    ) -> None:
+        dossier = load_project(project_id)
+        review = dossier.registration if stage is ReviewStage.REGISTRATION else dossier.completion
+        decision = review.decision
+        event_type = (
+            "registration_decided" if stage is ReviewStage.REGISTRATION else "completion_decided"
+        )
+        expected_status = {
+            "approve": ProjectStatus.REGISTRATION_APPROVED,
+            "reject": ProjectStatus.REGISTRATION_REJECTED,
+            "accept": ProjectStatus.COMPLETION_ACCEPTED,
+            "not_accept": ProjectStatus.COMPLETION_NOT_ACCEPTED,
+        }[request.command]
+        expected_message = {
+            "approve": "등록 승인으로 수행 단계 진입이 가능합니다.",
+            "reject": "등록 반려가 확정되어 이 수행 프로세스는 종료됩니다.",
+            "accept": "완료평가 관리자 결정이 기록됐습니다.",
+            "not_accept": "완료평가 관리자 결정이 기록됐습니다.",
+        }[request.command]
+        audit_matches = any(
+            event.get("event_id") in dossier.audit_event_ids
+            and event.get("project_id") == project_id
+            and event.get("event_type") == event_type
+            and event.get("actor_id") == principal.subject
+            and event.get("actor_role") == ApiRole.ADMINISTRATOR.value
+            and event.get("dossier_revision") == request.expected_revision + 1
+            and event.get("details", {}).get("command") == request.command
+            for event in client.service.audit.entries()
+        )
+        if (
+            result.pipeline_id != "two-gate-pptx"
+            or result.pipeline_version != "v1alpha1"
+            or result.status is not PipelineStatus.SUCCEEDED
+            or result.project_id != project_id
+            or result.dossier_status is not expected_status
+            or result.dossier_revision != request.expected_revision + 1
+            or result.report_id is not None
+            or result.allowed_commands
+            or result.message != expected_message
+            or dossier.revision < result.dossier_revision
+            or decision is None
+            or decision.stage is not stage
+            or decision.command != request.command
+            or decision.actor_id != principal.subject
+            or decision.actor_role != ApiRole.ADMINISTRATOR.value
+            or decision.rationale != request.rationale.strip()
+            or decision.adjustments != request.adjustments
+            or decision.authority_context != "verified_api_principal"
+            or not audit_matches
+        ):
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_replay_integrity_failure",
+                title="Project decision replay integrity verification failed",
+            )
 
     @router.post(
         "/v1/projects",
@@ -416,6 +600,33 @@ def create_project_router(
                 title="Project registration failed validation",
             ) from error
 
+    @router.get(
+        "/v1/projects/{project_id}",
+        operation_id="getProject",
+        response_model=ProjectResourceView,
+        responses=problem_responses(401, 403, 404, 409, 422, 503),
+    )
+    async def get_project(
+        project_id: Annotated[
+            str,
+            ApiPath(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"),
+        ],
+        principal: Annotated[ApiPrincipal, Depends(authenticate)],
+    ) -> ProjectResourceView:
+        dossier = await asyncio.to_thread(
+            load_authorized_read_project,
+            principal,
+            project_id,
+        )
+        try:
+            return _project_resource_view(dossier)
+        except RuntimeError as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_resource_integrity_failure",
+                title="Project resource integrity verification failed",
+            ) from error
+
     @router.post(
         "/v1/projects/{project_id}/decisions/registration",
         operation_id="decideProjectRegistration",
@@ -429,8 +640,15 @@ def create_project_router(
             ApiPath(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"),
         ],
         principal: Annotated[ApiPrincipal, Depends(authenticate)],
+        idempotency_key: Annotated[
+            str,
+            Header(
+                alias="Idempotency-Key",
+                pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            ),
+        ],
     ) -> ProjectCommandResponse:
-        load_authorized_decision_project(principal, project_id)
+        await asyncio.to_thread(load_authorized_decision_project, principal, project_id)
         try:
             result = await asyncio.to_thread(
                 client.decide_registration,
@@ -440,7 +658,21 @@ def create_project_router(
                 rationale=request.rationale,
                 adjustments=request.adjustments,
                 expected_revision=request.expected_revision,
+                authority_context="verified_api_principal",
+                idempotency_key=_decision_idempotency_key(idempotency_key),
             )
+        except IdempotencyConflictError as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_idempotency_conflict",
+                title="Idempotency key was already used for a different decision",
+            ) from error
+        except IdempotencyError as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_idempotency_integrity_failure",
+                title="Project decision idempotency record is invalid",
+            ) from error
         except RevisionConflictError as error:
             raise ApiProblemError(
                 status=409,
@@ -459,6 +691,24 @@ def create_project_router(
                 code="project_decision_invalid",
                 title="Project decision failed validation",
             ) from error
+        except (
+            TransactionBlockedError,
+            TransactionConflictError,
+            TransactionIntegrityError,
+        ) as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_transaction_integrity_failure",
+                title="Project decision transaction integrity verification failed",
+            ) from error
+        await asyncio.to_thread(
+            verify_decision_result,
+            result,
+            project_id=project_id,
+            stage=ReviewStage.REGISTRATION,
+            principal=principal,
+            request=request,
+        )
         return _project_command_view(result)
 
     @router.post(
@@ -474,8 +724,15 @@ def create_project_router(
             ApiPath(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"),
         ],
         principal: Annotated[ApiPrincipal, Depends(authenticate)],
+        idempotency_key: Annotated[
+            str,
+            Header(
+                alias="Idempotency-Key",
+                pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            ),
+        ],
     ) -> ProjectCommandResponse:
-        load_authorized_decision_project(principal, project_id)
+        await asyncio.to_thread(load_authorized_decision_project, principal, project_id)
         try:
             result = await asyncio.to_thread(
                 client.decide_completion,
@@ -485,7 +742,21 @@ def create_project_router(
                 rationale=request.rationale,
                 adjustments=request.adjustments,
                 expected_revision=request.expected_revision,
+                authority_context="verified_api_principal",
+                idempotency_key=_decision_idempotency_key(idempotency_key),
             )
+        except IdempotencyConflictError as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_idempotency_conflict",
+                title="Idempotency key was already used for a different decision",
+            ) from error
+        except IdempotencyError as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_idempotency_integrity_failure",
+                title="Project decision idempotency record is invalid",
+            ) from error
         except RevisionConflictError as error:
             raise ApiProblemError(
                 status=409,
@@ -504,6 +775,24 @@ def create_project_router(
                 code="project_decision_invalid",
                 title="Project decision failed validation",
             ) from error
+        except (
+            TransactionBlockedError,
+            TransactionConflictError,
+            TransactionIntegrityError,
+        ) as error:
+            raise ApiProblemError(
+                status=409,
+                code="project_decision_transaction_integrity_failure",
+                title="Project decision transaction integrity verification failed",
+            ) from error
+        await asyncio.to_thread(
+            verify_decision_result,
+            result,
+            project_id=project_id,
+            stage=ReviewStage.COMPLETION,
+            principal=principal,
+            request=request,
+        )
         return _project_command_view(result)
 
     return router

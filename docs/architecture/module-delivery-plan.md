@@ -1,9 +1,9 @@
 ---
 document_type: module_delivery_plan
 project: AXCalib
-baseline: v0.3-p1-g4-api-alpha
+baseline: v0.3-p1-g4-project-read-replay-alpha
 updated_at: 2026-07-22
-status: library_cli_api_local_alpha_verified
+status: library_cli_resource_api_local_alpha_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -289,15 +289,16 @@ Evidence가 남아 있다.
   no-path staged artifact resolver/hash boundary
 - 세 번째 slice: immutable program 조회/self enrollment, learner/mentor/instructor/admin resource scope와
   milestone/reviewer/project-sync/completion command
+- 네 번째 slice: owner/admin authorized project safe GET과 principal/resource/payload-bound 두 HITL
+  decision semantic replay
 - 검증: generated OpenAPI 3.1/Draft 2020-12, fail-closed verifier/grant, reserved authority field
   rejection, principal/role/resource-scope/organization/program-hash/revision, staged hash, project context,
-  unknown option, deterministic idempotent retry, run conflict와 cancellation
+  project read redaction, actor/resource/payload decision conflict, deterministic idempotent retry, run conflict와 cancellation
 - 현재 완료증거: `tests/contract/test_runtime_api_contract.py`,
   `tests/contract/test_project_api_contract.py`, `tests/contract/test_education_api_contract.py`,
-  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024와 API Alpha threat model
+  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024/025와 API Alpha threat model
 - 남은 완료증거: immutable upload/staging service, approved OIDC/RBAC·education assignment source,
-  project read/list/report authorization와 decision semantic replay, 202 worker/SSE 및 script/CLI/API
-  workflow result parity
+  project list/report/evidence authorization, 202 worker/SSE 및 script/CLI/API workflow result parity
 
 ### M13 — Web Review
 
@@ -405,19 +406,17 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-Library/CLI/runtime/project·education API local Alpha checkpoint 다음은 G4 Interfaces의 resource read와
-decision replay slice다.
+Library/CLI/runtime/project·education API와 project read/replay local Alpha checkpoint 다음은 G4
+Interfaces의 운영 경계와 durable worker slice다.
 
-1. authorized project GET과 administrator decision semantic replay를 추가해 응답 유실 복구 계약을
-   고정한다.
-2. approved OIDC/JWKS claim mapping, education assignment source와 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
+1. approved OIDC/JWKS claim mapping, education assignment source와 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
    분리한다.
-3. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
-4. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
-5. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
-6. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
-7. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
-8. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
+2. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
+3. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
+4. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
+5. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
+6. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
+7. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
 9. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
    traceability를 실행한다.
 10. `prep.ps1 validate|test|eval`, Ruff, Pyright와 별도 Docling contract를 유지한다.

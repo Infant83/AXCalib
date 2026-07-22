@@ -28,6 +28,8 @@
   education completion decision endpoint
 - learner/mentor/instructor/administrator별 resource assignment scope, organization, program hash와
   enrollment revision contract
+- owner/admin scope와 organization을 검사하는 URI/free-text redacted project current-state GET
+- principal/resource/stage/revision/payload에 고정된 registration/completion decision semantic replay
 
 ### 변경
 
@@ -47,19 +49,22 @@
   principal을 audit actor로 사용한다. 같은 idempotency key의 동일 성공 명령은 replay한다.
 - project milestone bind와 sync는 dossier의 program/version/enrollment/milestone/learner/organization
   context를 매번 다시 확인한다.
+- API decision은 `verified_api_principal` authority context를 domain record에 남기고 exact successful
+  retry만 revision/audit 증가 없이 재생한다. 같은 key의 다른 actor/resource/payload는 409로 닫힌다.
 
 ### 현재 검증
 
-- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. education API
-  targeted contract 5/5, runtime+project+education API contract 17/17과 Pyright 0/0이 통과했다.
-- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/16 paths를
+- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. project API
+  targeted contract 6/6, runtime+project+education API contract 18/18, full 121 tests, 10 eval groups와
+  Pyright 0/0이 통과했다.
+- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/17 paths를
   구성한다. actual-PPTX quickstart는 이전 Alpha checkpoint evidence를 유지한다.
 - project/education local state recovery와 stale artifact maintenance는 검증했지만 report/outbox producer,
   database/distributed worker, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
 
 ### 다음 변경 후보
 
-- G4: project read/decision replay, immutable upload service와 approved OIDC/RBAC·education assignment source
+- G4: immutable upload service와 approved OIDC/RBAC·education assignment source
 - durable 202 worker, poll/SSE와 resume
 - report/outbox producer와 database/distributed transaction hardening
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증

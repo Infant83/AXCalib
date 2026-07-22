@@ -5,8 +5,8 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 
 - [전체 제품 목표 계약](openapi.v1alpha1.json): project evaluation/HITL까지 포함하는
   **pre-implementation target**
-- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime과 WP-06.I2a/I2b의
-  principal-bound project·education resource command **implemented local Alpha**
+- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime과 WP-06.I2a/I2b/I2c의
+  principal-bound project·education resource command/read/replay **implemented local Alpha**
 
 목표 계약에만 존재하는 endpoint를 실행 가능하다고 간주하지 않는다. 구현 artifact는 FastAPI가
 생성한 schema와 contract test에서 byte 의미 수준으로 비교한다.
@@ -23,7 +23,11 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 - run 조회·취소는 owner, administrator 또는 명시적 cross-run scope만 허용한다.
 - project 등록은 project owner/administrator role, `projects:create` scope와 verified organization을
   모두 요구한다. 두 HITL 결정은 administrator role, project decision scope, dossier organization과
-  expected revision을 모두 검사한다.
+  expected revision을 모두 검사하며 `Idempotency-Key`가 필수다.
+- project 조회는 owner `projects:read:own` + creation audit 또는 administrator read scope와 organization을
+  요구한다. response는 local URI, progress note, mentor identity와 decision rationale를 포함하지 않는다.
+- 동일 decision principal/key/resource/stage/revision/payload는 저장된 성공 결과를 replay한다. 다른
+  actor/resource/payload가 같은 key를 쓰면 mutation 없이 409로 닫힌다.
 - generic pipeline payload가 `actor_id`, `actor_role` 또는 관리자 결정을 전달하는 것은 거부한다.
   전용 project decision endpoint에는 actor field가 없으며 검증된 principal subject만 audit actor가 된다.
 - `education-program-runtime@v1alpha1`은 generic grant로 노출할 수 없다. 교육 endpoint는 learner,
@@ -65,8 +69,9 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 | GET | `/v1/runs/{run_id}` | result path/hash를 검증한 status/output 조회 |
 | POST | `/v1/runs/{run_id}/cancel` | process kill이 아닌 cooperative marker |
 | POST | `/v1/projects` | principal-bound project 등록; required idempotency key와 staged PPTX hash 검증 |
-| POST | `/v1/projects/{project_id}/decisions/registration` | 관리자 등록 승인/반려; scope/org/revision guard |
-| POST | `/v1/projects/{project_id}/decisions/completion` | 관리자 완료 수용/미수용; scope/org/revision guard |
+| GET | `/v1/projects/{project_id}` | owner/admin scope·organization을 확인한 URI/free-text redacted current state |
+| POST | `/v1/projects/{project_id}/decisions/registration` | 관리자 등록 승인/반려; scope/org/revision + semantic replay |
+| POST | `/v1/projects/{project_id}/decisions/completion` | 관리자 완료 수용/미수용; scope/org/revision + semantic replay |
 | GET | `/v1/programs/{program_id}/versions/{program_version}` | local path를 제거한 immutable program/hash 조회 |
 | POST | `/v1/programs/{program_id}/versions/{program_version}/enrollments` | exact hash의 principal-bound learner self enrollment |
 | GET | `/v1/enrollments/{enrollment_id}` | learner 또는 배정 reviewer/admin의 진도 조회 |
@@ -84,14 +89,14 @@ uv run --no-sync python scripts/pipelines/export_runtime_openapi.py
 ~~~
 
 TestClient 계약은 실제 socket이나 외부 인증 endpoint를 열지 않는다. 운영 server, OIDC/JWKS,
-rate limit, immutable upload service, 실제 교육 배정/claim source, project read/list/report authorization,
+rate limit, immutable upload service, 실제 교육 배정/claim source, project list/report authorization,
 worker/202/SSE는 후속 WP-06 범위다. 운영 NO-GO와 공격면은
 [API Alpha Threat Model](../security/api-alpha-threat-model.md)을
 따른다.
 
-현재 decision endpoint의 expected revision은 중복 mutation을 막지만, commit 뒤 HTTP 응답 유실을
-같은 응답으로 replay하는 idempotency record와 authorized project GET은 아직 없다. 운영 client 계약
-전에 반드시 보강한다.
+현재 decision replay는 단일 workspace의 local filesystem record다. domain commit 뒤 idempotency
+success record write 전 process crash, multi-host serialization, retention과 database transaction은
+해결하지 않는다. 이 경계는 distributed worker/idempotency adapter 전에 반드시 보강한다.
 
 ## 교육 프로그램 확장 경계
 

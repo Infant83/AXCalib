@@ -200,7 +200,7 @@
     <rect x="990" y="870" width="250" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="1115" y="906" class="wave-title">Wave 4 · WP-06</text>
     <text x="1115" y="931" class="wave-note">CLI + Resource API Alpha</text>
-    <text x="1115" y="956" class="wave-note">Project read/replay · OIDC · Worker next</text>
+    <text x="1115" y="956" class="wave-note">Read/replay verified · OIDC · Worker next</text>
 
     <path class="arrow" d="M 1240 930 L 1262 930"/>
     <rect x="1270" y="870" width="270" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>

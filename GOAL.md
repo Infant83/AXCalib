@@ -92,8 +92,9 @@ manifest, 작은 synthetic lexical retrieval baseline, strict structured model e
 하의 live registration smoke를 포함한다. 독립 freeze/update pipeline, dossier JSON Schema,
 filesystem lock, local idempotency, durable recording outbox와 effective-config manifest도 reference
 수준으로 검증했다. 2026-07-22 R1/I1/I2a에서 project·education transaction recovery,
-PipelineContext/checkpoint/cancel, Typer CLI/batch, non-destructive maintenance, fail-closed runtime API와
-principal-bound project register/HITL contract까지 local Alpha로 검증했다. 단, report/outbox producer,
+PipelineContext/checkpoint/cancel, Typer CLI/batch, non-destructive maintenance, fail-closed runtime API,
+principal-bound project/education command와 URI-redacted project GET/decision replay contract까지 local
+Alpha로 검증했다. 단, report/outbox producer,
 OIDC/JWKS·immutable upload·distributed worker와 운영 품질평가는 남아 있으므로 제품 전체나 운영
 MVP 완료로 기록하지 않는다.
 
@@ -345,7 +346,7 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 ### WP-06 Async, Batch, API
 
 현재 local Alpha evidence: sync/async executor, bounded JSONL batch, Alpha CLI, fail-closed FastAPI
-catalog/run/status/cancel, principal-bound project register/registration/completion decision, 교육
+catalog/run/status/cancel, principal-bound project register/read/registration/completion decision replay, 교육
 program 조회·self enrollment·milestone/reviewer/project sync·completion decision과 generated runtime
 OpenAPI. approved OIDC/RBAC·교육 배정 원장, immutable upload service, 202 worker/SSE와 full workflow
 parity는 아직 남아 있다.
@@ -358,6 +359,7 @@ parity는 아직 남아 있다.
 - OpenAPI 3.1.0 artifact-first contract, JSON Schema 2020-12와 generated client parity
 - allowlisted per-request options, bearer auth/RBAC boundary와 Problem Details
 - project owner/admin principal·scope·organization·revision binding과 no-path staged artifact hash contract
+- owner/admin project read scope와 URI/free-text redaction, principal/resource/payload-bound decision replay
 - learner/mentor/instructor/administrator resource scope·organization·program hash·revision binding
 - OpenAPI 3.2/TOML 1.1 toolchain compatibility spike
 - worker queue port와 in-process reference adapter

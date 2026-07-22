@@ -979,6 +979,13 @@ route와 working script에서 model call, file parse, 상태판정을 직접 수
   기본 resolver는 모두 거부하며 운영 구현은 immutable content-addressed object version이어야 한다.
 - project 등록 replay는 principal+idempotency key로 만든 stable project ID에서 request/context/artifact
   hash와 principal-bound creation audit가 모두 같을 때만 성공한다.
+- project GET은 owner `projects:read:own` + creation audit 또는 administrator read scope와 organization을
+  확인하고, 별도 safe view에서 dossier/source/snapshot/report URI, progress note, mentor identity와
+  decision rationale를 제외한다.
+- registration/completion decision은 required `Idempotency-Key`를 principal subject, project, stage,
+  expected revision, command/rationale/adjustment와 함께 canonical hash로 고정한다. exact retry는 저장된
+  성공 결과를 replay하고 다른 actor/resource/stage/payload는 409로 거부한다. replay 전 authorization과
+  persisted decision/audit/authority context를 다시 검사한다.
 - education runtime은 generic pipeline grant로 공개하지 않는다. 전용 endpoint는 request actor/learner/org
   field 없이 principal subject를 사용하며, self enrollment는 exact program hash를 요구한다.
 - learner는 enrollment learner + `education:progress:self`, mentor는 enrollment별 mentor scope,

@@ -1,9 +1,9 @@
 ---
 document_type: workflow_blueprint
 project: AXCalib
-baseline: v0.3-p1-g4-api-alpha
+baseline: v0.3-p1-g4-project-read-replay-alpha
 updated_at: 2026-07-22
-status: library_cli_project_api_local_alpha_exact_model_pending
+status: library_cli_resource_api_local_alpha_exact_model_pending
 ---
 
 # AXCalib Workflow Blueprint
@@ -11,7 +11,7 @@ status: library_cli_project_api_local_alpha_exact_model_pending
 이 문서는 AXCalib의 전체 workflow, 국소 pipeline, module dependency, 사람 승인과 실패·재개
 경로를 시각적으로 고정한다. 0절은 현재 실행되는 slice이고, 나머지 다이어그램에는 향후
 Docling/model/outbox/worker/Web Target도 포함된다. FastAPI node는 runtime과 principal-bound
-project·education command의 local Alpha 범위만 구현됐으며 운영 OIDC/RBAC·실제 교육 배정 원장·
+project·education command와 project safe read/decision replay의 local Alpha 범위만 구현됐으며 운영 OIDC/RBAC·실제 교육 배정 원장·
 immutable upload·202 worker가 완료된 것으로 해석하지 않는다.
 P/WP/G 일정, Active Slice와 작업 이력은 단일 실행 원장
 [PROJECT_STATE.md](../../PROJECT_STATE.md)에서 관리한다.
@@ -210,6 +210,37 @@ flowchart LR
 교육 request에는 actor, learner 또는 organization field가 없다. `Idempotency-Key`가 같은 동일 명령은
 저장된 성공 결과를 replay하지만 다른 payload는 충돌한다. mentor/instructor assignment는 현재
 deployment가 검증해 넣는 resource scope이며 실제 IdP·배정 원장 통합은 운영 Gate다.
+
+### 0.6 WP-06.I2c project read and decision replay boundary
+
+```mermaid
+flowchart LR
+    P["Verified project principal"] --> MODE{"GET or HITL decision?"}
+    MODE -->|GET| READ{"owner creation audit or<br/>admin read scope + organization?"}
+    READ -->|deny| STOP["403 · no resource"]
+    READ -->|allow| SAFE["ProjectResourceView<br/>no URI · notes · rationale"]
+    MODE -->|decision| AUTH{"admin decide scope<br/>+ organization?"}
+    AUTH -->|deny| STOP
+    AUTH -->|allow| KEY["required Idempotency-Key<br/>raw key not persisted"]
+    KEY --> MATCH{"same actor · project · stage<br/>revision · payload?"}
+    MATCH -->|different| CONFLICT["409 · no mutation"]
+    MATCH -->|exact first| DOMAIN["Library decision<br/>verified_api_principal"]
+    DOMAIN --> STORE["local successful result record"]
+    MATCH -->|exact replay| STORE
+    STORE --> VERIFY["decision + audit + result<br/>integrity recheck"]
+    VERIFY --> RESPONSE["same semantic response"]
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class P,SAFE,DOMAIN,STORE,VERIFY,RESPONSE safe;
+    class MODE,READ,AUTH,KEY,MATCH wait;
+    class STOP,CONFLICT stop;
+```
+
+replay 전에 현재 principal authorization을 다시 확인한다. local result record는 HTTP response가 전송
+중 유실된 경우를 복구하지만 domain commit과 result write 사이 process crash, multi-host serialization과
+retention은 보장하지 않는다. report/evidence content read도 이 safe GET 범위가 아니다.
 
 ## 1. 전체 계층
 
@@ -448,7 +479,7 @@ flowchart TB
     subgraph I["Delivery Interfaces"]
         direction LR
         M11["M11 Script / CLI"]
-        M12["M12 Runtime + Project + Education API / Worker"] --> M13["M13 Web Review"]
+        M12["M12 Resource API + Project Read/Replay / Worker"] --> M13["M13 Web Review"]
     end
 
     M00 --> PC

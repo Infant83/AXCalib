@@ -39,5 +39,6 @@
 | D-035 | 2026-07-22 | Accepted | HTTP adapter는 Library registry와 별도 exact delivery grant를 요구하고 기본 verifier/grant를 fail closed한다. generic payload의 actor/admin decision을 거부하며 owner/scope로 run을 보호한다. 전체 제품 target OpenAPI와 실제 runtime-generated OpenAPI는 별도 artifact로 관리한다. |
 | D-036 | 2026-07-22 | Accepted | Project HTTP command는 request actor/local path를 받지 않고 verified principal과 opaque staged artifact에 bind한다. 등록·완료 결정은 administrator role, explicit scope, organization과 expected revision을 모두 통과해야 하며 project create replay는 content/context/creation audit exact match만 허용한다. |
 | D-037 | 2026-07-22 | Accepted | Education HTTP command는 generic pipeline grant가 아니라 actor 없는 resource endpoint로만 제공한다. learner는 subject/self scope, mentor는 enrollment scope, instructor는 immutable program selector scope, administrator는 explicit admin scope와 organization에 bind하며 program hash·revision·project context를 domain에서 재검증한다. 실제 assignment/IdP claim mapping은 운영 Gate로 남긴다. |
+| D-038 | 2026-07-22 | Accepted | Project GET은 owner creation audit 또는 administrator read scope와 organization을 통과한 URI/free-text redacted safe view만 반환한다. 두 HITL decision은 raw key를 저장하지 않는 local idempotency record에 principal/resource/stage/revision/payload를 고정하고 exact 성공만 replay하며 cached result도 persisted decision·audit·verified authority와 재검증한다. |
 
 세부 근거는 `docs/adr/`의 ADR을 따른다.

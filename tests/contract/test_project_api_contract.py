@@ -27,19 +27,31 @@ class _TokenVerifier:
                 subject="user:owner",
                 role=ApiRole.PROJECT_OWNER,
                 organization_id="org:alpha",
-                scopes=frozenset({"projects:create"}),
+                scopes=frozenset({"projects:create", "projects:read:own"}),
+            ),
+            "other-owner-token": ApiPrincipal(
+                subject="user:other-owner",
+                role=ApiRole.PROJECT_OWNER,
+                organization_id="org:alpha",
+                scopes=frozenset({"projects:read:own"}),
             ),
             "admin-token": ApiPrincipal(
                 subject="user:administrator",
                 role=ApiRole.ADMINISTRATOR,
                 organization_id="org:alpha",
-                scopes=frozenset({"projects:decide:any"}),
+                scopes=frozenset({"projects:decide:any", "projects:read:any"}),
+            ),
+            "second-admin-token": ApiPrincipal(
+                subject="user:second-administrator",
+                role=ApiRole.ADMINISTRATOR,
+                organization_id="org:alpha",
+                scopes=frozenset({"projects:decide:any", "projects:read:any"}),
             ),
             "other-admin-token": ApiPrincipal(
                 subject="user:other-administrator",
                 role=ApiRole.ADMINISTRATOR,
                 organization_id="org:other",
-                scopes=frozenset({"projects:decide:any"}),
+                scopes=frozenset({"projects:decide:any", "projects:read:any"}),
             ),
             "unscoped-admin-token": ApiPrincipal(
                 subject="user:unscoped-administrator",
@@ -66,10 +78,10 @@ class _ArtifactResolver:
         return self.artifacts.get(artifact.artifact_id)
 
 
-def _auth(token: str) -> dict[str, str]:
+def _auth(token: str, idempotency_key: str = "registration-request-1") -> dict[str, str]:
     return {
         "Authorization": f"Bearer {token}",
-        "Idempotency-Key": "registration-request-1",
+        "Idempotency-Key": idempotency_key,
     }
 
 
@@ -118,9 +130,16 @@ def _project_client(tmp_path: Path) -> tuple[AXCalib, TestClient, _ArtifactResol
     return runtime, TestClient(app), resolver
 
 
-def _register(client: TestClient) -> dict[str, Any]:
+def _register(
+    client: TestClient,
+    idempotency_key: str = "registration-request-1",
+) -> dict[str, Any]:
     request, _ = _registration_request()
-    response = client.post("/v1/projects", headers=_auth("owner-token"), json=request)
+    response = client.post(
+        "/v1/projects",
+        headers=_auth("owner-token", idempotency_key),
+        json=request,
+    )
     assert response.status_code == 200, response.text
     return response.json()
 
@@ -225,6 +244,55 @@ def test_project_registration_rejects_paths_and_integrity_failures(tmp_path: Pat
     assert unavailable.json()["code"] == "staged_artifact_not_found"
 
 
+def test_project_get_requires_owner_or_admin_scope_and_returns_safe_view(
+    tmp_path: Path,
+) -> None:
+    _, client, _ = _project_client(tmp_path)
+    registered = _register(client)
+    project_id = str(registered["project_id"])
+    path = f"/v1/projects/{project_id}"
+
+    owner = client.get(path, headers=_auth("owner-token"))
+    assert owner.status_code == 200, owner.text
+    body = owner.json()
+    assert body["project_id"] == project_id
+    assert body["proposer_org_id"] == "org:alpha"
+    assert body["revision"] == registered["revision"]
+    assert body["artifacts"][0]["sha256"] == registered["artifact"]["sha256"]
+    assert set(body["execution"]) == {
+        "started_at",
+        "completion_submitted_at",
+        "mentor_assigned",
+        "progress_note_count",
+    }
+    for forbidden in (
+        "uri",
+        "source_uri",
+        "report_json_uri",
+        "report_markdown_uri",
+        "rationale",
+        "notes",
+        "mentor_ref",
+    ):
+        assert forbidden not in owner.text
+
+    admin = client.get(path, headers=_auth("admin-token"))
+    assert admin.status_code == 200
+    assert admin.json() == body
+
+    unscoped = client.get(path, headers=_auth("unscoped-admin-token"))
+    assert unscoped.status_code == 403
+    assert unscoped.json()["code"] == "project_read_scope_forbidden"
+
+    different_owner = client.get(path, headers=_auth("other-owner-token"))
+    assert different_owner.status_code == 403
+    assert different_owner.json()["code"] == "project_owner_read_forbidden"
+
+    wrong_org = client.get(path, headers=_auth("other-admin-token"))
+    assert wrong_org.status_code == 403
+    assert wrong_org.json()["code"] == "project_organization_forbidden"
+
+
 def test_project_source_hash_is_rechecked_before_create_and_evaluation(
     tmp_path: Path,
 ) -> None:
@@ -268,6 +336,7 @@ def test_registration_decision_binds_admin_scope_org_and_revision(tmp_path: Path
         "command": "approve",
         "rationale": "Evidence and reviewer checklist were checked.",
     }
+    decision_headers = _auth("admin-token", "registration-decision-1")
 
     owner = client.post(decision_path, headers=_auth("owner-token"), json=request)
     assert owner.status_code == 403
@@ -307,9 +376,18 @@ def test_registration_decision_binds_admin_scope_org_and_revision(tmp_path: Path
     assert impersonation.status_code == 422
     assert "impersonated" not in impersonation.text
 
+    missing_key = client.post(
+        decision_path,
+        headers={"Authorization": "Bearer admin-token"},
+        json=request,
+    )
+    assert missing_key.status_code == 422
+    assert missing_key.json()["code"] == "request_invalid"
+    assert runtime.service.dossiers.load(project_id).revision == current.revision
+
     approved = client.post(
         decision_path,
-        headers=_auth("admin-token"),
+        headers=decision_headers,
         json=request,
     )
     assert approved.status_code == 200, approved.text
@@ -319,6 +397,56 @@ def test_registration_decision_binds_admin_scope_org_and_revision(tmp_path: Path
     assert event["event_type"] == "registration_decided"
     assert event["actor_id"] == "user:administrator"
     assert event["actor_role"] == "administrator"
+    decided = runtime.service.dossiers.load(project_id)
+    assert decided.registration.decision is not None
+    assert decided.registration.decision.authority_context == "verified_api_principal"
+
+    replay = client.post(decision_path, headers=decision_headers, json=request)
+    assert replay.status_code == 200, replay.text
+    assert replay.json() == approved.json()
+    assert runtime.service.dossiers.load(project_id).revision == decided.revision
+    assert (
+        len(
+            [
+                item
+                for item in runtime.service.audit.entries()
+                if item["event_type"] == "registration_decided" and item["project_id"] == project_id
+            ]
+        )
+        == 1
+    )
+
+    changed_payload = client.post(
+        decision_path,
+        headers=decision_headers,
+        json=request | {"rationale": "A different rationale reuses the key."},
+    )
+    assert changed_payload.status_code == 409
+    assert changed_payload.json()["code"] == "project_decision_idempotency_conflict"
+    assert runtime.service.dossiers.load(project_id).revision == decided.revision
+
+    changed_actor = client.post(
+        decision_path,
+        headers=_auth("second-admin-token", "registration-decision-1"),
+        json=request,
+    )
+    assert changed_actor.status_code == 409
+    assert changed_actor.json()["code"] == "project_decision_idempotency_conflict"
+    assert runtime.service.dossiers.load(project_id).revision == decided.revision
+
+    second = _register(client, "registration-request-2")
+    second_id = str(second["project_id"])
+    runtime.submit_registration(second_id)
+    runtime.evaluate(second_id, "registration")
+    second_current = runtime.service.dossiers.load(second_id)
+    changed_resource = client.post(
+        f"/v1/projects/{second_id}/decisions/registration",
+        headers=decision_headers,
+        json=request | {"expected_revision": second_current.revision},
+    )
+    assert changed_resource.status_code == 409
+    assert changed_resource.json()["code"] == "project_decision_idempotency_conflict"
+    assert runtime.service.dossiers.load(second_id).revision == second_current.revision
 
 
 def test_completion_decision_uses_same_principal_and_revision_guard(tmp_path: Path) -> None:
@@ -330,7 +458,7 @@ def test_completion_decision_uses_same_principal_and_revision_guard(tmp_path: Pa
     registration = runtime.service.dossiers.load(project_id)
     client.post(
         f"/v1/projects/{project_id}/decisions/registration",
-        headers=_auth("admin-token"),
+        headers=_auth("admin-token", "completion-flow-registration-decision"),
         json={
             "expected_revision": registration.revision,
             "command": "approve",
@@ -348,6 +476,7 @@ def test_completion_decision_uses_same_principal_and_revision_guard(tmp_path: Pa
     runtime.evaluate(project_id, "completion")
     completion = runtime.service.dossiers.load(project_id)
     decision_path = f"/v1/projects/{project_id}/decisions/completion"
+    decision_headers = _auth("admin-token", "completion-decision-1")
 
     stale = client.post(
         decision_path,
@@ -363,7 +492,7 @@ def test_completion_decision_uses_same_principal_and_revision_guard(tmp_path: Pa
 
     accepted = client.post(
         decision_path,
-        headers=_auth("admin-token"),
+        headers=decision_headers,
         json={
             "expected_revision": completion.revision,
             "command": "accept",
@@ -375,3 +504,25 @@ def test_completion_decision_uses_same_principal_and_revision_guard(tmp_path: Pa
     event = runtime.service.audit.entries()[-1]
     assert event["event_type"] == "completion_decided"
     assert event["actor_id"] == "user:administrator"
+    decided = runtime.service.dossiers.load(project_id)
+    assert decided.completion.decision is not None
+    assert decided.completion.decision.authority_context == "verified_api_principal"
+
+    request = {
+        "expected_revision": completion.revision,
+        "command": "accept",
+        "rationale": "Completion evidence checked.",
+    }
+    replay = client.post(decision_path, headers=decision_headers, json=request)
+    assert replay.status_code == 200, replay.text
+    assert replay.json() == accepted.json()
+    assert runtime.service.dossiers.load(project_id).revision == decided.revision
+
+    conflict = client.post(
+        decision_path,
+        headers=decision_headers,
+        json=request | {"command": "not_accept"},
+    )
+    assert conflict.status_code == 409
+    assert conflict.json()["code"] == "project_decision_idempotency_conflict"
+    assert runtime.service.dossiers.load(project_id).revision == decided.revision

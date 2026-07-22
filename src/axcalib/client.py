@@ -6,6 +6,8 @@ import asyncio
 from pathlib import Path
 from typing import Literal
 
+from pydantic import BaseModel, ConfigDict
+
 from axcalib.evaluation import (
     EvidenceEvaluator,
     OfflineEvidenceEvaluator,
@@ -64,6 +66,21 @@ from axcalib.schemas import (
     WorkflowRunSummary,
 )
 from axcalib.workflows.two_gate import ActorRole
+
+
+class _ProjectDecisionReplayInput(BaseModel):
+    """Canonical command identity stored by the local idempotency adapter."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    stage: ReviewStage
+    actor_id: str
+    authority_context: str
+    expected_revision: int
+    command: str
+    rationale: str
+    adjustments: tuple[ReviewerAdjustment, ...]
 
 
 class AXCalib:
@@ -148,9 +165,7 @@ class AXCalib:
         self.registry.register(
             WorkspaceMaintenancePipeline.pipeline_id,
             WorkspaceMaintenancePipeline.pipeline_version,
-            lambda: WorkspaceMaintenancePipeline(
-                LocalWorkspaceMaintenance(self.service.workspace)
-            ),
+            lambda: WorkspaceMaintenancePipeline(LocalWorkspaceMaintenance(self.service.workspace)),
             request_type=WorkspaceMaintenanceRequest,
             result_type=MaintenanceResult,
         )
@@ -283,8 +298,7 @@ class AXCalib:
             result = self.idempotency.execute(
                 key=request.idempotency_key,
                 operation=(
-                    f"{TwoGatePptxPipeline.pipeline_id}@"
-                    f"{TwoGatePptxPipeline.pipeline_version}"
+                    f"{TwoGatePptxPipeline.pipeline_id}@{TwoGatePptxPipeline.pipeline_version}"
                 ),
                 request=request,
                 result_type=WorkflowRunSummary,
@@ -354,9 +368,7 @@ class AXCalib:
             TransactionReconcilePipeline.pipeline_id,
             TransactionReconcilePipeline.pipeline_version,
         )
-        result = pipeline.run(
-            TransactionReconcileRequest(transaction_id=transaction_id)
-        )
+        result = pipeline.run(TransactionReconcileRequest(transaction_id=transaction_id))
         if not isinstance(result, TransactionReconcilePipelineResult):
             raise TypeError("transaction reconcile pipeline returned an invalid result")
         return result
@@ -528,16 +540,41 @@ class AXCalib:
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
         expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
+        idempotency_key: str | None = None,
     ) -> PipelineResult:
-        """Resume registration with an explicit administrator command."""
+        """Resume registration, optionally replaying one exact persisted command."""
 
-        return self.service.decide_registration(
-            project_id,
-            command=command,
-            actor_id=actor_id,
-            rationale=rationale,
-            adjustments=adjustments,
-            expected_revision=expected_revision,
+        def call() -> PipelineResult:
+            return self.service.decide_registration(
+                project_id,
+                command=command,
+                actor_id=actor_id,
+                rationale=rationale,
+                adjustments=adjustments,
+                expected_revision=expected_revision,
+                authority_context=authority_context,
+            )
+
+        if idempotency_key is None:
+            return call()
+        if expected_revision is None:
+            raise ValueError("expected_revision is required with an idempotency key")
+        return self.idempotency.execute(
+            key=idempotency_key,
+            operation="project.decision.registration@v1alpha1",
+            request=_ProjectDecisionReplayInput(
+                project_id=project_id,
+                stage=ReviewStage.REGISTRATION,
+                actor_id=actor_id,
+                authority_context=authority_context,
+                expected_revision=expected_revision,
+                command=command,
+                rationale=rationale.strip(),
+                adjustments=adjustments,
+            ),
+            result_type=PipelineResult,
+            call=call,
         )
 
     def decide_completion(
@@ -549,16 +586,41 @@ class AXCalib:
         rationale: str,
         adjustments: tuple[ReviewerAdjustment, ...] = (),
         expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
+        idempotency_key: str | None = None,
     ) -> PipelineResult:
-        """Resume completion with an explicit administrator command."""
+        """Resume completion, optionally replaying one exact persisted command."""
 
-        return self.service.decide_completion(
-            project_id,
-            command=command,
-            actor_id=actor_id,
-            rationale=rationale,
-            adjustments=adjustments,
-            expected_revision=expected_revision,
+        def call() -> PipelineResult:
+            return self.service.decide_completion(
+                project_id,
+                command=command,
+                actor_id=actor_id,
+                rationale=rationale,
+                adjustments=adjustments,
+                expected_revision=expected_revision,
+                authority_context=authority_context,
+            )
+
+        if idempotency_key is None:
+            return call()
+        if expected_revision is None:
+            raise ValueError("expected_revision is required with an idempotency key")
+        return self.idempotency.execute(
+            key=idempotency_key,
+            operation="project.decision.completion@v1alpha1",
+            request=_ProjectDecisionReplayInput(
+                project_id=project_id,
+                stage=ReviewStage.COMPLETION,
+                actor_id=actor_id,
+                authority_context=authority_context,
+                expected_revision=expected_revision,
+                command=command,
+                rationale=rationale.strip(),
+                adjustments=adjustments,
+            ),
+            result_type=PipelineResult,
+            call=call,
         )
 
 

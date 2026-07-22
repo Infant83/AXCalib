@@ -136,8 +136,8 @@
 
   <rect x="1535" y="730" width="250" height="103" rx="14" fill="#F6F8FC" stroke="#CCD7EA"/>
   <text x="1553" y="756" class="mini-title">Runtime API + Worker</text>
-  <text x="1553" y="778" class="mini-note">현재 · runtime + project/education Alpha</text>
-  <text x="1553" y="799" class="mini-note">후속 · project read/replay · 202 worker</text>
+  <text x="1553" y="778" class="mini-note">현재 · resource API + project read/replay</text>
+  <text x="1553" y="799" class="mini-note">후속 · OIDC/upload · 202 worker</text>
   <rect x="1553" y="808" width="76" height="17" rx="8" fill="#EAF2FF"/><text x="1591" y="820" class="sans" font-size="9" font-weight="750" fill="#2F6BFF" text-anchor="middle">INTEGRATION</text>
 
   <rect x="1270" y="856" width="515" height="88" rx="14" fill="#172033"/>

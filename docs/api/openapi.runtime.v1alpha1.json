@@ -1279,6 +1279,51 @@
         "title": "ProjectCommandResponse",
         "type": "object"
       },
+      "ProjectExecutionView": {
+        "additionalProperties": false,
+        "description": "Progress summary that deliberately excludes free-form notes and mentor identity.",
+        "properties": {
+          "completion_submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Submitted At"
+          },
+          "mentor_assigned": {
+            "default": false,
+            "title": "Mentor Assigned",
+            "type": "boolean"
+          },
+          "progress_note_count": {
+            "minimum": 0.0,
+            "title": "Progress Note Count",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "required": [
+          "progress_note_count"
+        ],
+        "title": "ProjectExecutionView",
+        "type": "object"
+      },
       "ProjectRegistrationRequest": {
         "additionalProperties": false,
         "description": "Register a staged PPTX without accepting a caller-controlled local path.",
@@ -1387,6 +1432,178 @@
           "artifact"
         ],
         "title": "ProjectRegistrationResponse",
+        "type": "object"
+      },
+      "ProjectResourceView": {
+        "additionalProperties": false,
+        "description": "Authorized current project state with every deployment-local URI removed.",
+        "properties": {
+          "artifacts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ProjectArtifactView"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "certification_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certification Level"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/ProjectStageView"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_id": {
+            "title": "Display Id",
+            "type": "string"
+          },
+          "execution": {
+            "$ref": "#/components/schemas/ProjectExecutionView"
+          },
+          "notification_event_types": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notification Event Types",
+            "type": "array"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "proposer_org_id": {
+            "title": "Proposer Org Id",
+            "type": "string"
+          },
+          "registration": {
+            "$ref": "#/components/schemas/ProjectStageView"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "default": "axcalib.api-project-resource/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProjectStatus"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "display_id",
+          "title",
+          "status",
+          "revision",
+          "created_at",
+          "updated_at",
+          "proposer_org_id",
+          "registration",
+          "execution",
+          "completion"
+        ],
+        "title": "ProjectResourceView",
+        "type": "object"
+      },
+      "ProjectStageView": {
+        "additionalProperties": false,
+        "description": "Review-gate state without report paths, snapshots, rationale, or source text.",
+        "properties": {
+          "decision_command": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Command"
+          },
+          "decision_recorded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Recorded At"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "review_profile_selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Profile Selector"
+          },
+          "review_profile_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Profile Sha256"
+          },
+          "submission_artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submission Artifact Id"
+          }
+        },
+        "title": "ProjectStageView",
         "type": "object"
       },
       "ProjectStatus": {
@@ -3074,6 +3291,101 @@
         "summary": "Register Project"
       }
     },
+    "/v1/projects/{project_id}": {
+      "get": {
+        "operationId": "getProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResourceView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get Project"
+      }
+    },
     "/v1/projects/{project_id}/decisions/completion": {
       "post": {
         "operationId": "decideProjectCompletion",
@@ -3085,6 +3397,16 @@
             "schema": {
               "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
               "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
               "type": "string"
             }
           }
@@ -3190,6 +3512,16 @@
             "schema": {
               "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
               "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
               "type": "string"
             }
           }
