@@ -96,7 +96,8 @@ config로 끌 수 없다.
 | Mentor App | 배정 Mentor | comment, 변경 승인, 완료 제출 동의 | mentor event, completion guard | Target, 미구현 |
 | Runtime API | 플랫폼 개발자 | bearer + exact grant 아래 catalog/run/status/cancel | 같은 pipeline registry/checkpoint | Local Alpha |
 | Project/HITL API | 과제 담당자·관리자 | staged hash 등록, registration/completion 결정 | principal + scope/org/revision + domain HITL | Local Alpha |
-| Education/Full API | 기존 인증시스템 | enrollment command, result/report 조회, OpenAPI client | principal-bound education/workflow command | Target, 미구현 |
+| Education API | 학습자·멘토·강사·관리자 | program 조회, 가입, milestone/reviewer/project sync, 과정 완료결정 | principal + resource scope/org/revision + domain guard | Local Alpha |
+| Full Evaluation API | 기존 인증시스템 | evaluation/report, async workflow, OpenAPI client | 202 worker와 principal-bound workflow command | Target, 미구현 |
 | Async/Batch Worker | 운영자·연동시스템 | `202 + run_id`, progress, item별 retry/resume | long-running parse/evaluate workflow | Target, 미구현 |
 | Python/Offline Harness | 개발자·설계 검토자 | supplied-PPTX 두 Gate, policy/Docling/retrieval/model report, fail-closed 확인 | `AXCalib`, `two-gate-pptx@v1alpha1` | G3 reference slice |
 | 과정 기획 Harness | 과정 기획자·관리자 | versioned level/milestone 구성, 가입 목표, project roll-up과 과정 완료 HITL 확인 | `publish_program`, `education-program-runtime@v1alpha1` | Offline reference |
@@ -116,8 +117,9 @@ Web은 chatbot이 아니라 **review cockpit**이 주 화면이다. Web/App은 d
 
 이 자료는 제품 전체가 구현됐다는 표시가 아니다. 현재는 dossier/snapshot, hash-bound policy,
 제한된 PPTX/Docling manifest, synthetic lexical retrieval, deterministic/structured evaluator와 두
-HITL을 연결한 **G3 reference**, Library/CLI/API **local Alpha**다. on-prem/multi-model 품질, Vector
-DB, durable 운영 notification, education/full API, OIDC/immutable upload/worker와 Web/App은 아직 구현되지 않았다.
+HITL을 연결한 **G3 reference**, Library/CLI/project·education API **local Alpha**다. on-prem/multi-model
+품질, Vector DB, durable 운영 notification, full evaluation API, OIDC/실제 교육 배정/immutable
+upload/worker와 Web/App은 아직 구현되지 않았다.
 
 ## 5. 생성 자산과 재현 기록
 

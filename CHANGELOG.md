@@ -24,6 +24,10 @@
 - 실제 route에서 생성한 `openapi.runtime.v1alpha1.json`과 API contract regression
 - principal-bound project registration과 registration/completion administrator decision endpoint
 - local path를 받지 않는 `StagedArtifactResolver`, media/size/SHA-256 verification과 API threat model
+- principal-bound program 조회/self enrollment, milestone start/manual/score/project bind·sync와
+  education completion decision endpoint
+- learner/mentor/instructor/administrator별 resource assignment scope, organization, program hash와
+  enrollment revision contract
 
 ### 변경
 
@@ -39,19 +43,23 @@
   expected revision을 domain mutation 전에 확인한다.
 - project create idempotency replay는 stable principal/key project ID의 request/hash/context/creation audit가
   모두 일치할 때만 허용한다.
+- education runtime은 generic pipeline grant를 금지하고 request actor/learner/org 대신 verified
+  principal을 audit actor로 사용한다. 같은 idempotency key의 동일 성공 명령은 replay한다.
+- project milestone bind와 sync는 dossier의 program/version/enrollment/milestone/learner/organization
+  context를 매번 다시 확인한다.
 
 ### 현재 검증
 
-- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. project API
-  targeted contract 5/5, runtime+project API contract 12/12와 Pyright 0/0이 통과했다.
-- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/7 routes를
+- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. education API
+  targeted contract 5/5, runtime+project+education API contract 17/17과 Pyright 0/0이 통과했다.
+- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/16 paths를
   구성한다. actual-PPTX quickstart는 이전 Alpha checkpoint evidence를 유지한다.
 - project/education local state recovery와 stale artifact maintenance는 검증했지만 report/outbox producer,
   database/distributed worker, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
 
 ### 다음 변경 후보
 
-- G4: education principal binding, immutable upload service와 approved OIDC/RBAC
+- G4: project read/decision replay, immutable upload service와 approved OIDC/RBAC·education assignment source
 - durable 202 worker, poll/SSE와 resume
 - report/outbox producer와 database/distributed transaction hardening
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증

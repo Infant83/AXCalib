@@ -82,6 +82,416 @@
         "title": "CompletionDecisionRequest",
         "type": "object"
       },
+      "EducationCommandResponse": {
+        "additionalProperties": false,
+        "description": "Filesystem-neutral education command result.",
+        "properties": {
+          "active_milestone_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Active Milestone Ids",
+            "type": "array"
+          },
+          "allowed_commands": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Commands",
+            "type": "array"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "enrollment_revision": {
+            "minimum": 1.0,
+            "title": "Enrollment Revision",
+            "type": "integer"
+          },
+          "enrollment_status": {
+            "$ref": "#/components/schemas/EnrollmentStatus"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "axcalib.api-education-command/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "waiting_human",
+              "blocked",
+              "stale"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "enrollment_status",
+          "enrollment_revision",
+          "status",
+          "message"
+        ],
+        "title": "EducationCommandResponse",
+        "type": "object"
+      },
+      "EducationCompletionDecisionRequest": {
+        "additionalProperties": false,
+        "description": "Administrator-only final education completion command.",
+        "properties": {
+          "command": {
+            "enum": [
+              "approve",
+              "return_for_revision"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "rationale": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "reopen_milestone_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reopen Milestone Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "command",
+          "rationale"
+        ],
+        "title": "EducationCompletionDecisionRequest",
+        "type": "object"
+      },
+      "EducationEnrollmentCreateRequest": {
+        "additionalProperties": false,
+        "description": "Enroll the authenticated learner in one exact program artifact.",
+        "properties": {
+          "expected_program_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Program Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_program_sha256"
+        ],
+        "title": "EducationEnrollmentCreateRequest",
+        "type": "object"
+      },
+      "EducationEnrollmentView": {
+        "additionalProperties": false,
+        "description": "Authorized enrollment view with local repository paths removed.",
+        "properties": {
+          "completion_decisions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ProgramCompletionDecision"
+            },
+            "title": "Completion Decisions",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "learner_ref": {
+            "title": "Learner Ref",
+            "type": "string"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneProgress"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "notifications": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ProgramNotificationRecord"
+            },
+            "title": "Notifications",
+            "type": "array"
+          },
+          "organization_id": {
+            "title": "Organization Id",
+            "type": "string"
+          },
+          "program_selector": {
+            "title": "Program Selector",
+            "type": "string"
+          },
+          "program_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Program Sha256",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "default": "axcalib.api-education-enrollment/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EnrollmentStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "learner_ref",
+          "organization_id",
+          "program_selector",
+          "program_sha256",
+          "revision",
+          "status",
+          "created_at",
+          "updated_at",
+          "milestones"
+        ],
+        "title": "EducationEnrollmentView",
+        "type": "object"
+      },
+      "EducationManualConfirmationRequest": {
+        "additionalProperties": false,
+        "description": "Record an allowlisted manual requirement using an opaque evidence ID.",
+        "properties": {
+          "evidence_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "requirement_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Requirement Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "requirement_id",
+          "evidence_id"
+        ],
+        "title": "EducationManualConfirmationRequest",
+        "type": "object"
+      },
+      "EducationProgram": {
+        "additionalProperties": false,
+        "description": "Immutable program blueprint selected when a learner enrolls.",
+        "properties": {
+          "description": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramLevelSpec"
+            },
+            "minItems": 1,
+            "title": "Levels",
+            "type": "array"
+          },
+          "owner_ref": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Owner Ref",
+            "type": "string"
+          },
+          "program_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "axcalib.education-program/v1alpha1",
+            "default": "axcalib.education-program/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProgramStatus",
+            "default": "draft"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "program_id",
+          "version",
+          "title",
+          "description",
+          "owner_ref",
+          "levels"
+        ],
+        "title": "EducationProgram",
+        "type": "object"
+      },
+      "EducationProgramView": {
+        "additionalProperties": false,
+        "description": "Immutable education program without a deployment-local source path.",
+        "properties": {
+          "program": {
+            "$ref": "#/components/schemas/EducationProgram"
+          },
+          "schema_version": {
+            "default": "axcalib.api-education-program/v1alpha1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "selector": {
+            "title": "Selector",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selector",
+          "sha256",
+          "program"
+        ],
+        "title": "EducationProgramView",
+        "type": "object"
+      },
+      "EducationProjectBindRequest": {
+        "additionalProperties": false,
+        "description": "Bind one existing project dossier to an enrollment milestone.",
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "project_id"
+        ],
+        "title": "EducationProjectBindRequest",
+        "type": "object"
+      },
+      "EducationRevisionRequest": {
+        "additionalProperties": false,
+        "description": "Shared optimistic-concurrency input for enrollment mutations.",
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "title": "EducationRevisionRequest",
+        "type": "object"
+      },
+      "EducationScoreRequest": {
+        "additionalProperties": false,
+        "description": "Record an authorized score against one configured requirement.",
+        "properties": {
+          "evidence_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "requirement_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "requirement_id",
+          "evidence_id",
+          "score"
+        ],
+        "title": "EducationScoreRequest",
+        "type": "object"
+      },
+      "EnrollmentStatus": {
+        "description": "Program progression state with a mandatory human completion gate.",
+        "enum": [
+          "active",
+          "completion_hitl_pending",
+          "completed",
+          "returned_for_revision",
+          "withdrawn"
+        ],
+        "title": "EnrollmentStatus",
+        "type": "string"
+      },
       "EvidenceLocator": {
         "additionalProperties": false,
         "description": "Auditable source location with a short allowed excerpt.",
@@ -111,6 +521,279 @@
           "source"
         ],
         "title": "EvidenceLocator",
+        "type": "object"
+      },
+      "ManualConfirmationRequirement": {
+        "additionalProperties": false,
+        "description": "An instructor, mentor, or administrator confirms an activity.",
+        "properties": {
+          "kind": {
+            "const": "manual_confirmation",
+            "default": "manual_confirmation",
+            "title": "Kind",
+            "type": "string"
+          },
+          "points": {
+            "default": 1.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Points",
+            "type": "number"
+          },
+          "required_role": {
+            "default": "instructor",
+            "enum": [
+              "instructor",
+              "mentor",
+              "administrator"
+            ],
+            "title": "Required Role",
+            "type": "string"
+          },
+          "requirement_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "title"
+        ],
+        "title": "ManualConfirmationRequirement",
+        "type": "object"
+      },
+      "MilestoneCompletionRule": {
+        "additionalProperties": false,
+        "description": "Small allowlisted rule; arbitrary expressions are intentionally unsupported.",
+        "properties": {
+          "minimum_points": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 10000.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Points"
+          },
+          "mode": {
+            "default": "all_required",
+            "enum": [
+              "all_required",
+              "minimum_points"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "title": "MilestoneCompletionRule",
+        "type": "object"
+      },
+      "MilestoneKind": {
+        "description": "Allowlisted milestone capabilities available to a course designer.",
+        "enum": [
+          "learning_activity",
+          "project_certification",
+          "assessment"
+        ],
+        "title": "MilestoneKind",
+        "type": "string"
+      },
+      "MilestoneProgress": {
+        "additionalProperties": false,
+        "description": "Generated learner goal and its current evidence state.",
+        "properties": {
+          "bound_project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bound Project Id"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "goal_title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Goal Title",
+            "type": "string"
+          },
+          "level_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Level Id",
+            "type": "string"
+          },
+          "milestone_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Milestone Id",
+            "type": "string"
+          },
+          "pipeline_id": {
+            "title": "Pipeline Id",
+            "type": "string"
+          },
+          "pipeline_version": {
+            "title": "Pipeline Version",
+            "type": "string"
+          },
+          "requirement_results": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RequirementResult"
+            },
+            "title": "Requirement Results",
+            "type": "array"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MilestoneProgressStatus"
+          }
+        },
+        "required": [
+          "milestone_id",
+          "level_id",
+          "goal_title",
+          "pipeline_id",
+          "pipeline_version",
+          "status"
+        ],
+        "title": "MilestoneProgress",
+        "type": "object"
+      },
+      "MilestoneProgressStatus": {
+        "description": "Runtime status of one generated learner goal.",
+        "enum": [
+          "locked",
+          "available",
+          "in_progress",
+          "waiting_review",
+          "needs_action",
+          "completed"
+        ],
+        "title": "MilestoneProgressStatus",
+        "type": "string"
+      },
+      "MilestoneSpec": {
+        "additionalProperties": false,
+        "description": "One versioned, composable learner milestone.",
+        "properties": {
+          "completion_rule": {
+            "$ref": "#/components/schemas/MilestoneCompletionRule"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MilestoneKind"
+          },
+          "milestone_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Milestone Id",
+            "type": "string"
+          },
+          "pipeline_id": {
+            "pattern": "^[a-z][a-z0-9._-]{2,127}$",
+            "title": "Pipeline Id",
+            "type": "string"
+          },
+          "pipeline_version": {
+            "pattern": "^v[0-9A-Za-z._-]+$",
+            "title": "Pipeline Version",
+            "type": "string"
+          },
+          "prerequisites": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Prerequisites",
+            "type": "array"
+          },
+          "required_for_program_completion": {
+            "default": true,
+            "title": "Required For Program Completion",
+            "type": "boolean"
+          },
+          "requirements": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "manual_confirmation": "#/components/schemas/ManualConfirmationRequirement",
+                  "project_status": "#/components/schemas/ProjectStatusRequirement",
+                  "score_at_least": "#/components/schemas/ScoreRequirement"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ManualConfirmationRequirement"
+                },
+                {
+                  "$ref": "#/components/schemas/ScoreRequirement"
+                },
+                {
+                  "$ref": "#/components/schemas/ProjectStatusRequirement"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Requirements",
+            "type": "array"
+          },
+          "sequence": {
+            "minimum": 1.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "milestone_id",
+          "title",
+          "sequence",
+          "kind",
+          "pipeline_id",
+          "pipeline_version",
+          "requirements"
+        ],
+        "title": "MilestoneSpec",
         "type": "object"
       },
       "PipelineCatalogResponse": {
@@ -363,6 +1046,144 @@
         "title": "Problem",
         "type": "object"
       },
+      "ProgramCompletionDecision": {
+        "additionalProperties": false,
+        "description": "Explicit administrator decision, separate from condition evaluation.",
+        "properties": {
+          "actor_id": {
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "actor_role": {
+            "const": "administrator",
+            "default": "administrator",
+            "title": "Actor Role",
+            "type": "string"
+          },
+          "authority_context": {
+            "default": "offline_unverified_actor",
+            "title": "Authority Context",
+            "type": "string"
+          },
+          "command": {
+            "enum": [
+              "approve",
+              "return_for_revision"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "rationale": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "source": {
+            "default": "explicit_command_input",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "actor_id",
+          "rationale"
+        ],
+        "title": "ProgramCompletionDecision",
+        "type": "object"
+      },
+      "ProgramLevelSpec": {
+        "additionalProperties": false,
+        "description": "Ordered group of milestones representing one course level.",
+        "properties": {
+          "level_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Level Id",
+            "type": "string"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneSpec"
+            },
+            "minItems": 1,
+            "title": "Milestones",
+            "type": "array"
+          },
+          "sequence": {
+            "minimum": 1.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level_id",
+          "title",
+          "sequence",
+          "milestones"
+        ],
+        "title": "ProgramLevelSpec",
+        "type": "object"
+      },
+      "ProgramNotificationRecord": {
+        "additionalProperties": false,
+        "description": "Administrator completion request retained on the enrollment.",
+        "properties": {
+          "delivery_status": {
+            "const": "recorded",
+            "default": "recorded",
+            "title": "Delivery Status",
+            "type": "string"
+          },
+          "enrollment_revision": {
+            "minimum": 1.0,
+            "title": "Enrollment Revision",
+            "type": "integer"
+          },
+          "event_type": {
+            "default": "education_program_completion_approval_requested",
+            "title": "Event Type",
+            "type": "string"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "required_role": {
+            "default": "administrator",
+            "title": "Required Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_revision"
+        ],
+        "title": "ProgramNotificationRecord",
+        "type": "object"
+      },
+      "ProgramStatus": {
+        "description": "Lifecycle of a program definition, not a learner certification decision.",
+        "enum": [
+          "draft",
+          "offline_reference",
+          "published",
+          "retired"
+        ],
+        "title": "ProgramStatus",
+        "type": "string"
+      },
       "ProjectArtifactView": {
         "additionalProperties": false,
         "description": "Hash metadata safe to return without a deployment-local URI.",
@@ -588,6 +1409,51 @@
         "title": "ProjectStatus",
         "type": "string"
       },
+      "ProjectStatusRequirement": {
+        "additionalProperties": false,
+        "description": "A milestone condition derived from an actual AXCalib project dossier.",
+        "properties": {
+          "kind": {
+            "const": "project_status",
+            "default": "project_status",
+            "title": "Kind",
+            "type": "string"
+          },
+          "points": {
+            "default": 1.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Points",
+            "type": "number"
+          },
+          "required_status": {
+            "default": "completion_accepted",
+            "enum": [
+              "registration_approved",
+              "completion_accepted"
+            ],
+            "title": "Required Status",
+            "type": "string"
+          },
+          "requirement_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "title"
+        ],
+        "title": "ProjectStatusRequirement",
+        "type": "object"
+      },
       "RegistrationDecisionRequest": {
         "additionalProperties": false,
         "description": "Administrator registration command; actor identity comes from auth.",
@@ -628,6 +1494,69 @@
         "title": "RegistrationDecisionRequest",
         "type": "object"
       },
+      "RequirementResult": {
+        "additionalProperties": false,
+        "description": "Auditable observation for one configured requirement.",
+        "properties": {
+          "actor_id": {
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "actor_role": {
+            "title": "Actor Role",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "title": "Evidence Ref",
+            "type": "string"
+          },
+          "observed_value": {
+            "title": "Observed Value",
+            "type": "string"
+          },
+          "points_awarded": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Points Awarded",
+            "type": "number"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "requirement_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "satisfied": {
+            "title": "Satisfied",
+            "type": "boolean"
+          },
+          "source": {
+            "enum": [
+              "manual_confirmation",
+              "score",
+              "project_dossier"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "satisfied",
+          "points_awarded",
+          "source",
+          "actor_id",
+          "actor_role",
+          "evidence_ref",
+          "observed_value"
+        ],
+        "title": "RequirementResult",
+        "type": "object"
+      },
       "ReviewerAdjustment": {
         "additionalProperties": false,
         "description": "Criterion-level human correction that never rewrites the Agent report.",
@@ -664,6 +1593,59 @@
           "reason"
         ],
         "title": "ReviewerAdjustment",
+        "type": "object"
+      },
+      "ScoreRequirement": {
+        "additionalProperties": false,
+        "description": "A trusted evaluator records a score against an explicit threshold.",
+        "properties": {
+          "kind": {
+            "const": "score_at_least",
+            "default": "score_at_least",
+            "title": "Kind",
+            "type": "string"
+          },
+          "passing_score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Passing Score",
+            "type": "number"
+          },
+          "points": {
+            "default": 1.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Points",
+            "type": "number"
+          },
+          "required_role": {
+            "default": "instructor",
+            "enum": [
+              "instructor",
+              "mentor",
+              "administrator"
+            ],
+            "title": "Required Role",
+            "type": "string"
+          },
+          "requirement_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "title",
+          "passing_score"
+        ],
+        "title": "ScoreRequirement",
         "type": "object"
       },
       "StagedArtifactRef": {
@@ -737,6 +1719,841 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "openapi": "3.1.0",
   "paths": {
+    "/v1/enrollments/{enrollment_id}": {
+      "get": {
+        "operationId": "getEducationEnrollment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationEnrollmentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get Enrollment"
+      }
+    },
+    "/v1/enrollments/{enrollment_id}/completion-decisions": {
+      "post": {
+        "operationId": "decideEducationCompletion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationCompletionDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Decide Completion"
+      }
+    },
+    "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/manual-confirmations": {
+      "post": {
+        "operationId": "recordEducationManualConfirmation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "milestone_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Milestone Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationManualConfirmationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Record Manual Confirmation"
+      }
+    },
+    "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/project-sync": {
+      "post": {
+        "operationId": "syncEducationProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "milestone_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Milestone Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationRevisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Sync Project"
+      }
+    },
+    "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/projects": {
+      "post": {
+        "operationId": "bindEducationProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "milestone_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Milestone Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationProjectBindRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Bind Project"
+      }
+    },
+    "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/scores": {
+      "post": {
+        "operationId": "recordEducationScore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "milestone_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Milestone Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationScoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Record Score"
+      }
+    },
+    "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/start": {
+      "post": {
+        "operationId": "startEducationMilestone",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "milestone_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Milestone Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationRevisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Start Milestone"
+      }
+    },
     "/v1/pipelines": {
       "get": {
         "operationId": "listPipelines",
@@ -910,6 +2727,236 @@
           }
         ],
         "summary": "Run Pipeline"
+      }
+    },
+    "/v1/programs/{program_id}/versions/{program_version}": {
+      "get": {
+        "operationId": "getEducationProgram",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Program Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "program_version",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Program Version",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationProgramView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get Program"
+      }
+    },
+    "/v1/programs/{program_id}/versions/{program_version}/enrollments": {
+      "post": {
+        "operationId": "createEducationEnrollment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Program Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "program_version",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+              "title": "Program Version",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EducationEnrollmentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCommandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured AXCalib API problem"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create Enrollment"
       }
     },
     "/v1/projects": {
@@ -1436,8 +3483,8 @@
   ],
   "x-axcalib-contract": {
     "artifact_boundary": "opaque staged artifact ID with byte-size and SHA-256 verification; caller local paths are forbidden",
-    "authority": "verified principal, role, scope, organization and domain HITL guards are all required",
-    "scope": "pipeline catalog/run/status/cancel plus principal-bound project registration and HITL decisions",
+    "authority": "verified principal, role, resource assignment scope, organization, revision and domain HITL guards are all required",
+    "scope": "pipeline catalog/run/status/cancel plus principal-bound project registration/HITL decisions and education enrollment/milestone commands",
     "status": "implemented-local-alpha"
   }
 }

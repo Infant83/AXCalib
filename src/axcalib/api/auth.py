@@ -14,6 +14,9 @@ class ApiRole(StrEnum):
     VIEWER = "viewer"
     OPERATOR = "operator"
     PROJECT_OWNER = "project_owner"
+    LEARNER = "learner"
+    MENTOR = "mentor"
+    INSTRUCTOR = "instructor"
     ADMINISTRATOR = "administrator"
 
 
@@ -24,7 +27,7 @@ class ApiPrincipal(BaseModel):
 
     subject: str = Field(min_length=1, max_length=300)
     role: ApiRole
-    organization_id: str | None = Field(default=None, max_length=200)
+    organization_id: str | None = Field(default=None, min_length=1, max_length=200)
     scopes: frozenset[str] = Field(default_factory=frozenset)
 
 
@@ -45,8 +48,16 @@ class ApiPipelineGrant(BaseModel):
             raise ValueError("execute_roles must not be empty")
         if ApiRole.VIEWER in self.execute_roles:
             raise ValueError("viewer cannot be granted pipeline execution")
-        if ApiRole.PROJECT_OWNER in self.execute_roles:
-            raise ValueError("project_owner must use a principal-bound resource command endpoint")
+        resource_bound_roles = {
+            ApiRole.PROJECT_OWNER,
+            ApiRole.LEARNER,
+            ApiRole.MENTOR,
+            ApiRole.INSTRUCTOR,
+        }
+        if self.execute_roles.intersection(resource_bound_roles):
+            raise ValueError(
+                "human workflow roles must use principal-bound resource command endpoints"
+            )
         return self
 
 

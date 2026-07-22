@@ -27,6 +27,7 @@ from axcalib.schemas import (
     ProgramNotificationRecord,
     ProgramRef,
     ProgramStatus,
+    ProjectDossier,
     ProjectStatusRequirement,
     RequirementResult,
     ScoreRequirement,
@@ -96,6 +97,9 @@ class EducationProgramService:
         *,
         learner_ref: str,
         enrollment_id: str | None = None,
+        organization_id: str | None = None,
+        actor_id: str | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Pin a learner to one program version and generate milestone goals."""
 
@@ -132,9 +136,14 @@ class EducationProgramService:
             enrollment.enrollment_id,
             1,
             "learner_enrolled",
-            actor_id=learner_ref,
+            actor_id=actor_id or learner_ref,
             actor_role="learner",
-            details={"program": reference.selector, "program_sha256": reference.sha256},
+            details={
+                "program": reference.selector,
+                "program_sha256": reference.sha256,
+                "organization_id": organization_id or "",
+                "authority_context": authority_context,
+            },
         )
         saved = self.transactions.execute_create(
             enrollment,
@@ -150,10 +159,13 @@ class EducationProgramService:
         milestone_id: str,
         *,
         actor_id: str,
+        expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Start one available or returned milestone."""
 
         enrollment = self.enrollments.load(enrollment_id)
+        self._require_revision(enrollment, expected_revision)
         self._require_active(enrollment)
         progress = self._progress(enrollment, milestone_id)
         if progress.status not in {
@@ -175,7 +187,10 @@ class EducationProgramService:
             "milestone_started",
             actor_id=actor_id,
             actor_role="learner",
-            details={"milestone_id": milestone_id},
+            details={
+                "milestone_id": milestone_id,
+                "authority_context": authority_context,
+            },
         )
         return self._result(saved, "마일스톤 수행을 시작했습니다.")
 
@@ -188,10 +203,13 @@ class EducationProgramService:
         actor_id: str,
         actor_role: Literal["instructor", "mentor", "administrator"],
         evidence_ref: str,
+        expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Record one configured activity confirmation."""
 
         enrollment, program, milestone = self._context(enrollment_id, milestone_id)
+        self._require_revision(enrollment, expected_revision)
         self._require_active(enrollment)
         requirement = self._requirement(milestone, requirement_id)
         if not isinstance(requirement, ManualConfirmationRequirement):
@@ -214,6 +232,7 @@ class EducationProgramService:
             result,
             actor_id=actor_id,
             actor_role=actor_role,
+            authority_context=authority_context,
         )
 
     def record_score(
@@ -226,10 +245,13 @@ class EducationProgramService:
         actor_id: str,
         actor_role: Literal["instructor", "mentor", "administrator"],
         evidence_ref: str,
+        expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Record a score and evaluate its configured threshold."""
 
         enrollment, program, milestone = self._context(enrollment_id, milestone_id)
+        self._require_revision(enrollment, expected_revision)
         self._require_active(enrollment)
         requirement = self._requirement(milestone, requirement_id)
         if not isinstance(requirement, ScoreRequirement):
@@ -255,6 +277,7 @@ class EducationProgramService:
             result,
             actor_id=actor_id,
             actor_role=actor_role,
+            authority_context=authority_context,
         )
 
     def bind_project(
@@ -264,28 +287,25 @@ class EducationProgramService:
         *,
         project_id: str,
         actor_id: str,
+        organization_id: str | None = None,
+        expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Bind exactly one AXCalib project dossier to a project milestone."""
 
         enrollment, program, milestone = self._context(enrollment_id, milestone_id)
+        self._require_revision(enrollment, expected_revision)
         self._require_active(enrollment)
         if milestone.kind.value != "project_certification":
             raise EducationProgramError("only a project milestone may bind a dossier")
         dossier = self.dossiers.load(project_id)
-        expected_context = {
-            "program_id": program.program_id,
-            "program_version": program.version,
-            "enrollment_id": enrollment.enrollment_id,
-            "milestone_id": milestone.milestone_id,
-            "learner_ref": enrollment.learner_ref,
-        }
-        actual_context = {
-            key: getattr(dossier.review_context, key) for key in expected_context
-        }
-        if actual_context != expected_context:
-            raise EducationProgramError(
-                "project dossier education context does not match this enrollment milestone"
-            )
+        self._require_project_context(
+            dossier,
+            enrollment,
+            program,
+            milestone,
+            organization_id=organization_id,
+        )
         progress = self._progress(enrollment, milestone_id)
         if progress.bound_project_id and progress.bound_project_id != project_id:
             raise EducationProgramError("milestone already has a different project dossier")
@@ -308,7 +328,11 @@ class EducationProgramService:
             "project_bound",
             actor_id=actor_id,
             actor_role="learner",
-            details={"milestone_id": milestone_id, "project_id": project_id},
+            details={
+                "milestone_id": milestone_id,
+                "project_id": project_id,
+                "authority_context": authority_context,
+            },
         )
         return self._result(saved, "프로젝트 dossier가 교육 마일스톤에 연결됐습니다.")
 
@@ -316,21 +340,31 @@ class EducationProgramService:
         self,
         enrollment_id: str,
         milestone_id: str,
+        *,
+        actor_id: str = "system:education-runtime",
+        actor_role: str = "system",
+        organization_id: str | None = None,
+        expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Derive project requirement evidence from the trusted local dossier."""
 
         enrollment, program, milestone = self._context(enrollment_id, milestone_id)
+        self._require_revision(enrollment, expected_revision)
         self._require_active(enrollment)
         progress = self._progress(enrollment, milestone_id)
         if not progress.bound_project_id:
             raise EducationProgramError("project milestone has no bound dossier")
         dossier = self.dossiers.load(progress.bound_project_id)
+        self._require_project_context(
+            dossier,
+            enrollment,
+            program,
+            milestone,
+            organization_id=organization_id,
+        )
         requirement = next(
-            (
-                item
-                for item in milestone.requirements
-                if isinstance(item, ProjectStatusRequirement)
-            ),
+            (item for item in milestone.requirements if isinstance(item, ProjectStatusRequirement)),
             None,
         )
         if requirement is None:
@@ -356,8 +390,9 @@ class EducationProgramService:
             program,
             milestone,
             result,
-            actor_id="system:education-runtime",
-            actor_role="system",
+            actor_id=actor_id,
+            actor_role=actor_role,
+            authority_context=authority_context,
         )
 
     def decide_program_completion(
@@ -368,10 +403,13 @@ class EducationProgramService:
         actor_id: str,
         rationale: str,
         reopen_milestone_ids: tuple[str, ...] = (),
+        expected_revision: int | None = None,
+        authority_context: str = "offline_unverified_actor",
     ) -> EducationPipelineResult:
         """Apply the mandatory administrator decision for program completion."""
 
         enrollment = self.enrollments.load(enrollment_id)
+        self._require_revision(enrollment, expected_revision)
         if enrollment.status is not EnrollmentStatus.COMPLETION_HITL_PENDING:
             raise EducationProgramError("program completion is not awaiting an administrator")
         if not rationale.strip():
@@ -380,6 +418,7 @@ class EducationProgramService:
             command=command,
             actor_id=actor_id,
             rationale=rationale.strip(),
+            authority_context=authority_context,
         )
         milestones = enrollment.milestones
         status = EnrollmentStatus.COMPLETED
@@ -388,9 +427,7 @@ class EducationProgramService:
                 raise EducationProgramError(
                     "return_for_revision requires at least one reopened milestone"
                 )
-            unknown = set(reopen_milestone_ids).difference(
-                item.milestone_id for item in milestones
-            )
+            unknown = set(reopen_milestone_ids).difference(item.milestone_id for item in milestones)
             if unknown:
                 raise EducationProgramError(f"unknown reopened milestones: {sorted(unknown)}")
             milestones = tuple(
@@ -425,6 +462,7 @@ class EducationProgramService:
             details={
                 "command": command,
                 "reopened_milestones": ",".join(reopen_milestone_ids),
+                "authority_context": authority_context,
             },
         )
         saved = self.transactions.execute_update(
@@ -448,6 +486,7 @@ class EducationProgramService:
         *,
         actor_id: str,
         actor_role: str,
+        authority_context: str,
     ) -> EducationPipelineResult:
         progress = self._progress(enrollment, milestone.milestone_id)
         if progress.status not in {
@@ -457,17 +496,13 @@ class EducationProgramService:
             MilestoneProgressStatus.NEEDS_ACTION,
         }:
             raise EducationProgramError("requirement cannot be recorded at this milestone status")
-        existing = {
-            item.requirement_id: item for item in progress.requirement_results
-        }
+        existing = {item.requirement_id: item for item in progress.requirement_results}
         existing[result.requirement_id] = result
         updated = progress.model_copy(
             update={
                 "status": MilestoneProgressStatus.IN_PROGRESS,
                 "started_at": progress.started_at or datetime.now(UTC),
-                "requirement_results": tuple(
-                    existing[key] for key in sorted(existing)
-                ),
+                "requirement_results": tuple(existing[key] for key in sorted(existing)),
             }
         )
         updated = self._evaluate_milestone(updated, milestone)
@@ -495,6 +530,7 @@ class EducationProgramService:
                 "requirement_id": result.requirement_id,
                 "satisfied": result.satisfied,
                 "source": result.source,
+                "authority_context": authority_context,
             },
         )
         saved = self.transactions.execute_update(
@@ -531,15 +567,11 @@ class EducationProgramService:
             project_id=enrollment.enrollment_id,
             stage=f"education_program_completion:r{enrollment.revision}",
             revision=enrollment.revision + 1,
-            report_ref=(
-                f"education-enrollment:{enrollment.enrollment_id}@r{enrollment.revision}"
-            ),
+            report_ref=(f"education-enrollment:{enrollment.enrollment_id}@r{enrollment.revision}"),
         )
         self.notifier.send(notification_event)
         event_id = self._event_id()
-        notification = ProgramNotificationRecord(
-            enrollment_revision=enrollment.revision + 1
-        )
+        notification = ProgramNotificationRecord(enrollment_revision=enrollment.revision + 1)
         candidate = enrollment.model_copy(
             update={
                 "status": EnrollmentStatus.COMPLETION_HITL_PENDING,
@@ -560,9 +592,7 @@ class EducationProgramService:
             raise EducationProgramError(
                 "education completion requires a durable notification outbox"
             )
-        requirement = self.transactions.require_outbox(
-            self.notifier.path_for(notification_event)
-        )
+        requirement = self.transactions.require_outbox(self.notifier.path_for(notification_event))
         saved = self.transactions.execute_update(
             candidate,
             expected_revision=enrollment.revision,
@@ -611,16 +641,10 @@ class EducationProgramService:
                 ProjectStatus.REGISTRATION_REJECTED.value,
                 ProjectStatus.COMPLETION_NOT_ACCEPTED.value,
             }:
-                return progress.model_copy(
-                    update={"status": MilestoneProgressStatus.NEEDS_ACTION}
-                )
-            return progress.model_copy(
-                update={"status": MilestoneProgressStatus.IN_PROGRESS}
-            )
+                return progress.model_copy(update={"status": MilestoneProgressStatus.NEEDS_ACTION})
+            return progress.model_copy(update={"status": MilestoneProgressStatus.IN_PROGRESS})
         if any(not item.satisfied for item in results.values()):
-            return progress.model_copy(
-                update={"status": MilestoneProgressStatus.NEEDS_ACTION}
-            )
+            return progress.model_copy(update={"status": MilestoneProgressStatus.NEEDS_ACTION})
         return progress
 
     @staticmethod
@@ -633,10 +657,7 @@ class EducationProgramService:
             for item in progress_items
             if item.status is MilestoneProgressStatus.COMPLETED
         }
-        specs = {
-            milestone.milestone_id: milestone
-            for _, milestone in program.milestones()
-        }
+        specs = {milestone.milestone_id: milestone for _, milestone in program.milestones()}
         return tuple(
             item.model_copy(update={"status": MilestoneProgressStatus.AVAILABLE})
             if item.status is MilestoneProgressStatus.LOCKED
@@ -656,6 +677,41 @@ class EducationProgramService:
             raise EducationProgramError("program content changed after enrollment")
         milestone = self._milestone(program, milestone_id)
         return enrollment, program, milestone
+
+    @staticmethod
+    def _require_revision(
+        enrollment: EducationEnrollment,
+        expected_revision: int | None,
+    ) -> None:
+        if expected_revision is not None and enrollment.revision != expected_revision:
+            raise EducationProgramError(
+                f"expected enrollment revision {expected_revision}; current revision is "
+                f"{enrollment.revision}"
+            )
+
+    @staticmethod
+    def _require_project_context(
+        dossier: ProjectDossier,
+        enrollment: EducationEnrollment,
+        program: EducationProgram,
+        milestone: MilestoneSpec,
+        *,
+        organization_id: str | None,
+    ) -> None:
+        expected_context: dict[str, str] = {
+            "program_id": program.program_id,
+            "program_version": program.version,
+            "enrollment_id": enrollment.enrollment_id,
+            "milestone_id": milestone.milestone_id,
+            "learner_ref": enrollment.learner_ref,
+        }
+        if organization_id is not None:
+            expected_context["proposer_org_id"] = organization_id
+        actual_context = {key: getattr(dossier.review_context, key) for key in expected_context}
+        if actual_context != expected_context:
+            raise EducationProgramError(
+                "project dossier education context does not match this enrollment milestone"
+            )
 
     @staticmethod
     def _milestone(program: EducationProgram, milestone_id: str) -> MilestoneSpec:
@@ -759,8 +815,7 @@ class EducationProgramService:
         updated: MilestoneProgress,
     ) -> tuple[MilestoneProgress, ...]:
         return tuple(
-            updated if item.milestone_id == updated.milestone_id else item
-            for item in values
+            updated if item.milestone_id == updated.milestone_id else item for item in values
         )
 
     @staticmethod

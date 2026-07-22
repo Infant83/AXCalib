@@ -979,6 +979,14 @@ route와 working script에서 model call, file parse, 상태판정을 직접 수
   기본 resolver는 모두 거부하며 운영 구현은 immutable content-addressed object version이어야 한다.
 - project 등록 replay는 principal+idempotency key로 만든 stable project ID에서 request/context/artifact
   hash와 principal-bound creation audit가 모두 같을 때만 성공한다.
+- education runtime은 generic pipeline grant로 공개하지 않는다. 전용 endpoint는 request actor/learner/org
+  field 없이 principal subject를 사용하며, self enrollment는 exact program hash를 요구한다.
+- learner는 enrollment learner + `education:progress:self`, mentor는 enrollment별 mentor scope,
+  instructor는 immutable program selector별 instructor scope, administrator는 explicit enrollment/global
+  admin scope에 bind한다. 모든 mutation은 organization과 expected revision을 확인하고 같은 idempotency
+  key의 성공 결과만 replay한다.
+- project milestone bind/sync는 program/version/enrollment/milestone/learner와 proposer organization을
+  dossier에서 다시 검사하며 project 상태를 request로 받지 않는다.
 - run status/cancel은 owner, administrator 또는 explicit cross-run scope로 제한한다.
 - 짧은 read/write: 동기 HTTP response
 - parse/evaluation/index: 202 + run_id
@@ -1017,10 +1025,11 @@ HTTP message와 내부 stack trace를 분리하고 trace_id를 제공한다.
 - auditor: read-only audit
 - administrator: rubric/model/access 설정
 
-HTTP Alpha의 `project_owner`, `operator`, `administrator`, `viewer`는 전달계층 역할이다. project
-decision의 administrator는 domain HITL guard와 함께 사용하지만, 이 역할을 education learner/mentor/
-instructor 또는 전사 운영권한으로 자동 승격하지 않는다. claim mapping과 역할 조합은 승인된
-OIDC/RBAC 정책 전까지 deployment-ready가 아니다.
+HTTP Alpha의 `project_owner`, `learner`, `mentor`, `instructor`, `operator`, `administrator`, `viewer`는
+전달계층 역할이다. project decision의 administrator와 education completion administrator는 각각
+domain HITL guard와 resource scope를 함께 사용하며, 한 역할을 다른 업무 권한이나 전사 운영권한으로
+자동 승격하지 않는다. mentor/instructor assignment scope와 역할 조합은 승인된 OIDC/RBAC·교육 배정
+정책 전까지 deployment-ready가 아니다.
 
 역할만으로 충분하지 않으며 project/organization/access_classification scope를 함께 검사한다.
 

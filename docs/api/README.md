@@ -5,8 +5,8 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 
 - [전체 제품 목표 계약](openapi.v1alpha1.json): project evaluation/HITL까지 포함하는
   **pre-implementation target**
-- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime과 WP-06.I2a의
-  principal-bound project registration/HITL command **implemented local Alpha**
+- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime과 WP-06.I2a/I2b의
+  principal-bound project·education resource command **implemented local Alpha**
 
 목표 계약에만 존재하는 endpoint를 실행 가능하다고 간주하지 않는다. 구현 artifact는 FastAPI가
 생성한 schema와 contract test에서 byte 의미 수준으로 비교한다.
@@ -26,6 +26,9 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
   expected revision을 모두 검사한다.
 - generic pipeline payload가 `actor_id`, `actor_role` 또는 관리자 결정을 전달하는 것은 거부한다.
   전용 project decision endpoint에는 actor field가 없으며 검증된 principal subject만 audit actor가 된다.
+- `education-program-runtime@v1alpha1`은 generic grant로 노출할 수 없다. 교육 endpoint는 learner,
+  mentor, instructor, administrator의 exact resource scope와 organization을 검사하고 request actor를
+  principal subject로 대체한다.
 - remote project request는 local path를 받지 않는다. deployment-owned `StagedArtifactResolver`가 opaque
   artifact ID를 access-check하고 API가 media type, byte size와 SHA-256을 재검증한다. 기본 resolver는
   모두 거부한다.
@@ -64,6 +67,15 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 | POST | `/v1/projects` | principal-bound project 등록; required idempotency key와 staged PPTX hash 검증 |
 | POST | `/v1/projects/{project_id}/decisions/registration` | 관리자 등록 승인/반려; scope/org/revision guard |
 | POST | `/v1/projects/{project_id}/decisions/completion` | 관리자 완료 수용/미수용; scope/org/revision guard |
+| GET | `/v1/programs/{program_id}/versions/{program_version}` | local path를 제거한 immutable program/hash 조회 |
+| POST | `/v1/programs/{program_id}/versions/{program_version}/enrollments` | exact hash의 principal-bound learner self enrollment |
+| GET | `/v1/enrollments/{enrollment_id}` | learner 또는 배정 reviewer/admin의 진도 조회 |
+| POST | `/v1/enrollments/{id}/milestones/{milestone_id}/start` | 해당 learner의 milestone 시작 |
+| POST | `/v1/enrollments/{id}/milestones/{milestone_id}/manual-confirmations` | 설정된 instructor/mentor/admin의 확인 기록 |
+| POST | `/v1/enrollments/{id}/milestones/{milestone_id}/scores` | 설정된 reviewer의 점수 기록 |
+| POST | `/v1/enrollments/{id}/milestones/{milestone_id}/projects` | learner project dossier 연결과 context/org 검증 |
+| POST | `/v1/enrollments/{id}/milestones/{milestone_id}/project-sync` | 저장된 dossier 상태에서 project requirement 동기화 |
+| POST | `/v1/enrollments/{enrollment_id}/completion-decisions` | 관리자 과정 완료 승인/보완반려 |
 
 구현 artifact 재생성:
 
@@ -72,8 +84,9 @@ uv run --no-sync python scripts/pipelines/export_runtime_openapi.py
 ~~~
 
 TestClient 계약은 실제 socket이나 외부 인증 endpoint를 열지 않는다. 운영 server, OIDC/JWKS,
-rate limit, immutable upload service, project read/list/report authorization, worker/202/SSE는 후속
-WP-06 범위다. 운영 NO-GO와 공격면은 [API Alpha Threat Model](../security/api-alpha-threat-model.md)을
+rate limit, immutable upload service, 실제 교육 배정/claim source, project read/list/report authorization,
+worker/202/SSE는 후속 WP-06 범위다. 운영 NO-GO와 공격면은
+[API Alpha Threat Model](../security/api-alpha-threat-model.md)을
 따른다.
 
 현재 decision endpoint의 expected revision은 중복 mutation을 막지만, commit 뒤 HTTP 응답 유실을
@@ -82,15 +95,21 @@ WP-06 범위다. 운영 NO-GO와 공격면은 [API Alpha Threat Model](../securi
 
 ## 교육 프로그램 확장 경계
 
-`EducationProgram`, `EducationEnrollment`과 `education-program-runtime@v1alpha1` typed command는
-현재 Python Library에서 실행된다. program/enrollment JSON Schema Draft 2020-12 artifact도
-생성되지만 implemented OpenAPI에는 아직 endpoint를 추가하지 않았다. WP-06.I2b에서 다음
-resource/command를 같은 schema와 idempotency 의미로 노출한다.
+implemented OpenAPI는 미리 발행된 immutable program의 safe 조회, learner self enrollment, enrollment
+조회, milestone start/manual confirmation/score/project bind·sync와 administrator completion
+approve/return을 제공한다. mutation은 `Idempotency-Key`와 `expected_revision`이 필수이며 같은
+principal/key/request의 성공 결과만 replay한다.
 
-- immutable program publish/show/retire
-- learner enrollment와 milestone progress 조회
-- manual confirmation, score, project bind/sync typed command
-- program completion administrator approve/return command
+| actor 역할 | principal/resource 조건 |
+|---|---|
+| learner | enrollment `learner_ref`와 subject 일치 + `education:progress:self` |
+| mentor | `education:enrollment:{id}:mentor` |
+| instructor | `education:program:{program_id}@{version}:instructor` |
+| administrator | `education:admin:any` 또는 enrollment별 admin scope |
+
+모든 역할은 enrollment creation audit에 고정된 organization도 일치해야 한다. program publish/retire,
+mentor/instructor assignment 저장소와 실제 IdP claim mapping은 아직 구현하지 않았다. library-only
+legacy enrollment처럼 organization-bound creation audit가 없는 resource는 HTTP에서 fail closed한다.
 
 project status, HITL 생략, 자동 과정 완료, arbitrary expression/import는 request field로 제공하지
 않는다. Web App은 API가 반환한 milestone state와 allowed command만 표시한다.

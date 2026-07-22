@@ -13,22 +13,22 @@
 
 - 제품: AXCalib, AX Certification Agent Library
 - 핵심 경계: Agent는 심의 초안을 만들고 승인된 사람이 최종 결정한다.
-- 현재 위치: P7 / WP-06.I2a / G4 Interfaces
-- 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a project API local Alpha
-- 다음 Slice: WP-06.I2b education principal binding `ready`
-- 최근 증거: 115 lightweight tests, 10 eval groups, project API 5/5, combined API 12/12,
+- 현재 위치: P7 / WP-06.I2c / G4 Interfaces
+- 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a/I2b project·education API local Alpha
+- 다음 Slice: WP-06.I2c project read/decision replay `ready`
+- 최근 증거: 120 lightweight tests, 10 eval groups, education API 5/5, combined API 17/17,
   Ruff check, Pyright 0/0, validation 0/0
 - 최근 해결: SkillBoss proxy의 `json_object` HTTP 500 원인을 JSON keyword/schema contract로 복구
 - 최근 구현: project/education recovery, pipeline checkpoint/result hash/cancel, JSONL batch,
-  non-destructive maintenance, Alpha CLI, fail-closed runtime API, principal-bound project register/HITL과
-  clean-wheel actual-PPTX quickstart
+  non-destructive maintenance, Alpha CLI, fail-closed runtime API, principal-bound project register/HITL,
+  education enrollment/milestone/completion command와 clean-wheel actual-PPTX quickstart
 - 중단 원인: Windows `os.kill(pid, 0)` self-termination; read-only Win32 query로 해결. Docling은 별도
   `prep.ps1 docling` contract로 분리
 - 모델 경계: Qwen3.5 Plus/GPT-4o provider proxy만 확인; exact `Qwen3.5-397B-A17B`는 미검증
 - 데이터 경계: synthetic 또는 승인된 비식별 fixture만 사용
-- API 경계: injected verifier/grant; project command는 principal·scope·org·revision과 staged hash에 bind.
-  OIDC/JWKS, immutable upload, education auth와 202 worker는 미구현
-- 다음 읽기: `../PROJECT_STATE.md` → `../docs/evaluation/wp06-i2a-principal-bound-project-api-report.md` →
+- API 경계: injected verifier/grant; project/education command는 principal·resource scope·org·revision,
+  staged/program hash에 bind. OIDC/JWKS·실제 교육 배정, immutable upload와 202 worker는 미구현
+- 다음 읽기: `../PROJECT_STATE.md` → `../docs/evaluation/wp06-i2b-principal-bound-education-api-report.md` →
   `../docs/HANDOFF.md` → `../CHANGELOG.md`
 
 ## 재개 체크리스트

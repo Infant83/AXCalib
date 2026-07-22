@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-project-api-alpha
+baseline: v0.3-p1-g4-education-api-alpha
 phase: P7 Interfaces
 gate: G4 Interfaces
 gate_status: interface_alpha_in_progress
-status: g4_project_api_verified_education_binding_ready
+status: g4_resource_api_verified_project_replay_ready
 current_work_package: WP-06 interface hardening
-active_slice: WP-06.I2b education-principal-binding-contract
+active_slice: WP-06.I2c project-read-decision-replay-contract
 active_slice_status: ready
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-007
+last_history_id: HIST-2026-07-22-009
 ---
 
 # AXCalib Project Execution Ledger
@@ -61,11 +61,11 @@ last_history_id: HIST-2026-07-22-007
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
 | 현재 Work Package | **WP-06 interface hardening** |
-| Active Slice | **WP-06.I2b** (`ready`; education principal/role/scope binding contract) |
-| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/runtime/project API local Alpha evidence 확보 |
-| 다음 Gate | **G4 Interfaces**; education auth, OIDC/immutable upload와 202 worker evidence 필요 |
+| Active Slice | **WP-06.I2c** (`ready`; authorized project read와 decision semantic replay) |
+| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/runtime/project·education API local Alpha evidence 확보 |
+| 다음 Gate | **G4 Interfaces**; project replay/read, OIDC/immutable upload와 202 worker evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 115 lightweight tests, 10 eval groups, API 12/12, validation 0/0, Ruff check, Pyright 0/0 |
+| 최근 회귀 | 120 lightweight tests, 10 eval groups, API 17/17, validation 0/0, Ruff check, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -132,7 +132,7 @@ gantt
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
 | P6 Calibration | WP-05/06 일부 | `not_started` | panel disagreement와 human agreement report |
-| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/runtime/project API local Alpha 완료; education auth/OIDC/upload/worker 남음 |
+| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/runtime/project·education API local Alpha 완료; read/replay/OIDC/upload/worker 남음 |
 | P8 Web Review | Web delivery | `blocked_policy` | FE/RBAC 선택, API, reviewer E2E와 G5 |
 | P9 Pilot | pilot package | `not_started` | 승인된 비식별 자료, G6~G7 결정 |
 
@@ -144,7 +144,7 @@ gantt
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
 | G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
-| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor, JSONL batch, fail-closed runtime + principal-bound project API/OpenAPI | education auth, OIDC/RBAC, immutable upload와 202 worker/SSE |
+| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor, JSONL batch, fail-closed runtime + principal-bound project·education API/OpenAPI | project read/replay, OIDC/RBAC, immutable upload와 202 worker/SSE |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
 | G6 Pilot | `not_started` | 없음 | 승인된 비식별 paired dataset |
 | G7 Go/No-Go | `not_started` | 없음 | Sponsor Continue/Narrow/Stop 결정 |
@@ -300,11 +300,11 @@ Exit Evidence:
 - [x] threat model, contract/E2E, validate/test/eval와 diagram/module drift 검증이 통과한다.
 - [x] education learner/mentor/instructor binding은 후속 WP-06.I2b로 범위와 선행조건이 기록된다.
 
-### 5.7 현재 Active Slice — WP-06.I2b Education Principal Binding Contract
+### 5.7 완료 Slice — WP-06.I2b Education Principal Binding Contract
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `ready`; WP-06.I2a checkpoint push 후 착수 가능 |
+| 상태 | `verified_local_contract`; 2026-07-22 synthetic/in-process 검증 완료 |
 | 목적 | education command의 learner/mentor/instructor/administrator를 enrollment/program/project context에 bind |
 | 대상 Module | M02 state/approval, M09 education workflow, M12 API/worker |
 | 입력 | approved role vocabulary, program/enrollment scope matrix, immutable program version과 current project API principal contract |
@@ -314,12 +314,33 @@ Exit Evidence:
 
 Exit Evidence:
 
-- [ ] request actor 문자열 없이 verified principal이 education audit actor가 된다.
-- [ ] learner/mentor/instructor/administrator command별 role·scope matrix가 명시된다.
-- [ ] program version, enrollment learner, mentor, organization mismatch가 mutation 전에 거부된다.
-- [ ] project completion 근거 연결은 기존 dossier context/state guard를 우회하지 않는다.
-- [ ] implemented education resource만 runtime OpenAPI에 추가하고 contract/E2E가 통과한다.
-- [ ] approved OIDC claim mapping과 실제 계정/배포는 별도 운영 Gate로 유지한다.
+- [x] request actor 문자열 없이 verified principal이 education audit actor가 된다.
+- [x] learner/mentor/instructor/administrator command별 role·scope matrix가 명시된다.
+- [x] program version, enrollment learner, mentor, organization mismatch가 mutation 전에 거부된다.
+- [x] project completion 근거 연결은 기존 dossier context/state guard를 우회하지 않는다.
+- [x] implemented education resource만 runtime OpenAPI에 추가하고 contract/E2E가 통과한다.
+- [x] approved OIDC claim mapping과 실제 계정/배포는 별도 운영 Gate로 유지한다.
+
+### 5.8 현재 Active Slice — WP-06.I2c Project Read and Decision Replay Contract
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `ready`; WP-06.I2b checkpoint push 후 착수 가능 |
+| 목적 | project decision commit 뒤 응답 유실을 안전하게 복구하고 authorized current state를 조회 |
+| 대상 Module | M02 state/approval, M10 runtime/idempotency, M12 API/worker |
+| 입력 | project principal/org contract, current decision endpoint, local idempotency store |
+| 출력 | URI-redacted project GET과 principal-bound registration/completion decision replay |
+| 목표 Gate | G4 Interfaces |
+| 외부 호출 | 없음; synthetic/in-process only, 실제 OIDC·계정·배포 없음 |
+
+Exit Evidence:
+
+- [ ] project owner/admin의 read scope와 organization mismatch가 resource 반환 전에 거부된다.
+- [ ] response에는 dossier/source/report local URI와 허용되지 않은 원문이 없다.
+- [ ] 동일 principal/key/stage/revision/command는 commit 뒤 같은 semantic 결과를 replay한다.
+- [ ] 같은 key의 다른 actor/resource/payload는 mutation 없이 409 conflict다.
+- [ ] registration/completion 두 endpoint와 authorized GET의 contract/E2E/OpenAPI가 통과한다.
+- [ ] distributed idempotency와 actual OIDC는 별도 운영 Gate로 유지한다.
 
 ## 6. 일정·작업 Queue
 
@@ -338,13 +359,15 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 8 | P5-P6 / WP-05 | exact on-prem Qwen/panel/calibration | `blocked_endpoint_policy` | exact endpoint·gold label 승인 | TBD | TBD | G3 quality |
 | 9 | P7 / WP-06 | minimal API/OpenAPI parity | `verified_local_alpha` | CLI/batch Alpha와 auth contract | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 10 | P7 / WP-06 | principal-bound project command/artifact contract | `verified_local_contract` | runtime API Alpha, role/scope policy | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
-| 11 | P7 / WP-06 | education principal binding contract | `ready` | project API contract, education domain reference | TBD | TBD | G4 |
-| 12 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
+| 11 | P7 / WP-06 | education principal binding contract | `verified_local_contract` | project API contract, education domain reference | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
+| 12 | P7 / WP-06 | project read and decision replay contract | `ready` | project resource auth, local idempotency | TBD | TBD | G4 |
+| 13 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-22 | WP-06.I2b principal-bound education API | education/runtime/project API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | education API 5/5, combined API 17/17, full 120 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0, OpenAPI 16 paths | in-process resource scope contract; actual OIDC/assignment source/server 미포함 |
 | 2026-07-22 | WP-06.I2a principal-bound project API | project/runtime API contract, full test/eval, Ruff, Pyright, validate, SVG/PNG visual audit | API 12/12, full 115 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0 | in-process project command/staging port; actual OIDC/upload/server 미포함 |
 | 2026-07-22 | WP-06.I1 runtime API Alpha | contract pytest, clean core/API wheel, full test/eval, Ruff/Pyright/validate | API 7/7, full 110 passed, 10 eval groups, 0/0 static/validate | in-process sync API; OIDC/RBAC/upload/worker/server 미포함 |
 | 2026-07-22 | WP-01.R1.2 Library MVP/Alpha | lightweight `prep test/eval`, Ruff, low-memory Pyright, validate, clean wheel/CLI/actual-PPTX | 103 passed, 10 eval groups, Alpha 8/8, Ruff, Pyright 0/0, validate 0/0 | single-host offline Alpha; Docling current-turn rerun·API/RBAC/운영 미포함 |
@@ -719,6 +742,57 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   [API Threat Model](docs/security/api-alpha-threat-model.md),
   [WP-06.I2a 리포트](docs/evaluation/wp06-i2a-principal-bound-project-api-report.md), D-036,
   R-016/R-021/R-038/R-039/R-041/R-042와 M02/M09/M12 Module Control Board.
+
+### HIST-2026-07-22-008
+
+- Phase / WP / Gate: P7 / WP-06.I2b / G4
+- 상태: `closeout_validation_in_progress`
+- 작업: actor 없는 education program/enrollment/milestone resource endpoint, learner/mentor/instructor/
+  administrator resource scope와 organization/program-hash/revision/project-context guard를 구현했다.
+  ADR-024, API threat model, generated OpenAPI, module plan/두 Mermaid/SVG/PNG와 개발리포트를 같은
+  change set으로 갱신했다.
+- 검증: education API 5 passed, combined API 17 passed, education unit/integration 7 passed, changed-scope
+  Ruff와 Pyright 0/0. 첫 full `prep.ps1 test`는 118 passed였고 새 report link와 final history가 아직
+  없어서 harness 2건만 실패했다.
+- 특이사항: 별도 router의 postponed annotation이 auth dependency를 query parameter로 해석한 초기
+  422를 eager annotation으로 수정했다. idempotent 성공 replay가 current revision 검사에 막히지 않도록
+  authorization 뒤 domain/idempotency 순서를 고정했고, enrollment creation audit와 cross-tenant
+  requirement lookup 순서도 보강했다.
+- 미검증: 문서/history 보강 뒤 full test 재실행, eval/validate, clean API wheel. 실제 OIDC/JWKS,
+  education assignment source, immutable upload, socket server/worker와 실데이터는 범위 밖이다.
+- 다음 작업: 동일 저메모리 명령을 순차 재실행하고 성공하면 별도 append-only closeout history로
+  WP-06.I2b를 완료 처리한다.
+
+### HIST-2026-07-22-009
+
+- Phase / WP / Gate: P7 / WP-06.I2b / G4
+- 상태: `verified_local_education_api_contract_g4_remaining`
+- 작업: immutable program safe GET/self enrollment, authorized enrollment GET, learner milestone start,
+  configured instructor/mentor confirmation·score, project bind/sync와 administrator completion decision을
+  actor 없는 resource endpoint로 제공했다. education generic pipeline grant는 금지하고 principal subject,
+  resource assignment scope, organization, program hash와 expected revision을 domain transaction까지 bind했다.
+- 변경 파일: `src/axcalib/api` auth/model/app/education router, education pipeline/service revision·authority·
+  project-context contract, API tests/generated OpenAPI, ADR-024·I2b 리포트·threat model, README/API/HANDOFF/
+  GOAL/WORK_SPEC/DESIGN/AGENTS/CHANGELOG/memory bank, decision/risk, module plan·workflow Mermaid·SVG/PNG와
+  이 원장.
+- 검증: education API 5 passed, combined API 17 passed, full lightweight offline 120 passed, 10 eval groups
+  passed, Ruff check passed, changed-file format check passed, low-memory Pyright 0 errors/0 warnings,
+  `prep validate` 0 errors/0 warnings. clean `[api]` wheel은 FastAPI 0.139.2/OpenAPI 3.1/16 paths를 확인했고
+  두 SVG는 Edge headless로 렌더해 clipping/상태 라벨을 확인했다.
+- 특이사항: HIST-008의 첫 full test 2건 실패는 새 report/history 미완성만 감지한 harness contract였다.
+  두 산출물을 추가한 뒤 같은 명령이 120/120으로 통과했다. auth dependency annotation, replay/revision
+  순서, persisted enrollment audit 재검증, cross-tenant requirement enumeration과 sync context 재검증을
+  코드리뷰 중 수정했다.
+- 미검증: approved OIDC/JWKS와 claim mapping, actual mentor/instructor assignment source·revocation,
+  program publish/retire, legacy enrollment migration, immutable upload, project read/decision replay,
+  socket server/rate limit, distributed 202 worker/SSE. Docling/live model/실데이터/운영 notification은
+  호출하지 않았다.
+- 다음 작업: WP-06.I2c에서 URI-redacted authorized project GET과 principal-bound administrator decision
+  semantic replay를 구현해 R-042 응답 유실 복구 계약을 닫는다.
+- 관련 근거: [ADR-024](docs/adr/ADR-024-principal-bound-education-api.md),
+  [API Threat Model](docs/security/api-alpha-threat-model.md),
+  [WP-06.I2b 리포트](docs/evaluation/wp06-i2b-principal-bound-education-api-report.md), D-037,
+  R-016/R-021/R-026/R-030/R-038/R-039/R-043와 M02/M09/M12 Module Control Board.
 
 ## 10. 단계 종료 업데이트 템플릿
 

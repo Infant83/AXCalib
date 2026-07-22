@@ -35,7 +35,7 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 `offline_reference`는 제품 module 완료가 아니다. 현재 local/synthetic slice에서 실행되고 회귀
 test가 있다는 뜻이다. M01의 `contract_verified`도 filesystem dossier/freeze 계약에 한정하며 운영
 transaction 또는 제품 전체 완료가 아니다. M12의 `contract_verified`는 fail-closed in-process
-catalog/run/status/cancel 계약에 한정하며 운영 인증·worker 완료가 아니다. 각 행의 다음 Exit
+runtime/project/education resource API 계약에 한정하며 운영 인증·worker 완료가 아니다. 각 행의 다음 Exit
 Evidence가 남아 있다.
 
 ### 1.1 2026-07-16 slice evidence
@@ -287,13 +287,15 @@ Evidence가 남아 있다.
 - 첫 slice: implemented local FastAPI catalog/run/status/cooperative-cancel adapter
 - 두 번째 slice: principal-bound project register와 registration/completion administrator decision,
   no-path staged artifact resolver/hash boundary
+- 세 번째 slice: immutable program 조회/self enrollment, learner/mentor/instructor/admin resource scope와
+  milestone/reviewer/project-sync/completion command
 - 검증: generated OpenAPI 3.1/Draft 2020-12, fail-closed verifier/grant, reserved authority field
-  rejection, principal/role/scope/organization/revision, staged hash, unknown option, deterministic idempotent
-  retry, run conflict와 cancellation
+  rejection, principal/role/resource-scope/organization/program-hash/revision, staged hash, project context,
+  unknown option, deterministic idempotent retry, run conflict와 cancellation
 - 현재 완료증거: `tests/contract/test_runtime_api_contract.py`,
-  `tests/contract/test_project_api_contract.py`, `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023와
-  API Alpha threat model
-- 남은 완료증거: education principal-bound command, immutable upload/staging service, approved OIDC/RBAC,
+  `tests/contract/test_project_api_contract.py`, `tests/contract/test_education_api_contract.py`,
+  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024와 API Alpha threat model
+- 남은 완료증거: immutable upload/staging service, approved OIDC/RBAC·education assignment source,
   project read/list/report authorization와 decision semantic replay, 202 worker/SSE 및 script/CLI/API
   workflow result parity
 
@@ -403,11 +405,12 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-Library/CLI/runtime/project API local Alpha checkpoint 다음은 G4 Interfaces의 education authority slice다.
+Library/CLI/runtime/project·education API local Alpha checkpoint 다음은 G4 Interfaces의 resource read와
+decision replay slice다.
 
-1. M12의 project principal binding을 기준으로 learner/mentor/instructor/administrator를 program version,
-   enrollment, milestone과 organization scope에 bind하는 education 전용 command를 설계한다.
-2. approved OIDC/JWKS claim mapping과 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
+1. authorized project GET과 administrator decision semantic replay를 추가해 응답 유실 복구 계약을
+   고정한다.
+2. approved OIDC/JWKS claim mapping, education assignment source와 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
    분리한다.
 3. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
 4. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.

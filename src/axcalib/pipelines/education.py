@@ -21,6 +21,7 @@ class EducationCommandBase(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     idempotency_key: str | None = Field(default=None, pattern=IDEMPOTENCY_PATTERN)
+    authority_context: str = "offline_unverified_actor"
 
 
 class EnrollCommand(EducationCommandBase):
@@ -28,6 +29,8 @@ class EnrollCommand(EducationCommandBase):
     program_selector: str
     learner_ref: str
     enrollment_id: str | None = None
+    organization_id: str | None = None
+    actor_id: str | None = None
 
 
 class StartMilestoneCommand(EducationCommandBase):
@@ -35,6 +38,7 @@ class StartMilestoneCommand(EducationCommandBase):
     enrollment_id: str
     milestone_id: str
     actor_id: str
+    expected_revision: int | None = Field(default=None, ge=1)
 
 
 class ManualConfirmationCommand(EducationCommandBase):
@@ -45,6 +49,7 @@ class ManualConfirmationCommand(EducationCommandBase):
     actor_id: str
     actor_role: Literal["instructor", "mentor", "administrator"]
     evidence_ref: str
+    expected_revision: int | None = Field(default=None, ge=1)
 
 
 class RecordScoreCommand(EducationCommandBase):
@@ -56,6 +61,7 @@ class RecordScoreCommand(EducationCommandBase):
     actor_id: str
     actor_role: Literal["instructor", "mentor", "administrator"]
     evidence_ref: str
+    expected_revision: int | None = Field(default=None, ge=1)
 
 
 class BindProjectCommand(EducationCommandBase):
@@ -64,12 +70,18 @@ class BindProjectCommand(EducationCommandBase):
     milestone_id: str
     project_id: str
     actor_id: str
+    organization_id: str | None = None
+    expected_revision: int | None = Field(default=None, ge=1)
 
 
 class SyncProjectCommand(EducationCommandBase):
     action: Literal["sync_project"] = "sync_project"
     enrollment_id: str
     milestone_id: str
+    actor_id: str = "system:education-runtime"
+    actor_role: Literal["learner", "mentor", "instructor", "administrator", "system"] = "system"
+    organization_id: str | None = None
+    expected_revision: int | None = Field(default=None, ge=1)
 
 
 class DecideProgramCompletionCommand(EducationCommandBase):
@@ -80,6 +92,7 @@ class DecideProgramCompletionCommand(EducationCommandBase):
     actor_role: Literal["administrator"]
     rationale: str
     reopen_milestone_ids: tuple[str, ...] = ()
+    expected_revision: int | None = Field(default=None, ge=1)
 
 
 EducationCommand = Annotated[
@@ -116,12 +129,17 @@ class EducationProgramPipeline:
                 request.program_selector,
                 learner_ref=request.learner_ref,
                 enrollment_id=request.enrollment_id,
+                organization_id=request.organization_id,
+                actor_id=request.actor_id,
+                authority_context=request.authority_context,
             )
         if isinstance(request, StartMilestoneCommand):
             return self.service.start_milestone(
                 request.enrollment_id,
                 request.milestone_id,
                 actor_id=request.actor_id,
+                expected_revision=request.expected_revision,
+                authority_context=request.authority_context,
             )
         if isinstance(request, ManualConfirmationCommand):
             return self.service.record_manual_confirmation(
@@ -131,6 +149,8 @@ class EducationProgramPipeline:
                 actor_id=request.actor_id,
                 actor_role=request.actor_role,
                 evidence_ref=request.evidence_ref,
+                expected_revision=request.expected_revision,
+                authority_context=request.authority_context,
             )
         if isinstance(request, RecordScoreCommand):
             return self.service.record_score(
@@ -141,6 +161,8 @@ class EducationProgramPipeline:
                 actor_id=request.actor_id,
                 actor_role=request.actor_role,
                 evidence_ref=request.evidence_ref,
+                expected_revision=request.expected_revision,
+                authority_context=request.authority_context,
             )
         if isinstance(request, BindProjectCommand):
             return self.service.bind_project(
@@ -148,11 +170,19 @@ class EducationProgramPipeline:
                 request.milestone_id,
                 project_id=request.project_id,
                 actor_id=request.actor_id,
+                organization_id=request.organization_id,
+                expected_revision=request.expected_revision,
+                authority_context=request.authority_context,
             )
         if isinstance(request, SyncProjectCommand):
             return self.service.sync_project_milestone(
                 request.enrollment_id,
                 request.milestone_id,
+                actor_id=request.actor_id,
+                actor_role=request.actor_role,
+                organization_id=request.organization_id,
+                expected_revision=request.expected_revision,
+                authority_context=request.authority_context,
             )
         if isinstance(request, DecideProgramCompletionCommand):
             return self.service.decide_program_completion(
@@ -161,6 +191,8 @@ class EducationProgramPipeline:
                 actor_id=request.actor_id,
                 rationale=request.rationale,
                 reopen_milestone_ids=request.reopen_milestone_ids,
+                expected_revision=request.expected_revision,
+                authority_context=request.authority_context,
             )
         raise TypeError(f"unsupported education command: {type(request).__name__}")
 

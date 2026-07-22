@@ -9,7 +9,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from axcalib.pipelines import PipelineDescriptor
 from axcalib.runtime import PipelineExecutionResult, PipelineRunStatus
-from axcalib.schemas import ReviewerAdjustment
+from axcalib.schemas import (
+    EducationProgram,
+    EnrollmentStatus,
+    MilestoneProgress,
+    ProgramCompletionDecision,
+    ProgramNotificationRecord,
+    ReviewerAdjustment,
+)
 from axcalib.workflows.two_gate import ProjectStatus
 
 PPTX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
@@ -181,6 +188,95 @@ class ProjectCommandResponse(BaseModel):
     message: str
 
 
+class EducationProgramView(BaseModel):
+    """Immutable education program without a deployment-local source path."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "axcalib.api-education-program/v1alpha1"
+    selector: str
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    program: EducationProgram
+
+
+class EducationEnrollmentCreateRequest(BaseModel):
+    """Enroll the authenticated learner in one exact program artifact."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    expected_program_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
+class EducationRevisionRequest(BaseModel):
+    """Shared optimistic-concurrency input for enrollment mutations."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    expected_revision: int = Field(ge=1)
+
+
+class EducationManualConfirmationRequest(EducationRevisionRequest):
+    """Record an allowlisted manual requirement using an opaque evidence ID."""
+
+    requirement_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+    evidence_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$")
+
+
+class EducationScoreRequest(EducationManualConfirmationRequest):
+    """Record an authorized score against one configured requirement."""
+
+    score: float = Field(ge=0.0, le=100.0)
+
+
+class EducationProjectBindRequest(EducationRevisionRequest):
+    """Bind one existing project dossier to an enrollment milestone."""
+
+    project_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+
+
+class EducationCompletionDecisionRequest(EducationRevisionRequest):
+    """Administrator-only final education completion command."""
+
+    command: Literal["approve", "return_for_revision"]
+    rationale: str = Field(min_length=1, max_length=4000)
+    reopen_milestone_ids: tuple[str, ...] = ()
+
+
+class EducationCommandResponse(BaseModel):
+    """Filesystem-neutral education command result."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "axcalib.api-education-command/v1alpha1"
+    enrollment_id: str
+    enrollment_status: EnrollmentStatus
+    enrollment_revision: int = Field(ge=1)
+    active_milestone_ids: tuple[str, ...] = ()
+    allowed_commands: tuple[str, ...] = ()
+    status: Literal["succeeded", "waiting_human", "blocked", "stale"]
+    message: str
+
+
+class EducationEnrollmentView(BaseModel):
+    """Authorized enrollment view with local repository paths removed."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "axcalib.api-education-enrollment/v1alpha1"
+    enrollment_id: str
+    learner_ref: str
+    organization_id: str
+    program_selector: str
+    program_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    revision: int = Field(ge=1)
+    status: EnrollmentStatus
+    created_at: datetime
+    updated_at: datetime
+    milestones: tuple[MilestoneProgress, ...]
+    notifications: tuple[ProgramNotificationRecord, ...] = ()
+    completion_decisions: tuple[ProgramCompletionDecision, ...] = ()
+
+
 class ValidationIssue(BaseModel):
     """Redacted validation location and code without rejected input values."""
 
@@ -206,6 +302,15 @@ class Problem(BaseModel):
 __all__ = [
     "CancelRunResponse",
     "CompletionDecisionRequest",
+    "EducationCommandResponse",
+    "EducationCompletionDecisionRequest",
+    "EducationEnrollmentCreateRequest",
+    "EducationEnrollmentView",
+    "EducationManualConfirmationRequest",
+    "EducationProgramView",
+    "EducationProjectBindRequest",
+    "EducationRevisionRequest",
+    "EducationScoreRequest",
     "PipelineCatalogResponse",
     "PipelineRunRequest",
     "PipelineRunView",

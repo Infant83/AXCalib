@@ -1,13 +1,14 @@
 # AXCalib API Alpha Threat Model
 
-- 범위: WP-06.I1 + WP-06.I2a의 in-process FastAPI adapter
+- 범위: WP-06.I1 + WP-06.I2a/I2b의 in-process FastAPI adapter
 - 상태: local contract verified, operational deployment **NO-GO**
 - 기준일: 2026-07-22
 
 ## 1. 보호 대상과 신뢰 경계
 
-보호 대상은 프로젝트 dossier와 revision, proposal/sidecar bytes, 두 HITL 결정권, audit event,
-notification/report reference와 bearer credential이다. 다음 세 경계를 분리한다.
+보호 대상은 프로젝트 dossier와 revision, proposal/sidecar bytes, 교육 program/enrollment와 reviewer
+assignment, 두 project HITL·과정 완료 결정권, audit event, notification/report reference와 bearer
+credential이다. 다음 세 경계를 분리한다.
 
 ```mermaid
 flowchart LR
@@ -37,6 +38,9 @@ Library는 상태전이와 관리자 HITL을 최종적으로 다시 검사한다
 | 정보 노출 | path/token/validation value가 오류에 반사 | URI 제거 response, RFC 9457형 redacted problem, token 미기록 | 운영 trace/observability redaction 검토 필요 |
 | resource exhaustion | 거대 PPTX/sidecar 반복 hash | 64 MiB PPTX, 2 MiB sidecar metadata limit, default resolver deny | HTTP body limit, rate limit, timeout, malware/zip-bomb staging scan 미구현 |
 | 감사 불완전 | dossier만 남고 creation audit 누락 | replay 전에 principal-bound creation audit 존재 확인, transaction journal/reconcile | API가 자동 reconcile하지 않음; 운영 recovery runbook 필요 |
+| 교육 actor 가장 | 다른 learner/mentor/instructor 문자열 삽입 | 교육 request schema에 actor/learner/org 없음, principal subject/role과 `verified_api_principal` audit | 실제 IdP·배정 원장 claim 검증 미구현 |
+| 교육 resource IDOR | 다른 enrollment 확인·점수·완료결정 | learner subject/self scope, mentor enrollment scope, instructor program selector scope, admin scope와 organization 확인 | scope 발급·회수 source 미구현 |
+| program/project 혼선 | 다른 program version 또는 조직 project를 milestone에 연결 | exact program SHA-256 pin, enrollment creation audit, bind와 sync에서 dossier context/org 재검증 | cross-service distributed transaction 미구현 |
 
 ## 3. 명령별 authorization matrix
 
@@ -46,6 +50,11 @@ Library는 상태전이와 관리자 HITL을 최종적으로 다시 검사한다
 | registration approve/reject | administrator | `projects:decide:any` 또는 `project:{id}:decide` | dossier org match 또는 explicit org scope | 필수 | bearer principal |
 | completion accept/not_accept | administrator | 위와 동일 | 위와 동일 | 필수 | bearer principal |
 | generic pipeline run | operator 또는 administrator + exact delivery grant | grant가 역할 허용 | 아직 project resource scope 아님 | pipeline별 typed context | bearer principal |
+| learner self enrollment | learner | `education:enroll:self` | verified org 필수 | exact program hash | bearer principal |
+| milestone start/project bind | learner | subject match + `education:progress:self` | enrollment org match | 필수 | bearer principal |
+| manual confirmation/score | configured mentor/instructor 또는 administrator | enrollment mentor / program instructor / admin scope | enrollment org match | 필수 | bearer principal |
+| project status sync | assigned learner/mentor/instructor/administrator | 위 resource assignment scope | enrollment와 dossier org match | 필수 | bearer principal; evidence는 dossier |
+| education completion approve/return | administrator | `education:admin:any` 또는 enrollment admin scope | enrollment org match | 필수 | bearer principal |
 
 role 하나만으로 권한이 생기지 않는다. 사람 결정은 role, scope, organization, revision과 domain state
 machine이 모두 허용해야 한다.
@@ -58,7 +67,8 @@ machine이 모두 허용해야 한다.
 - database/distributed transaction, worker lease와 idempotency record
 - administrator decision semantic replay와 authorized project status/read endpoint
 - project read/list/report authorization 및 enumeration 방지
-- education program/enrollment/learner/mentor/instructor 별 scope와 delegation policy
+- education mentor/instructor assignment source, delegation/revocation와 scope claim test
+- program publish/retire authorization과 legacy enrollment organization migration
 - security test, dependency scan, penetration test와 운영 Owner 승인
 
 이 항목이 없으므로 현재 app factory를 인터넷 또는 사내 운영망에 배포하지 않는다.

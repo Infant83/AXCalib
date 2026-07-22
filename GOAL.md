@@ -345,9 +345,10 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 ### WP-06 Async, Batch, API
 
 현재 local Alpha evidence: sync/async executor, bounded JSONL batch, Alpha CLI, fail-closed FastAPI
-catalog/run/status/cancel, principal-bound project register/registration/completion decision과 generated
-runtime OpenAPI. education principal binding, approved OIDC/RBAC, immutable upload service, 202 worker/SSE와
-full workflow parity는 아직 남아 있다.
+catalog/run/status/cancel, principal-bound project register/registration/completion decision, 교육
+program 조회·self enrollment·milestone/reviewer/project sync·completion decision과 generated runtime
+OpenAPI. approved OIDC/RBAC·교육 배정 원장, immutable upload service, 202 worker/SSE와 full workflow
+parity는 아직 남아 있다.
 
 - sync/async parity
 - bounded concurrency와 cancellation
@@ -357,6 +358,7 @@ full workflow parity는 아직 남아 있다.
 - OpenAPI 3.1.0 artifact-first contract, JSON Schema 2020-12와 generated client parity
 - allowlisted per-request options, bearer auth/RBAC boundary와 Problem Details
 - project owner/admin principal·scope·organization·revision binding과 no-path staged artifact hash contract
+- learner/mentor/instructor/administrator resource scope·organization·program hash·revision binding
 - OpenAPI 3.2/TOML 1.1 toolchain compatibility spike
 - worker queue port와 in-process reference adapter
 

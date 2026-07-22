@@ -25,6 +25,7 @@ from .auth import (
     RejectAllTokenVerifier,
     TokenVerifier,
 )
+from .education_routes import create_education_router
 from .models import (
     CancelRunResponse,
     PipelineCatalogResponse,
@@ -47,8 +48,12 @@ RESERVED_AUTHORITY_FIELDS = frozenset(
         "completion_decision",
         "approval_actor_id",
         "approval_actor_role",
+        "authority_context",
+        "learner_ref",
+        "organization_id",
     }
 )
+RESOURCE_BOUND_PIPELINES = frozenset({("education-program-runtime", "v1alpha1")})
 
 
 def _stable_run_id(
@@ -101,6 +106,10 @@ def create_app(
         if key in grants:
             raise ValueError(
                 f"duplicate API pipeline grant: {grant.pipeline_id}@{grant.pipeline_version}"
+            )
+        if key in RESOURCE_BOUND_PIPELINES:
+            raise ValueError(
+                "education program runtime must use principal-bound resource endpoints"
             )
         grants[key] = grant
     bearer = HTTPBearer(auto_error=False, scheme_name="bearerAuth")
@@ -200,6 +209,7 @@ def create_app(
             artifact_resolver=staged_artifacts,
         )
     )
+    app.include_router(create_education_router(client, authenticate=authenticate))
 
     @app.post(
         "/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs",
@@ -435,11 +445,11 @@ def create_app(
             "status": "implemented-local-alpha",
             "scope": (
                 "pipeline catalog/run/status/cancel plus principal-bound project "
-                "registration and HITL decisions"
+                "registration/HITL decisions and education enrollment/milestone commands"
             ),
             "authority": (
-                "verified principal, role, scope, organization and domain HITL guards "
-                "are all required"
+                "verified principal, role, resource assignment scope, organization, "
+                "revision and domain HITL guards are all required"
             ),
             "artifact_boundary": (
                 "opaque staged artifact ID with byte-size and SHA-256 verification; "

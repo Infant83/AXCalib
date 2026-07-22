@@ -281,8 +281,17 @@ def test_generated_runtime_openapi_matches_committed_artifact(tmp_path: Path) ->
     assert schema["x-axcalib-contract"]["status"] == "implemented-local-alpha"
     assert "operator-token" not in json.dumps(schema)
     assert set(schema["paths"]) == {
+        "/v1/enrollments/{enrollment_id}",
+        "/v1/enrollments/{enrollment_id}/completion-decisions",
+        "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/manual-confirmations",
+        "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/project-sync",
+        "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/projects",
+        "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/scores",
+        "/v1/enrollments/{enrollment_id}/milestones/{milestone_id}/start",
         "/v1/pipelines",
         "/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs",
+        "/v1/programs/{program_id}/versions/{program_version}",
+        "/v1/programs/{program_id}/versions/{program_version}/enrollments",
         "/v1/projects",
         "/v1/projects/{project_id}/decisions/completion",
         "/v1/projects/{project_id}/decisions/registration",
