@@ -1,9 +1,9 @@
 ---
 document_type: module_delivery_plan
 project: AXCalib
-baseline: v0.3-p1-g4-project-read-replay-alpha
+baseline: v0.3-p1-g4-durable-worker-alpha
 updated_at: 2026-07-22
-status: library_cli_resource_api_local_alpha_verified
+status: library_cli_resource_api_durable_worker_local_alpha_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -27,15 +27,16 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 | M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | golden/redaction/content-hash contract |
 | M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | producer transaction + GitLab/email adapter |
 | M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
-| M10 | `axcalib.runtime` | contract_verified | WP-01/05 | config, M01/M02/M08 | distributed lease/worker + exact on-prem capability/allowlist |
+| M10 | `axcalib.runtime` | contract_verified | WP-01/05/06 | config, M01/M02/M08 | distributed queue/heartbeat + exact on-prem capability/allowlist |
 | M11 | scripts / CLI | contract_verified | WP-01/06 | M00, M10, target pipeline; M09 for workflow | full product command tree와 API parity |
-| M12 | API / worker | contract_verified | WP-06 | M09, M10 | OIDC/RBAC, upload boundary, 202 worker/SSE/resume |
+| M12 | API / worker | contract_verified | WP-06 | M09, M10 | OIDC/RBAC, upload boundary, distributed worker/SSE |
 | M13 | Web Review | blocked_policy | WP-07 | M12, FE selection | selected-stack E2E review flow |
 
 `offline_reference`는 제품 module 완료가 아니다. 현재 local/synthetic slice에서 실행되고 회귀
 test가 있다는 뜻이다. M01의 `contract_verified`도 filesystem dossier/freeze 계약에 한정하며 운영
 transaction 또는 제품 전체 완료가 아니다. M12의 `contract_verified`는 fail-closed in-process
-runtime/project/education resource API 계약에 한정하며 운영 인증·worker 완료가 아니다. 각 행의 다음 Exit
+runtime/project/education resource API와 single-host durable Worker 계약에 한정하며 운영 인증·분산 worker
+완료가 아니다. 각 행의 다음 Exit
 Evidence가 남아 있다.
 
 ### 1.1 2026-07-16 slice evidence
@@ -135,7 +136,20 @@ Evidence가 남아 있다.
 - clean wheel 설치 뒤 설치된 CLI catalog와 supplied actual PPTX의 등록심의 `waiting_human` quickstart
 - `prep test` 100 passed, 10 eval groups, Ruff, Pyright 0/0; Docling은 별도 contract로 분리
 - 품질 경계: single-host local Alpha이며 exact on-prem Qwen, official rubric/gold, distributed worker,
-  RBAC, 운영 notification, API/Web은 완료되지 않음
+  RBAC, 운영 notification, full evaluation API/Web은 완료되지 않음
+
+### 1.8 2026-07-22 WP-06.I3 durable local Worker evidence
+
+- `LocalPipelineJobQueue`: registry-validated object, canonical SHA-256, immutable context, 1 MiB/credential-key
+  guard와 atomic local envelope
+- `LocalPipelineWorker`와 thin script: oldest-available lease, expired-claim reclaim, 한 호출당 최대 한 job
+- exact executor terminal replay로 pipeline commit 뒤 queue finalization crash를 중복 호출 없이 복구
+- retryable failure만 동일 run/context에서 default 3회 bounded exponential backoff; terminal/cancelled 재실행 금지
+- `ApiPipelineGrant.execution_mode`: inline 호환 기본값과 exact queued 202/Location/Retry-After 분리
+- authorized poll에 execution `status`와 독립 `queue_status`, generic local path/URI structural redaction
+- unit/contract/integration과 Library Alpha eval; 상세 수치는 WP-06.I3 리포트와 `PROJECT_STATE.md`에 고정
+- 품질 경계: single-host filesystem Alpha이며 OIDC, immutable upload, heartbeat, broker/database queue,
+  distributed consensus와 socket load는 미검증
 
 ## 2. 공통 납품 단위
 
@@ -260,12 +274,14 @@ Evidence가 남아 있다.
 
 ### M10 — Runtime Profiles (`src/axcalib/runtime`)
 
-- 책임: config를 검증하고 승인된 adapter를 생성자 주입하는 composition root
+- 책임: config를 검증하고 승인된 adapter를 생성자 주입하는 composition root; local execution/job
+  checkpoint와 recovery primitive
 - 입력: offline/on-prem profile과 환경변수 이름
 - 출력: dependency container, pipeline/workflow facade
 - 의존성: 각 module의 port; secret 값은 model/report에 전달하지 않음
-- 첫 slice: filesystem + lexical + mock + recording offline profile
-- 검증: runtime JSON Schema, unknown/protected key, missing capability, unknown adapter, literal secret rejection
+- 첫 slice: filesystem + lexical + mock + recording offline profile, executor와 single-host job queue
+- 검증: runtime JSON Schema, unknown/protected key, missing capability, unknown adapter, literal secret rejection,
+  payload hash/size/key, lease reclaim와 terminal replay
 - 완료증거: clean terminal에서 같은 profile로 재현되는 container contract, runtime config validation과 effective-config hash/source map
 
 ### M11 — Working Scripts / CLI
@@ -291,14 +307,18 @@ Evidence가 남아 있다.
   milestone/reviewer/project-sync/completion command
 - 네 번째 slice: owner/admin authorized project safe GET과 principal/resource/payload-bound 두 HITL
   decision semantic replay
+- 다섯 번째 slice: exact grant별 inline/queued mode, durable local job, one-job Worker, 202/poll queue status와
+  bounded retry/restart replay
 - 검증: generated OpenAPI 3.1/Draft 2020-12, fail-closed verifier/grant, reserved authority field
   rejection, principal/role/resource-scope/organization/program-hash/revision, staged hash, project context,
-  project read redaction, actor/resource/payload decision conflict, deterministic idempotent retry, run conflict와 cancellation
+  project read redaction, actor/resource/payload decision conflict, deterministic idempotent retry, run/job conflict,
+  queue lease/restart/retry/cancel과 URI redaction
 - 현재 완료증거: `tests/contract/test_runtime_api_contract.py`,
   `tests/contract/test_project_api_contract.py`, `tests/contract/test_education_api_contract.py`,
-  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024/025와 API Alpha threat model
+  `tests/unit/test_local_worker.py`, `tests/integration/test_worker_script.py`,
+  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024/025/026와 API Alpha threat model
 - 남은 완료증거: immutable upload/staging service, approved OIDC/RBAC·education assignment source,
-  project list/report/evidence authorization, 202 worker/SSE 및 script/CLI/API workflow result parity
+  project list/report/evidence authorization, distributed worker/heartbeat/SSE 및 full workflow result parity
 
 ### M13 — Web Review
 
@@ -406,12 +426,13 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-Library/CLI/runtime/project·education API와 project read/replay local Alpha checkpoint 다음은 G4
-Interfaces의 운영 경계와 durable worker slice다.
+Library/CLI/runtime/project·education API, project read/replay와 durable local Worker Alpha checkpoint 다음은
+G4 Interfaces의 운영 identity/artifact/distributed execution 경계다.
 
 1. approved OIDC/JWKS claim mapping, education assignment source와 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
    분리한다.
-2. in-process sync run을 durable 202 worker, poll/SSE, retry/resume로 확장한다.
+2. local poll 의미를 유지하는 broker/database queue, heartbeat, dead-letter, metrics와 optional SSE adapter를
+   운영 dependency로 설계한다.
 3. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
 4. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
 5. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.

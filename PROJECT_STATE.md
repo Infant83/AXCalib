@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-project-read-replay-alpha
+baseline: v0.3-p1-g4-durable-worker-alpha
 phase: P7 Interfaces
 gate: G4 Interfaces
 gate_status: interface_alpha_in_progress
-status: g4_project_read_decision_replay_verified_worker_ready
+status: g4_identity_upload_policy_blocked
 current_work_package: WP-06 interface hardening
-active_slice: WP-06.I3 durable-202-worker-contract
-active_slice_status: ready
+active_slice: WP-06.I4 approved-identity-upload-boundary
+active_slice_status: blocked_policy
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-011
+last_history_id: HIST-2026-07-22-013
 ---
 
 # AXCalib Project Execution Ledger
@@ -61,11 +61,11 @@ last_history_id: HIST-2026-07-22-011
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
 | 현재 Work Package | **WP-06 interface hardening** |
-| Active Slice | **WP-06.I3** (`ready`; durable local 202 worker와 poll/resume contract) |
-| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/runtime/project·education API local Alpha evidence 확보 |
-| 다음 Gate | **G4 Interfaces**; OIDC/immutable upload와 202 worker evidence 필요 |
+| Active Slice | **WP-06.I4** (`blocked_policy`; approved OIDC/assignment/immutable upload boundary) |
+| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/durable local Worker Alpha evidence 확보 |
+| 다음 Gate | **G4 Interfaces**; OIDC/immutable upload와 distributed execution evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 121 lightweight tests, 10 eval groups, API 18/18, validation 0/0, Ruff check, Pyright 0/0 |
+| 최근 회귀 | 130 lightweight tests, 10 eval groups, API+Worker 27/27, validation 0/0, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -132,7 +132,7 @@ gantt
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
 | P6 Calibration | WP-05/06 일부 | `not_started` | panel disagreement와 human agreement report |
-| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/runtime/project·education API local Alpha 완료; read/replay/OIDC/upload/worker 남음 |
+| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/resource API/read-replay/durable local Worker Alpha 완료; OIDC/upload/distributed worker 남음 |
 | P8 Web Review | Web delivery | `blocked_policy` | FE/RBAC 선택, API, reviewer E2E와 G5 |
 | P9 Pilot | pilot package | `not_started` | 승인된 비식별 자료, G6~G7 결정 |
 
@@ -144,7 +144,7 @@ gantt
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
 | G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
-| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor, JSONL batch, fail-closed runtime + principal-bound project·education API, project read/replay/OpenAPI | OIDC/RBAC, immutable upload와 202 worker/SSE |
+| G4 Interfaces | `in_progress` | Typer CLI, executor/batch, principal-bound resource API, project read/replay, queued 202/local Worker/OpenAPI | OIDC/RBAC, immutable upload, distributed worker/heartbeat와 SSE |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
 | G6 Pilot | `not_started` | 없음 | 승인된 비식별 paired dataset |
 | G7 Go/No-Go | `not_started` | 없음 | Sponsor Continue/Narrow/Stop 결정 |
@@ -342,11 +342,11 @@ Exit Evidence:
 - [x] registration/completion 두 endpoint와 authorized GET의 contract/E2E/OpenAPI가 통과한다.
 - [x] distributed idempotency와 actual OIDC는 별도 운영 Gate로 유지한다.
 
-### 5.9 현재 Active Slice — WP-06.I3 Durable 202 Worker Contract
+### 5.9 완료 Slice — WP-06.I3 Durable 202 Worker Contract
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `ready`; I2c checkpoint push 후 착수 가능 |
+| 상태 | `verified_local_contract`; 2026-07-22 synthetic/single-host 검증 완료 |
 | 목적 | 오래 걸리는 parse/evaluation을 HTTP request와 분리하고 durable local worker가 같은 Library pipeline을 resume |
 | 대상 Module | M00 pipeline, M10 runtime/checkpoint, M12 API/worker |
 | 입력 | existing PipelineRegistry/ExecutionResult, run ownership, local lease/idempotency contract |
@@ -356,12 +356,26 @@ Exit Evidence:
 
 Exit Evidence:
 
-- [ ] async 대상 request는 inline domain 실행 없이 202와 stable run reference를 반환한다.
-- [ ] local durable queue/claim은 worker 재시작·중복 claim에서도 한 run의 terminal result를 보존한다.
-- [ ] poll/cancel은 owner/admin/scope와 persisted result hash를 재검증하고 local URI를 노출하지 않는다.
-- [ ] retryable failure만 같은 idempotency/run context로 resume하며 terminal/cancelled를 재실행하지 않는다.
-- [ ] script/CLI/API/worker가 같은 request/result/error 의미와 PipelineRegistry를 사용한다.
-- [ ] 실제 broker, multi-host lease, OIDC/JWKS와 운영 배포는 별도 Gate로 유지한다.
+- [x] queued 대상 request는 inline domain 실행 없이 202와 stable run reference를 반환한다.
+- [x] local durable queue/claim은 worker 재시작·중복 claim에서도 한 run의 terminal result를 보존한다.
+- [x] poll/cancel은 owner/admin/scope와 persisted result hash를 재검증하고 local URI를 노출하지 않는다.
+- [x] retryable failure만 같은 idempotency/run context로 resume하며 terminal/cancelled를 재실행하지 않는다.
+- [x] script/CLI/API/worker가 같은 request/result/error 의미와 PipelineRegistry/executor를 사용한다.
+- [x] 실제 broker, multi-host lease, OIDC/JWKS와 운영 배포는 별도 Gate로 유지한다.
+
+### 5.10 다음 Active Dependency — WP-06.I4 Approved Identity and Upload Boundary
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `blocked_policy` |
+| 목적 | local principal/staging port를 승인된 IdP claim과 immutable artifact trust boundary에 연결 |
+| 대상 Module | M02 authority, M10 deployment composition, M12 API/worker |
+| 선행결정 | OIDC issuer/audience/claims/revocation, assignment source, object ACL/version/malware/retention Owner |
+| 안전 진행범위 | 실제 계정·업로드·배포 없이 schema/port/threat model 검토 |
+| 목표 Gate | G4 Interfaces |
+
+승인되지 않은 issuer, 실제 계정, 운영 object store 또는 사내 데이터를 임의로 만들지 않는다. Owner/
+Security 결정 전에는 현재 fail-closed verifier/resolver와 local synthetic contract를 유지한다.
 
 ## 6. 일정·작업 Queue
 
@@ -382,13 +396,15 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 10 | P7 / WP-06 | principal-bound project command/artifact contract | `verified_local_contract` | runtime API Alpha, role/scope policy | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 11 | P7 / WP-06 | education principal binding contract | `verified_local_contract` | project API contract, education domain reference | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 12 | P7 / WP-06 | project read and decision replay contract | `verified_local_contract` | project resource auth, local idempotency | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
-| 13 | P7 / WP-06 | durable local 202 worker contract | `ready` | runtime checkpoint, resource authorization | TBD | TBD | G4 |
-| 14 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
+| 13 | P7 / WP-06 | durable local 202 worker contract | `verified_local_contract` | runtime checkpoint, resource authorization | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
+| 14 | P7 / WP-06 | approved identity/assignment/immutable upload boundary | `blocked_policy` | Product/Security/Platform Owner 결정 | TBD | TBD | G4 |
+| 15 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-22 | WP-06.I3 durable local Worker | split full test/eval, API+Worker contract, Ruff/Pyright/validate, clean API wheel, SVG/PNG audit | 130 passed (83/28/19), combined 27/27, 10 eval groups, Ruff, Pyright 0/0, validate 0/0, OpenAPI 17 paths | single-host filesystem Alpha; OIDC/upload/heartbeat/distributed broker 미포함 |
 | 2026-07-22 | WP-06.I2c project safe read/decision replay | project/runtime/education API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | project API 6/6, combined API 18/18, full 121 passed, 10 eval groups, Ruff check, changed format 7/7, Pyright 0/0, validate 0/0, OpenAPI 17 paths | local response-loss contract; commit-record crash window, distributed idempotency/OIDC 미포함 |
 | 2026-07-22 | WP-06.I2b principal-bound education API | education/runtime/project API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | education API 5/5, combined API 17/17, full 120 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0, OpenAPI 16 paths | in-process resource scope contract; actual OIDC/assignment source/server 미포함 |
 | 2026-07-22 | WP-06.I2a principal-bound project API | project/runtime API contract, full test/eval, Ruff, Pyright, validate, SVG/PNG visual audit | API 12/12, full 115 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0 | in-process project command/staging port; actual OIDC/upload/server 미포함 |
@@ -426,8 +442,8 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
    `prep test`가 실행별 `output/pytest-runs/run-{pid}`를 쓰도록 보강했다. 이어 atomic replace에서
    일시적 lock 1건이 재현돼 bounded retry를 추가한 뒤 76 tests가 통과했다.
 3. 2026-07-20 교육 composition과 R1.1 project recovery는 commit `ebd74ed`, R1.2 Library Alpha는
-   commit `a03a633`까지 `origin/main`에 반영됐다. WP-06.I1은 현재 change set 검증 후 별도
-   checkpoint commit/push한다.
+   `a03a633`, WP-06.I2b/I2c는 `e74ea69`/`c089d6d`까지 `origin/main`에 반영됐다. WP-06.I3는 현재
+   closeout change set을 checkpoint commit/push한다.
 4. SkillBoss catalog에는 exact `Qwen3.5-397B-A17B`가 없고 `qwen3.5-plus`만 있다. 기존 full
    registration HTTP 500의 직접 원인은 `json_object` 메시지에 literal `JSON`이 없던 AXCalib 요청과
    upstream 400을 500으로 감싼 proxy mapping 조합으로 확인됐다. exact on-prem 검증은 여전히 필수다.
@@ -449,6 +465,10 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 11. I2c의 repository-wide `ruff format --check .`은 기존 52개 파일의 format drift를 검출해 실패했다.
     이번 변경 Python 7개는 별도 format check를 통과했고 `ruff check .`도 통과했다. 범위 밖 52개를
     일괄 재작성하지 않았으며 별도 formatting cleanup WP가 필요하다.
+12. I3 첫 monolithic `prep test`는 assertion 실패가 아니라 도구의 60초 timeout으로 외부 종료됐고,
+    닫힌 stdout flush에서 `OSError 22`가 뒤따랐다. unit/integration/contract를 독립 pytest process로
+    분리하고 group 선택을 추가했다. 각 group 83/28/19와 aggregate 130이 통과해 중단 시 해당 group만
+    재개할 수 있다.
 
 ## 9. 작업 이력
 
@@ -864,6 +884,54 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   [API Threat Model](docs/security/api-alpha-threat-model.md),
   [WP-06.I2c 리포트](docs/evaluation/wp06-i2c-project-read-decision-replay-report.md), D-038,
   R-016/R-017/R-021/R-038/R-039/R-042와 M02/M10/M12 Module Control Board.
+
+### HIST-2026-07-22-012
+
+- Phase / WP / Gate: P7 / WP-06.I3 / G4
+- 상태: `active_durable_local_worker_audit`
+- 작업: I2c checkpoint `c089d6d`의 원격 일치를 확인하고 기존 executor, checkpoint, batch, run API와
+  poll/cancel authorization을 감사해 202 worker의 최소 경계를 확정했다.
+- 변경 파일: 착수 시점에는 이 원장의 Active Slice와 dependency queue 상태만 갱신했다.
+- 검증: `git status -sb`, local/remote SHA 일치, `prep status/next`와 `rg`/source inspection으로
+  `LocalPipelineExecutor`, FastAPI run route, API grant와 checkpoint contract를 확인했다.
+- 특이사항: executor는 lease, PREPARED/RUNNING/terminal/retryable 상태, result hash와 cooperative cancel을
+  이미 제공하지만 HTTP POST가 inline 실행되고 checkpoint는 의도적으로 payload 원문을 보존하지 않아
+  독립 worker가 요청을 복원할 durable queue envelope가 없다. 기존 동기 호환성을 유지하고 deployment
+  grant가 `queued`로 선언한 pipeline만 202로 보내는 방향을 선택했다.
+- 미검증: queue/claim/restart 구현, payload size/integrity, stale claim, API 202/OpenAPI, worker script와
+  regression은 아직 수행하지 않았다.
+- 다음 작업: bounded typed job envelope, lease-expiring claim과 executor replay를 Library에 추가하고
+  queued grant의 202/Location 및 기존 authorized poll/cancel에 연결한다.
+- 관련 근거: WP-06.I3 Exit Evidence, ADR-021, R-010/R-012/R-039와 M00/M10/M12.
+
+### HIST-2026-07-22-013
+
+- Phase / WP / Gate: P7 / WP-06.I3 / G4
+- 상태: `completed_verified_local_contract`
+- 작업: exact grant의 inline/queued mode, validated/hash-bound local job, oldest-available expiring claim,
+  retryable-only bounded backoff, terminal replay와 one-job Worker를 같은 executor에 연결했다. queued API는
+  domain 실행 없이 202/Location/Retry-After를 반환하며 authorized poll은 execution/queue status를 분리한다.
+- 변경 파일: `src/axcalib/runtime/worker.py`, executor/client/API models/routes, worker script와 unit/
+  integration/contract test, runtime OpenAPI, Library Alpha eval, `harness/prep.py`; WORK_SPEC/GOAL/DESIGN,
+  ADR-026, API/Worker manual, threat model, report, module/workflow/SVG/PNG, README/CHANGELOG/HANDOFF/memory bank와
+  이 원장.
+- 검증: split `prep test` 130 passed(unit 83, integration 28, contract 19), API+Worker combined 27/27,
+  `prep eval` 10 groups, `ruff check .`, I3 Python format 13/13, Pyright 0/0, `prep validate` 0/0,
+  generated OpenAPI exact contract, clean Python 3.12 `[api]` wheel FastAPI 0.139.2/OpenAPI 3.1/17 paths와
+  Worker prepared→succeeded, SVG XML/links와 1920×1080/1600×1050 visual audit.
+- 특이사항: completed re-enqueue의 replay flag, generic output의 local URI 노출, queue status 부재와
+  run-ID 파일순 claim, concurrent second-lock의 stale prepared view를 코드리뷰에서 발견해 각각 수정했다.
+  monolithic test의 60초 orchestration timeout은
+  test group process 격리와 선택 실행으로 복구했다. 기존 repo format drift 52개는 범위 밖이라 일괄
+  변경하지 않았다.
+- 미검증: Docling/live model은 저메모리·외부호출 분리 원칙에 따라 재실행하지 않았다. 실제 OIDC/JWKS,
+  계정·assignment source, immutable upload/malware/ACL, socket/load/penetration, worker heartbeat/dead-letter,
+  broker/database distributed queue와 운영 배포는 미검증이다.
+- 다음 작업: WP-06.I4는 Product/Security/Platform Owner가 identity/assignment/artifact trust policy를
+  승인할 때까지 `blocked_policy`다. 승인 전에는 fail-closed local port/schema/threat model만 유지한다.
+- 관련 근거: [ADR-026](docs/adr/ADR-026-durable-local-worker-and-202-contract.md),
+  [WP-06.I3 리포트](docs/evaluation/wp06-i3-durable-local-worker-report.md), D-039,
+  R-010/R-012/R-039/R-044와 M10/M12 Module Control Board.
 
 ## 10. 단계 종료 업데이트 템플릿
 

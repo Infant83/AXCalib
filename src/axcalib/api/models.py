@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from axcalib.pipelines import PipelineDescriptor
-from axcalib.runtime import PipelineExecutionResult, PipelineRunStatus
+from axcalib.runtime import PipelineExecutionResult, PipelineJobStatus, PipelineRunStatus
 from axcalib.schemas import (
     EducationProgram,
     EnrollmentStatus,
@@ -20,6 +20,21 @@ from axcalib.schemas import (
 from axcalib.workflows.two_gate import ProjectStatus
 
 PPTX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+LOCAL_REFERENCE_FIELDS = frozenset({"destination", "root", "uri"})
+
+
+def _redact_local_references(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _redact_local_references(nested)
+            for key, nested in value.items()
+            if key not in LOCAL_REFERENCE_FIELDS
+            and not key.endswith("_path")
+            and not key.endswith("_uri")
+        }
+    if isinstance(value, list):
+        return [_redact_local_references(item) for item in value]
+    return value
 
 
 class PipelineCatalogResponse(BaseModel):
@@ -29,6 +44,7 @@ class PipelineCatalogResponse(BaseModel):
 
     schema_version: str = "axcalib.api-pipeline-catalog/v1alpha1"
     pipelines: tuple[PipelineDescriptor, ...]
+    execution_modes: dict[str, Literal["inline", "queued"]] = Field(default_factory=dict)
 
 
 class PipelineRunRequest(BaseModel):
@@ -62,6 +78,7 @@ class PipelineRunView(BaseModel):
     output: dict[str, Any] | None = None
     error_code: str | None = None
     replayed: bool = False
+    queue_status: PipelineJobStatus | None = None
     updated_at: datetime | None = None
 
     @classmethod
@@ -69,6 +86,7 @@ class PipelineRunView(BaseModel):
         cls,
         value: PipelineExecutionResult,
         *,
+        queue_status: PipelineJobStatus | None = None,
         updated_at: datetime | None = None,
     ) -> PipelineRunView:
         """Remove local checkpoint paths from a transport-neutral result."""
@@ -79,9 +97,10 @@ class PipelineRunView(BaseModel):
             pipeline_version=value.pipeline_version,
             status=value.status,
             attempt=value.attempt,
-            output=value.output,
+            output=_redact_local_references(value.output),
             error_code=value.error_code,
             replayed=value.replayed,
+            queue_status=queue_status,
             updated_at=updated_at,
         )
 

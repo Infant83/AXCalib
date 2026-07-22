@@ -260,6 +260,7 @@ extensions
 | FR-055 | Principal-bound project API | project register/HITL command는 verified principal role·scope·organization·revision에 bind하고 local path 대신 opaque staged artifact의 size/hash를 검증 | Must |
 | FR-056 | Principal-bound education API | learner/mentor/instructor/administrator command는 actor 없는 resource endpoint에서 principal·program/enrollment assignment scope·organization·revision에 bind하고 project context를 재검증 | Must |
 | FR-057 | Project read and decision replay | owner/admin project GET은 URI·자유서술을 redaction하고 두 HITL decision은 principal·resource·stage·revision·payload에 고정된 성공 결과만 idempotent replay | Must |
+| FR-058 | Durable queued execution | exact delivery grant는 inline/queued를 분리하고 queued request를 typed/hash-bound envelope로 보존해 202·authorized poll/cancel·lease reclaim·bounded retry·terminal replay를 같은 Library executor로 제공 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -540,6 +541,11 @@ adapter는 16/16 slide의 content hash manifest를 만들고 합성 text/chart/m
 문서 design 품질을 과제 성과로 간주하지 않는다.
 
 ## 14. Async와 Batch
+
+현재 local Alpha는 JSONL batch와 별도로 validated object를 보존하는 single-host job queue,
+oldest-available claim, lease-expiry reclaim, retryable-only bounded retry와 one-job Worker를 제공한다.
+exact API grant가 `queued`일 때만 202를 반환하고 poll은 execution status와 queue status를 분리한다.
+이는 distributed broker/heartbeat/운영 scheduling 완료가 아니다.
 
 - sync/async API는 같은 input/output/error contract를 가진다.
 - artifact, model panel, dossier item 단위 병렬성을 지원한다.
@@ -857,6 +863,7 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 29. 원격 project 등록·HITL 권한과 경로 격리 | FR-055, ADR-023, API threat model, WP-06.I2a report | In-process project API contract verified; OIDC/immutable upload/read-replay pending |
 | 30. 교육 가입·진행·평가자·완료결정 권한 바인딩 | FR-056, ADR-024, API threat model, WP-06.I2b report | In-process education API contract verified; approved IdP/assignment source pending |
 | 31. project 안전 조회와 관리자 decision 응답 유실 복구 | FR-057, ADR-025, API threat model, WP-06.I2c report | In-process read/replay contract verified; distributed idempotency/OIDC pending |
+| 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/OIDC pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 
@@ -901,6 +908,7 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] principal-bound project register/두 HITL endpoint와 no-path staged artifact hash contract
 - [x] principal-bound education enrollment/milestone/완료결정 endpoint와 program hash·resource scope 계약
 - [x] URI-redacted owner/admin project GET과 registration/completion decision semantic replay 계약
+- [x] exact queued grant의 202, local durable queue/lease/retry/terminal replay와 one-job Worker 계약
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
 - [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
@@ -928,3 +936,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-22 | v0.3-p1 project-api-alpha | verified principal-bound project register/HITL command, staged artifact hash boundary와 API threat model 추가 |
 | 2026-07-22 | v0.3-p1 education-api-alpha | learner/mentor/instructor/administrator resource scope, organization, revision과 project-context 재검증 추가 |
 | 2026-07-22 | v0.3-p1 project-read-replay-alpha | owner/admin safe project GET, verified authority context와 principal/resource/payload-bound decision replay 추가 |
+| 2026-07-22 | v0.3-p1 durable-worker-alpha | exact inline/queued grant, 202/poll queue status, hash-bound local job, lease reclaim와 bounded retry Worker 추가 |

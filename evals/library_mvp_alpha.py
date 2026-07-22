@@ -10,7 +10,12 @@ from tempfile import TemporaryDirectory
 from axcalib import AXCalib
 from axcalib.pipelines import EnrollCommand, PipelineContext, StartMilestoneCommand
 from axcalib.programs import load_program
-from axcalib.runtime import BatchItem, BatchManifest, PipelineRunStatus
+from axcalib.runtime import (
+    BatchItem,
+    BatchManifest,
+    PipelineJobStatus,
+    PipelineRunStatus,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAM = ROOT / "fixtures" / "synthetic" / "education_project_lifecycle" / "program.yaml"
@@ -48,6 +53,34 @@ def main() -> int:
             first.status is PipelineRunStatus.SUCCEEDED and first.attempt == 1
         )
         checks["pipeline_replay_is_idempotent"] = replay.replayed and replay.attempt == 1
+
+        queued_context = PipelineContext(run_id="eval-durable-worker")
+        prepared = client.enqueue_pipeline(
+            "workspace.maintenance",
+            "v1alpha1",
+            {},
+            context=queued_context,
+        )
+        checks["worker_enqueue_does_not_execute_inline"] = (
+            prepared.status is PipelineRunStatus.PREPARED
+            and prepared.attempt == 0
+            and client.jobs.load(queued_context.run_id).status is PipelineJobStatus.QUEUED
+        )
+        worker_result = client.create_worker(worker_id="worker:alpha-eval").run_once()
+        worker_replay = client.enqueue_pipeline(
+            "workspace.maintenance",
+            "v1alpha1",
+            {},
+            context=queued_context,
+        )
+        checks["worker_executes_and_replays_exact_run"] = (
+            worker_result is not None
+            and worker_result.status is PipelineRunStatus.SUCCEEDED
+            and worker_result.attempt == 1
+            and worker_replay.replayed
+            and worker_replay.attempt == 1
+            and client.jobs.load(queued_context.run_id).status is PipelineJobStatus.COMPLETED
+        )
 
         batch = BatchManifest(
             batch_id="eval-alpha-batch",
@@ -113,9 +146,7 @@ def main() -> int:
             context=PipelineContext(run_id="eval-education-reconcile"),
         )
         checks["education_crash_injected"] = True
-        checks["education_reconcile_succeeded"] = (
-            recovered.status is PipelineRunStatus.SUCCEEDED
-        )
+        checks["education_reconcile_succeeded"] = recovered.status is PipelineRunStatus.SUCCEEDED
         checks["education_audit_exactly_once"] = len(client.education.audit.entries()) == 2
 
         stale_lock = workspace / "dossiers" / ".stale-eval.lock"
@@ -148,9 +179,9 @@ def main() -> int:
         "failures": failures,
         "passed": not failures,
         "quality_claim": (
-            "local library execution, replay, batch, education reconciliation, and "
-            "non-destructive maintenance contract only; no distributed operation, model, "
-            "or retrieval quality claim"
+            "local library execution, replay, durable single-host worker queue, batch, "
+            "education reconciliation, and non-destructive maintenance contract only; "
+            "no distributed operation, model, or retrieval quality claim"
         ),
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))

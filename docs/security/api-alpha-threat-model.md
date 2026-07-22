@@ -1,6 +1,6 @@
 # AXCalib API Alpha Threat Model
 
-- 범위: WP-06.I1 + WP-06.I2a/I2b/I2c의 in-process FastAPI adapter
+- 범위: WP-06.I1 + WP-06.I2a/I2b/I2c resource API + WP-06.I3 durable local Worker의 in-process adapter
 - 상태: local contract verified, operational deployment **NO-GO**
 - 기준일: 2026-07-22
 
@@ -16,7 +16,10 @@ flowchart LR
     C -->|opaque artifact id + hash| S[Deployment Staging Resolver]
     V -->|verified principal role org scopes| A[AXCalib API Adapter]
     S -->|approved immutable local file| A
+    A -->|inline or validated queued command| Q[Local Job Queue]
+    Q -->|lease + same PipelineContext| W[One-job Worker]
     A -->|principal-bound command + expected revision| L[AXCalib Library]
+    W --> L
     L --> D[(Dossier / Audit / Report / Outbox)]
 ```
 
@@ -37,6 +40,9 @@ Library는 상태전이와 관리자 HITL을 최종적으로 다시 검사한다
 | decision 응답 유실 | commit 뒤 응답을 못 받은 client가 재시도 | required key, principal/resource/payload-bound successful result replay와 authorized GET | commit-result write crash window와 distributed store 미구현 |
 | 정보 노출 | path/token/자유서술/validation value가 응답에 반사 | project safe view에서 URI·note·mentor·rationale 제외, RFC 9457형 redacted problem, token 미기록 | report/evidence read와 운영 trace redaction 별도 검토 필요 |
 | resource exhaustion | 거대 PPTX/sidecar 반복 hash | 64 MiB PPTX, 2 MiB sidecar metadata limit, default resolver deny | HTTP body limit, rate limit, timeout, malware/zip-bomb staging scan 미구현 |
+| queued payload 노출 | API key 또는 민감 업무본문을 job JSON에 남김 | registry-validated object, 1 MiB bound, recursive known credential-key deny, payload hash와 workspace 내부 저장 | DLP가 아니며 ACL/encryption/retention 정책 미구현 |
+| worker claim 경합 | lease 만료 후 두 process가 같은 job 실행 | claim 재검사, executor per-run lock, committed terminal result hash replay | heartbeat 없음; 장시간 작업의 첫 worker는 claim finalization을 잃을 수 있음 |
+| retry 폭주 | terminal 오류를 무한 재시도 | retryable status만 동일 run/context에서 기본 최대 3회 exponential delay | distributed dead-letter/metrics와 provider별 retry policy 미구현 |
 | 감사 불완전 | dossier만 남고 creation audit 누락 | replay 전에 principal-bound creation audit 존재 확인, transaction journal/reconcile | API가 자동 reconcile하지 않음; 운영 recovery runbook 필요 |
 | 교육 actor 가장 | 다른 learner/mentor/instructor 문자열 삽입 | 교육 request schema에 actor/learner/org 없음, principal subject/role과 `verified_api_principal` audit | 실제 IdP·배정 원장 claim 검증 미구현 |
 | 교육 resource IDOR | 다른 enrollment 확인·점수·완료결정 | learner subject/self scope, mentor enrollment scope, instructor program selector scope, admin scope와 organization 확인 | scope 발급·회수 source 미구현 |
@@ -50,7 +56,7 @@ Library는 상태전이와 관리자 HITL을 최종적으로 다시 검사한다
 | project read | project_owner 또는 administrator | owner `projects:read:own` + creation audit; admin `projects:read:any` 또는 `project:{id}:read` | dossier org match 또는 explicit org scope | current state | bearer principal |
 | registration approve/reject | administrator | `projects:decide:any` 또는 `project:{id}:decide` | dossier org match 또는 explicit org scope | 필수 | bearer principal |
 | completion accept/not_accept | administrator | 위와 동일 | 위와 동일 | 필수 | bearer principal |
-| generic pipeline run | operator 또는 administrator + exact delivery grant | grant가 역할 허용 | 아직 project resource scope 아님 | pipeline별 typed context | bearer principal |
+| generic pipeline run | operator 또는 administrator + exact inline/queued delivery grant | grant가 역할 허용 | 아직 project resource scope 아님 | pipeline별 typed context; queued도 동일 | bearer principal |
 | learner self enrollment | learner | `education:enroll:self` | verified org 필수 | exact program hash | bearer principal |
 | milestone start/project bind | learner | subject match + `education:progress:self` | enrollment org match | 필수 | bearer principal |
 | manual confirmation/score | configured mentor/instructor 또는 administrator | enrollment mentor / program instructor / admin scope | enrollment org match | 필수 | bearer principal |
@@ -65,7 +71,7 @@ machine이 모두 허용해야 한다.
 - 승인된 OIDC/JWKS issuer, audience, expiry, key rotation과 claim-to-role/scope/org mapping
 - immutable object storage 기반 upload/staging, access classification, malware scan, retention과 deletion
 - reverse proxy body limit, rate limit, request timeout과 audit-safe trace ID
-- database/distributed transaction, worker lease와 idempotency record retention/commit recovery
+- database/broker transaction, worker heartbeat/dead-letter/metrics와 idempotency/job retention/commit recovery
 - project list/report/evidence authorization 및 enumeration 방지
 - education mentor/instructor assignment source, delegation/revocation와 scope claim test
 - program publish/retire authorization과 legacy enrollment organization migration

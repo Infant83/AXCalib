@@ -1,5 +1,6 @@
 """Authenticated FastAPI adapter over the AXCalib local pipeline runtime."""
 
+import asyncio
 import hashlib
 import uuid
 from typing import Annotated, Any
@@ -15,10 +16,17 @@ from pydantic import ValidationError
 
 from axcalib.client import AXCalib
 from axcalib.pipelines import PipelineContext
-from axcalib.runtime import PipelineRunConflictError, PipelineRunIntegrityError
+from axcalib.runtime import (
+    PipelineJobConflictError,
+    PipelineJobIntegrityError,
+    PipelineJobPayloadRejectedError,
+    PipelineRunConflictError,
+    PipelineRunIntegrityError,
+)
 
 from .artifacts import RejectAllStagedArtifactResolver, StagedArtifactResolver
 from .auth import (
+    ApiExecutionMode,
     ApiPipelineGrant,
     ApiPrincipal,
     ApiRole,
@@ -200,7 +208,13 @@ def create_app(
             for descriptor in client.registry.descriptors()
             if (descriptor.pipeline_id, descriptor.pipeline_version) in grants
         )
-        return PipelineCatalogResponse(pipelines=pipelines)
+        return PipelineCatalogResponse(
+            pipelines=pipelines,
+            execution_modes={
+                f"{pipeline_id}@{pipeline_version}": grant.execution_mode.value
+                for (pipeline_id, pipeline_version), grant in sorted(grants.items())
+            },
+        )
 
     app.include_router(
         create_project_router(
@@ -215,7 +229,13 @@ def create_app(
         "/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs",
         operation_id="runPipeline",
         response_model=PipelineRunView,
-        responses=problem_responses(401, 403, 404, 409, 422, 503),
+        responses={
+            **problem_responses(401, 403, 404, 409, 422, 503),
+            202: {
+                "model": PipelineRunView,
+                "description": "Pipeline command durably queued for a local worker",
+            },
+        },
     )
     async def run_pipeline(
         request: PipelineRunRequest,
@@ -235,7 +255,7 @@ def create_app(
                 pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
             ),
         ] = None,
-    ) -> PipelineRunView:
+    ) -> PipelineRunView | JSONResponse:
         grant = grants.get((pipeline_id, pipeline_version))
         if grant is None:
             raise ApiProblemError(
@@ -314,6 +334,27 @@ def create_app(
             metadata={"transport": "api"},
         )
         try:
+            if grant.execution_mode is ApiExecutionMode.QUEUED:
+                result = await asyncio.to_thread(
+                    client.enqueue_pipeline,
+                    pipeline_id,
+                    pipeline_version,
+                    validated_request,
+                    context=context,
+                )
+                job = client.jobs.load(result.run_id)
+                accepted = PipelineRunView.from_execution(
+                    result,
+                    queue_status=job.status,
+                ).model_copy(update={"output": None})
+                return JSONResponse(
+                    status_code=202,
+                    content=accepted.model_dump(mode="json"),
+                    headers={
+                        "Location": f"/v1/runs/{result.run_id}",
+                        "Retry-After": "1",
+                    },
+                )
             result = await client.aexecute_pipeline(
                 pipeline_id,
                 pipeline_version,
@@ -325,6 +366,24 @@ def create_app(
                 status=409,
                 code="run_conflict",
                 title="Run identity conflicts with an existing request",
+            ) from error
+        except PipelineJobConflictError as error:
+            raise ApiProblemError(
+                status=409,
+                code="job_conflict",
+                title="Queued run identity conflicts with an existing request",
+            ) from error
+        except PipelineJobPayloadRejectedError as error:
+            raise ApiProblemError(
+                status=422,
+                code="queued_payload_forbidden",
+                title="Queued pipeline payload cannot be persisted safely",
+            ) from error
+        except PipelineJobIntegrityError as error:
+            raise ApiProblemError(
+                status=409,
+                code="job_integrity_failure",
+                title="Persisted queued command integrity verification failed",
             ) from error
         except (PipelineRunIntegrityError, ValidationError, UnicodeError) as error:
             raise ApiProblemError(
@@ -347,6 +406,7 @@ def create_app(
         ],
         principal: Annotated[ApiPrincipal, Depends(authenticate)],
     ) -> PipelineRunView:
+        queue_status = None
         try:
             record = client.executor.load(run_id)
         except FileNotFoundError as error:
@@ -372,8 +432,19 @@ def create_app(
                 title="Caller cannot inspect this pipeline run",
             )
         try:
+            queue_status = client.jobs.load(run_id).status
+        except FileNotFoundError:
+            pass
+        except (PipelineJobIntegrityError, ValidationError, UnicodeError) as error:
+            raise ApiProblemError(
+                status=409,
+                code="job_integrity_failure",
+                title="Persisted queued command integrity verification failed",
+            ) from error
+        try:
             return PipelineRunView.from_execution(
                 client.executor.inspect(run_id),
+                queue_status=queue_status,
                 updated_at=record.updated_at,
             )
         except (PipelineRunIntegrityError, ValidationError, UnicodeError) as error:

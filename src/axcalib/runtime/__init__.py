@@ -51,6 +51,17 @@ from axcalib.runtime.transactions import (
     TransactionReconciliationResult,
     TransactionStatus,
 )
+from axcalib.runtime.worker import (
+    LocalPipelineJobQueue,
+    LocalPipelineWorker,
+    PipelineJobClaimError,
+    PipelineJobConflictError,
+    PipelineJobError,
+    PipelineJobIntegrityError,
+    PipelineJobPayloadRejectedError,
+    PipelineJobRecord,
+    PipelineJobStatus,
+)
 
 __all__ = [
     "BatchCheckpoint",
@@ -73,10 +84,19 @@ __all__ = [
     "LocalBatchRunner",
     "load_batch_jsonl",
     "LocalPipelineExecutor",
+    "LocalPipelineJobQueue",
+    "LocalPipelineWorker",
     "LocalWorkspaceMaintenance",
     "MaintenanceAction",
     "MaintenanceResult",
     "PipelineExecutionResult",
+    "PipelineJobClaimError",
+    "PipelineJobConflictError",
+    "PipelineJobError",
+    "PipelineJobIntegrityError",
+    "PipelineJobPayloadRejectedError",
+    "PipelineJobRecord",
+    "PipelineJobStatus",
     "PipelineRunConflictError",
     "PipelineRunIntegrityError",
     "PipelineRunRecord",

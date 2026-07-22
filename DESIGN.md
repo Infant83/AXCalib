@@ -20,6 +20,9 @@ retrieval, report, recording notification과 두 Gate pipeline이 G3 reference s
 2026-07-21에는 supplied image-only PPTX에 한해 제한형 embedded-image `SlideRenderer`, 16-slide
 hash manifest, 13-locator gold fixture와 evidence-quality eval이 추가됐다. 일반 slide rendering/VLM,
 embedding/Vector DB, panel/calibration, 운영 API/Web 설계는 여전히 Target이며 구현 완료가 아니다.
+2026-07-22 WP-06.I3에는 validated request를 hash-bound local envelope로 보존하고 exact queued grant에
+202를 반환하는 single-host Worker Alpha가 추가됐다. 이는 분산 broker, OIDC, immutable upload 또는
+운영 scheduler 완료가 아니다.
 
 제품은 다음 네 층으로 분리한다.
 
@@ -823,7 +826,16 @@ batch는 checkpoint와 per-item result를 기록한다. resume은 retryable fail
 
 ### 13.4 Service worker
 
-초기 API는 in-process worker port로 시작할 수 있지만 long-running parse/model job은 202 Accepted와 run_id를 반환한다. 파일럿에서는 Redis/RabbitMQ 기반 worker adapter를 선택하고 다음을 보장한다.
+현재 local Alpha는 `ApiPipelineGrant.execution_mode=queued`인 exact pipeline만 202 Accepted와 stable
+run reference로 넘긴다. registry가 검증한 object payload, canonical SHA-256, immutable context와 최대
+시도 횟수를 1 MiB 이하 local envelope로 보존하고 알려진 credential key를 거부한다. one-job Worker는
+oldest-available claim을 lease하고 같은 `LocalPipelineExecutor`를 호출한다. retryable failure만 bounded
+backoff로 재실행하며 terminal/cancelled 결과는 replay한다. API poll은 execution `status`와
+`queue_status`를 분리하고 local path/URI를 제거한다.
+
+이 구현은 single-host filesystem reference다. lease heartbeat가 없으므로 장시간 작업이 lease를
+초과할 수 있고, workspace ACL/retention/encryption도 deployment 책임이다. 파일럿에서는 승인된
+database 또는 Redis/RabbitMQ 기반 worker adapter를 선택하고 다음을 보장한다.
 
 - at-least-once delivery를 고려한 idempotency
 - retry with exponential backoff + jitter

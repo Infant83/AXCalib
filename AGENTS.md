@@ -15,8 +15,8 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 5. 기존 인증시스템 연동
 
 현재 작업공간은 **G3 Intelligence reference baseline과 evidence Q1 검증 완료, Qwen3.5 Plus/GPT-4o
-provider-proxy registration 검증 완료, Library/CLI/batch, fail-closed runtime API와 WP-06.I2a/I2b/I2c
-principal-bound project·education API 및 project read/decision replay local Alpha 완료 단계**다.
+provider-proxy registration 검증 완료, Library/CLI/batch, fail-closed runtime API, WP-06.I2a/I2b/I2c
+principal-bound resource API/read-replay와 WP-06.I3 durable local 202 Worker Alpha 완료 단계**다.
 dossier/snapshot, hash-bound review policy, 제한된 PPTX와 optional Docling manifest, synthetic
 lexical retrieval, deterministic/structured model evaluator, report, recording notification, 두 HITL과
 `two-gate-pptx@v1alpha1` working script가 존재한다. SkillBoss JSON-mode HTTP 500 원인은 복구했고
@@ -24,9 +24,10 @@ project/education append-only transaction journal, idempotent reconcile, stale a
 typed local executor/JSONL batch/Alpha CLI, authenticated FastAPI runtime과 principal-bound project
 register/두 HITL command, education self enrollment/role별 milestone/completion command도 local reference로
 검증했다. URI-redacted owner/admin project GET과 두 HITL decision의 principal-bound local semantic replay도
-검증했다. exact on-prem `Qwen3.5-397B-A17B`, full rubric,
+검증했다. exact queued grant의 202, typed/hash-bound local job, oldest-available lease/reclaim,
+retryable-only bounded retry, terminal replay와 one-job Worker도 같은 executor로 검증했다. exact on-prem `Qwen3.5-397B-A17B`, full rubric,
 report/outbox producer transaction, embedding/Vector DB, multi-model 품질, durable 운영 알림, full CLI,
-full evaluation API, OIDC/RBAC·실제 교육 배정 원장, immutable upload, distributed worker와 Web은 아직 완료되지 않았다. 이
+full evaluation API, OIDC/RBAC·실제 교육 배정 원장, immutable upload, distributed broker/worker heartbeat와 Web은 아직 완료되지 않았다. 이
 reference slice를 제품 MVP 전체나 모델·retrieval·운영 API 품질 검증 완료로 기록하지 않는다.
 
 ## 2. 기준정보 우선순위
@@ -311,6 +312,9 @@ AXCalib/
 .\prep.ps1 next
 .\prep.ps1 validate
 .\prep.ps1 test
+.\prep.ps1 test unit
+.\prep.ps1 test integration
+.\prep.ps1 test contract
 .\prep.ps1 eval
 .\prep.ps1 docling
 ~~~
@@ -318,7 +322,8 @@ AXCalib/
 - status: 파일을 바꾸지 않고 baseline, Gate, 차단요인, 다음 작업을 표시한다.
 - next: 현재 Gate에서 가장 작은 실행 가능한 작업과 전제를 표시한다.
 - validate: 문서, schema, 링크, 설정, secret, dossier 상태전이를 읽기 전용으로 검사한다.
-- test: offline 단위·통합·계약 테스트를 실행한다.
+- test: offline 단위·통합·계약 테스트를 격리된 저메모리 process group으로 순차 실행한다. 중단 복구나
+  진단에는 `unit|integration|contract` group 하나만 지정한다.
 - eval: 고정 fixture/dataset으로 parser, retrieval, 평가, 모델 편차 지표를 생성한다.
 - docling: optional Docling PPTX contract를 별도 프로세스로 실행한다. 저메모리 환경의 기본 test에는
   포함하지 않는다.

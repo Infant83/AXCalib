@@ -93,11 +93,12 @@ config로 끌 수 없다.
 | 관리자 Review Web | 관리자·평가자 | criterion별 근거 비교, checklist, 보완요청, 최종 decision | evaluation result 조회, review request/decision command | Target, 미구현 |
 | 과제 수행자 App | 과제 Owner | dossier 진행기록, evidence reference 추가, 현재 Gate와 allowed command 확인 | dossier update/freeze, completion submit | Target, 미구현 |
 | Mentor App | 배정 Mentor | comment, 변경 승인, 완료 제출 동의 | mentor event, completion guard | Target, 미구현 |
-| Runtime API | 플랫폼 개발자 | bearer + exact grant 아래 catalog/run/status/cancel | 같은 pipeline registry/checkpoint | Local Alpha |
+| Runtime API | 플랫폼 개발자 | bearer + exact inline/queued grant 아래 200/202, poll/status/cancel | 같은 pipeline registry/checkpoint/job queue | Local Alpha |
 | Project/HITL API | 과제 담당자·관리자 | staged hash 등록, registration/completion 결정 | principal + scope/org/revision + domain HITL | Local Alpha |
 | Education API | 학습자·멘토·강사·관리자 | program 조회, 가입, milestone/reviewer/project sync, 과정 완료결정 | principal + resource scope/org/revision + domain guard | Local Alpha |
-| Full Evaluation API | 기존 인증시스템 | evaluation/report, async workflow, OpenAPI client | 202 worker와 principal-bound workflow command | Target, 미구현 |
-| Async/Batch Worker | 운영자·연동시스템 | `202 + run_id`, progress, item별 retry/resume | long-running parse/evaluate workflow | Target, 미구현 |
+| Full Evaluation API | 기존 인증시스템 | evaluation/report, async workflow, OpenAPI client | principal-bound workflow command | Target, 미구현 |
+| Local Job Worker | 개발자·운영설계자 | `202 + run_id`, queue poll, bounded retry/restart | allowlisted pipeline executor | Local Alpha |
+| Distributed Worker | 운영자·연동시스템 | heartbeat, dead-letter, metrics, multi-host retry/resume | broker/database queue adapter | Target, 미구현 |
 | Python/Offline Harness | 개발자·설계 검토자 | supplied-PPTX 두 Gate, policy/Docling/retrieval/model report, fail-closed 확인 | `AXCalib`, `two-gate-pptx@v1alpha1` | G3 reference slice |
 | 과정 기획 Harness | 과정 기획자·관리자 | versioned level/milestone 구성, 가입 목표, project roll-up과 과정 완료 HITL 확인 | `publish_program`, `education-program-runtime@v1alpha1` | Offline reference |
 | 학습자 Progress App | 학습자 | 잠금/진행/보완/완료 milestone과 제출 과제 Gate 확인 | enrollment query, allowed command, project dossier link | Target, 미구현 |
@@ -110,15 +111,15 @@ Web은 chatbot이 아니라 **review cockpit**이 주 화면이다. Web/App은 d
 ## 4. 현재와 향후를 읽는 법
 
 - 실선·진한 코어: 현재 문서화되거나 local/offline slice에서 검증된 계약
-- 점선·옅은 적용면: full Evaluation API, Worker, Web/App 등 향후 Target
+- 점선·옅은 적용면: full Evaluation API, distributed Worker, Web/App 등 향후 Target
 - 붉은 Gate: 등록심의와 완료평가의 관리자 HITL
 - 중앙 dossier/snapshot: 사용자 기준 dossier 하나와 평가 시점의 immutable revision
 
 이 자료는 제품 전체가 구현됐다는 표시가 아니다. 현재는 dossier/snapshot, hash-bound policy,
 제한된 PPTX/Docling manifest, synthetic lexical retrieval, deterministic/structured evaluator와 두
-HITL을 연결한 **G3 reference**, Library/CLI/project·education API **local Alpha**다. on-prem/multi-model
+HITL을 연결한 **G3 reference**, Library/CLI/resource API/durable local Worker **local Alpha**다. on-prem/multi-model
 품질, Vector DB, durable 운영 notification, full evaluation API, OIDC/실제 교육 배정/immutable
-upload/worker와 Web/App은 아직 구현되지 않았다.
+upload/distributed worker와 Web/App은 아직 구현되지 않았다.
 
 ## 5. 생성 자산과 재현 기록
 

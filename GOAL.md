@@ -94,9 +94,10 @@ filesystem lock, local idempotency, durable recording outbox와 effective-config
 수준으로 검증했다. 2026-07-22 R1/I1/I2a에서 project·education transaction recovery,
 PipelineContext/checkpoint/cancel, Typer CLI/batch, non-destructive maintenance, fail-closed runtime API,
 principal-bound project/education command와 URI-redacted project GET/decision replay contract까지 local
-Alpha로 검증했다. 단, report/outbox producer,
-OIDC/JWKS·immutable upload·distributed worker와 운영 품질평가는 남아 있으므로 제품 전체나 운영
-MVP 완료로 기록하지 않는다.
+Alpha로 검증했다. WP-06.I3에서는 exact queued grant의 202, hash-bound local job, lease reclaim,
+retryable-only bounded retry와 terminal replay를 같은 executor에 연결했다. 단, report/outbox producer,
+OIDC/JWKS·immutable upload·distributed broker/heartbeat와 운영 품질평가는 남아 있으므로 제품 전체나
+운영 MVP 완료로 기록하지 않는다.
 
 2026-07-21 `WP-02.Q1`에서는 제공 PPTX의 16/16 slide를 제한형 embedded-image renderer로
 재현하고, 13개 reviewed locator와 12개 reference field를 source/sidecar hash에 고정한 품질
@@ -348,8 +349,9 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 현재 local Alpha evidence: sync/async executor, bounded JSONL batch, Alpha CLI, fail-closed FastAPI
 catalog/run/status/cancel, principal-bound project register/read/registration/completion decision replay, 교육
 program 조회·self enrollment·milestone/reviewer/project sync·completion decision과 generated runtime
-OpenAPI. approved OIDC/RBAC·교육 배정 원장, immutable upload service, 202 worker/SSE와 full workflow
-parity는 아직 남아 있다.
+OpenAPI, exact queued grant의 202와 single-host durable queue/one-job Worker. approved OIDC/RBAC·교육
+배정 원장, immutable upload service, distributed broker/heartbeat, SSE와 full workflow parity는 아직 남아
+있다.
 
 - sync/async parity
 - bounded concurrency와 cancellation
@@ -362,7 +364,9 @@ parity는 아직 남아 있다.
 - owner/admin project read scope와 URI/free-text redaction, principal/resource/payload-bound decision replay
 - learner/mentor/instructor/administrator resource scope·organization·program hash·revision binding
 - OpenAPI 3.2/TOML 1.1 toolchain compatibility spike
-- worker queue port와 in-process reference adapter
+- typed/hash-bound local worker queue, oldest-available lease/reclaim, retryable-only bounded retry와 terminal replay
+- queued 202/Location/Retry-After, authorized poll/cancel과 독립 queue status
+- distributed worker port, heartbeat/dead-letter/metrics와 운영 adapter
 
 ### WP-07 Web Review
 
@@ -662,6 +666,7 @@ P0 이후 다음 결정이 필요하다.
 - [x] 사용자 최신 지시로 local/offline slice 구현 범위 승인
 - [x] full PipelineContext/checkpoint/cancel과 독립 dossier.freeze/update pipeline 구현
 - [x] strict JSONL batch, Alpha Typer CLI와 clean-wheel actual-PPTX quickstart
+- [x] single-host durable 202 queue, restart/reclaim/retry/cancel과 one-job Worker local contract
 - [ ] Product/Evaluation Owner의 rubric·운영 baseline 정식 sign-off
 
 ## 17. 기술 근거

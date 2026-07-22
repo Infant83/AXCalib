@@ -868,11 +868,11 @@ def show_status() -> int:
     print("  architecture control: required Mermaid views + 2 SVGs + M00-M13 module board")
     print(
         "  implemented: actual-PPT project gates + evidence Q1 + Qwen proxy capability + "
-        "education goals + Library/CLI/batch/API local Alpha"
+        "education goals + Library/CLI/batch/resource API/local Worker Alpha"
     )
     print(
-        "  boundary: exact Qwen/full-rubric quality, credential, full API/OIDC/worker/Web "
-        "and operations are not complete"
+        "  boundary: exact Qwen/full-rubric quality, credential, full API/OIDC/"
+        "distributed worker/Web and operations are not complete"
     )
     return 0
 
@@ -910,23 +910,40 @@ def _run(command: list[str]) -> int:
     return subprocess.run(command, cwd=ROOT, env=env, check=False).returncode
 
 
-def run_tests() -> int:
-    # Windows may leave an inaccessible global ``pytest-current`` junction behind.
-    # A per-process workspace path avoids that global cleanup while remaining ignored.
-    base_temp = ROOT / "output" / "pytest-runs" / f"run-{os.getpid()}"
-    base_temp.parent.mkdir(parents=True, exist_ok=True)
-    return _run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "-q",
+def run_tests(group: str = "all") -> int:
+    """Run lightweight tests in restartable, low-memory process groups."""
+
+    groups = {
+        "unit": ["tests/unit"],
+        "integration": ["tests/integration"],
+        "contract": [
+            "tests/contract",
             "--ignore",
             "tests/contract/test_docling_adapter.py",
-            "--basetemp",
-            str(base_temp),
-        ]
-    )
+        ],
+    }
+    selected = tuple(groups) if group == "all" else (group,)
+    for name in selected:
+        # Windows may leave an inaccessible global ``pytest-current`` junction behind.
+        # A group/process-specific workspace path avoids global cleanup and lets an
+        # interrupted verification resume from the failed group instead of rerunning all.
+        base_temp = ROOT / "output" / "pytest-runs" / f"run-{os.getpid()}-{name}"
+        base_temp.parent.mkdir(parents=True, exist_ok=True)
+        print(f"test: running {name} group", flush=True)
+        result = _run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                *groups[name],
+                "-q",
+                "--basetemp",
+                str(base_temp),
+            ]
+        )
+        if result:
+            return result
+    return 0
 
 
 def run_docling_contract() -> int:
@@ -972,12 +989,20 @@ def main(argv: list[str] | None = None) -> int:
         "command",
         choices=("status", "next", "validate", "test", "eval", "docling"),
     )
+    parser.add_argument(
+        "test_group",
+        nargs="?",
+        choices=("all", "unit", "integration", "contract"),
+        help="optional low-memory pytest group for the test command",
+    )
     args = parser.parse_args(argv)
+    if args.command != "test" and args.test_group is not None:
+        parser.error("test_group is only valid with the test command")
     commands = {
         "status": show_status,
         "next": show_next,
         "validate": run_validate,
-        "test": run_tests,
+        "test": lambda: run_tests(args.test_group or "all"),
         "eval": run_eval,
         "docling": run_docling_contract,
     }

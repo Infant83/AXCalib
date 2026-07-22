@@ -19,7 +19,7 @@
 
 - [제품 브리프](../product/product-brief.md): Excalibur 기억 장치와 사람 최종권한
 - [사용 안내서](../manuals/README.md): quickstart, 설정/API, 정확한 SVG와 6컷 tutorial
-- [현재 workflow SVG](../architecture/diagrams/workflow-at-a-glance.svg): G3 reference slice와 남은 hardening
+- [현재 workflow SVG](../architecture/diagrams/workflow-at-a-glance.svg): G3 reference, G4 resource API/local Worker와 남은 hardening
 - [PPTX demo 기록](../evaluation/oled-qc-pptx-demo.md): 등록 `needs_changes`, 완료 `not_accept` 결과
 - [G3 개발 리포트](../evaluation/g3-intelligence-development-report.md): policy/Docling/retrieval/model 검증과 코드리뷰
 - [개발 준비 감사](../readiness/development-readiness-audit.md): reference slice 검증과 운영 NO-GO

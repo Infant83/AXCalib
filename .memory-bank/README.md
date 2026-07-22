@@ -13,23 +13,24 @@
 
 - 제품: AXCalib, AX Certification Agent Library
 - 핵심 경계: Agent는 심의 초안을 만들고 승인된 사람이 최종 결정한다.
-- 현재 위치: P7 / WP-06.I3 ready / G4 Interfaces
-- 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a/I2b/I2c resource API/read/replay local Alpha
-- 다음 Slice: WP-06.I3 durable local 202 worker contract `ready`
-- 최근 증거: 121 lightweight tests, 10 eval groups, project API 6/6, combined API 18/18,
-  Ruff check, Pyright 0/0, validation 0/0
+- 현재 위치: P7 / WP-06.I3 completed local Alpha / G4 Interfaces
+- 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a/I2b/I2c resource API/read-replay + I3 local Worker
+- 다음 dependency: WP-06.I4 approved OIDC/assignment/immutable upload boundary `blocked_policy`
+- 최근 증거: 130 lightweight tests(unit 83/integration 28/contract 19), 10 eval groups,
+  API+Worker combined 27/27, Ruff check, Pyright 0/0, validation 0/0, clean Worker wheel smoke
 - 최근 해결: SkillBoss proxy의 `json_object` HTTP 500 원인을 JSON keyword/schema contract로 복구
 - 최근 구현: project/education recovery, pipeline checkpoint/result hash/cancel, JSONL batch,
   non-destructive maintenance, Alpha CLI, fail-closed runtime API, principal-bound project register/HITL,
-  education enrollment/milestone/completion, project safe GET/decision replay와 clean-wheel actual-PPTX quickstart
+  education enrollment/milestone/completion, project safe GET/decision replay, queued 202/local job lease/retry/
+  terminal replay Worker와 clean-wheel actual-PPTX quickstart
 - 중단 원인: Windows `os.kill(pid, 0)` self-termination; read-only Win32 query로 해결. Docling은 별도
   `prep.ps1 docling` contract로 분리
 - 모델 경계: Qwen3.5 Plus/GPT-4o provider proxy만 확인; exact `Qwen3.5-397B-A17B`는 미검증
 - 데이터 경계: synthetic 또는 승인된 비식별 fixture만 사용
 - API 경계: injected verifier/grant; project/education command는 principal·resource scope·org·revision,
-  staged/program hash에 bind하고 project GET은 URI/free-text redacted. local decision replay는 구현됐지만
-  OIDC/JWKS·실제 교육 배정, immutable upload와 202 worker/distributed idempotency는 미구현
-- 다음 읽기: `../PROJECT_STATE.md` → `../docs/evaluation/wp06-i2c-project-read-decision-replay-report.md` →
+  staged/program hash에 bind하고 project GET은 URI/free-text redacted. queued grant의 202/local Worker는
+  구현됐지만 OIDC/JWKS·실제 교육 배정, immutable upload와 distributed queue/heartbeat는 미구현
+- 다음 읽기: `../PROJECT_STATE.md` → `../docs/evaluation/wp06-i3-durable-local-worker-report.md` →
   `../docs/HANDOFF.md` → `../CHANGELOG.md`
 
 ## 재개 체크리스트

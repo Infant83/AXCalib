@@ -11,9 +11,9 @@
 | R-007 | 실제 데이터 또는 secret 유출 | 개인정보·보안 사고 | synthetic-only 기본, env 이름만 기록, default test에서 live 제외; 사용자 승인 비식별 smoke만 별도 수행 | Open |
 | R-008 | GitLab MR 또는 email provider 종속 | 운영 이식성 저하 | NotificationPort와 adapter 분리 | Planned |
 | R-009 | 국소 pipeline 과분할 | 경계·버전·운영 복잡도 증가 | 독립 업무결과와 재사용자가 있을 때만 pipeline 승격 | Planned |
-| R-010 | script, CLI, API별 로직 복제 | interface마다 판정과 오류 의미가 달라짐 | working script, Alpha CLI와 local FastAPI가 같은 `AXCalib` registry/request/result를 호출 | CLI/API locally mitigated; worker parity open |
+| R-010 | script, CLI, API별 로직 복제 | interface마다 판정과 오류 의미가 달라짐 | working script, Alpha CLI, local FastAPI와 one-job Worker가 같은 `AXCalib` registry/executor/request/result를 호출 | Local interfaces mitigated; distributed adapter parity open |
 | R-011 | 범용 workflow engine 조기개발 | Domain MVP 지연과 보안 surface 확대 | 명시적 Python composition과 allowlisted registry 구현 | Mitigated for slice |
-| R-012 | pipeline 사이 부분 side effect | 중복 평가·알림·불일치 상태 | atomic replace, durable outbox, project와 education append-only transaction journal, hash-bound artifact prerequisite와 idempotent reconcile | Locally mitigated; producer/distributed transaction open |
+| R-012 | pipeline 사이 부분 side effect | 중복 평가·알림·불일치 상태 | atomic replace, durable outbox, project/education journal, hash-bound prerequisite, executor terminal replay와 expired-claim recovery | Locally mitigated; producer/distributed transaction open |
 | R-013 | 구조도·module board와 코드 drift | 잘못된 작업순서와 완료판단 | 필수 문서 validation, same-change-set 규칙, Exit Evidence 기반 상태승격 | Mitigated in harness contract |
 | R-014 | Excalibur 비유가 Agent 자동인증으로 해석됨 | 사람 책임 약화·제품 신뢰 훼손 | 고정 문장, 권한 diagram, HITL 경계와 교육용 caption | Mitigated in predev contract |
 | R-015 | 옵션 과다로 첫 사용과 운영 구성이 실패 | adoption 저하·오설정 | minimal facade/default와 별도 expert profile | Mitigated in predev contract |
@@ -40,8 +40,9 @@
 | R-036 | Windows에서 POSIX식 PID probe가 테스트 프로세스를 종료 | traceback 없는 pytest·Agent 세션 중단 | Windows는 read-only `OpenProcess`/`GetExitCodeProcess`, POSIX만 `os.kill(pid, 0)`, 현재 PID 회귀 test | Mitigated locally |
 | R-037 | Docling과 정적검사 동시 실행이 저메모리 개발환경을 고갈 | 회귀 중단·불완전한 품질 주장 | Docling lazy import와 별도 `prep.ps1 docling`, lightweight default parser, 순차 검증과 512 MiB Pyright cap | Locally mitigated; CI resource sizing open |
 | R-038 | Library registry 등록을 HTTP 공개 권한으로 오인 | 임의 local path 실행·actor 가장·사람 Gate 우회 | exact grant, generic authority 거부, 전용 project/education role·resource-scope·org·revision command와 no-path staging | Mitigated for implemented routes; full authorization open |
-| R-039 | local Alpha API를 운영 server로 사용 | tenant 간 노출, 과대 request, path/credential 오용 | in-process 라벨, URI redaction, project size/hash guard, threat model과 운영 NO-GO | Open until OIDC/RBAC, immutable upload, proxy limits and worker |
+| R-039 | local Alpha API를 운영 server로 사용 | tenant 간 노출, 과대 request, path/credential 오용 | in-process 라벨, structural URI redaction, project size/hash guard, typed 1 MiB queued payload와 운영 NO-GO | Open until OIDC/RBAC, immutable upload, proxy limits and distributed worker |
 | R-040 | optional Docling tree가 yanked `pypdfium2 5.12.0` wheel을 lock | 향후 clean install 또는 parser 재현성 저하 | lock warning 기록, Docling 별도 contract, 기본 test에서 격리 | Open; refresh and 5.12.1 compatibility check before next Docling run |
 | R-041 | staged local file이 hash 확인 뒤 교체되거나 resolver ACL이 잘못됨 | 다른 bytes ingest 또는 tenant artifact 노출 | opaque ID, resolver principal/purpose, API size/hash, Library pre-transaction expected hash와 pre-evaluation frozen hash, 기본 deny | Open until immutable object version, ACL review and malware scan |
 | R-042 | 관리자 decision commit 뒤 HTTP 응답 유실 | client가 결과를 확인하지 못하거나 무작정 재시도 | authorized safe GET, principal/resource/payload-bound local idempotency result와 decision/audit integrity 재검증 | Locally mitigated; commit-record crash window/distributed store open |
 | R-043 | mentor/instructor resource scope가 실제 교육 배정 원장과 다름 | 다른 사람이 확인·점수를 기록하거나 tenant가 섞임 | exact enrollment/program scope, organization, role와 audit actor를 모두 검사하고 기본 verifier는 거부 | Open until approved OIDC claim mapping, assignment source and revocation tests |
+| R-044 | local Worker payload 보존·lease 만료 | 민감 업무내용 평문 보존 또는 장시간 실행 중 claim 상실 | validated object, 1 MiB/credential-key deny, payload hash, workspace ACL 전제, executor serialization과 terminal replay; heartbeat/retention/encryption은 운영 adapter 요구 | Local Alpha only; DLP, heartbeat, broker/database queue open |

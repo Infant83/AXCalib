@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from axcalib import AXCalib
-from axcalib.api import ApiPipelineGrant, ApiPrincipal, ApiRole, create_app
+from axcalib.api import ApiExecutionMode, ApiPipelineGrant, ApiPrincipal, ApiRole, create_app
 
 
 class _TokenVerifier:
@@ -41,6 +41,22 @@ def _runtime_client(tmp_path: Path) -> tuple[AXCalib, TestClient]:
             ApiPipelineGrant(
                 pipeline_id="workspace.maintenance",
                 pipeline_version="v1alpha1",
+            ),
+        ),
+    )
+    return runtime, TestClient(app)
+
+
+def _queued_runtime_client(tmp_path: Path) -> tuple[AXCalib, TestClient]:
+    runtime = AXCalib(tmp_path / "workspace")
+    app = create_app(
+        runtime,
+        token_verifier=_TokenVerifier(),
+        pipeline_grants=(
+            ApiPipelineGrant(
+                pipeline_id="workspace.maintenance",
+                pipeline_version="v1alpha1",
+                execution_mode=ApiExecutionMode.QUEUED,
             ),
         ),
     )
@@ -185,6 +201,73 @@ def test_api_runs_same_registry_checkpoint_and_redacts_transport_details(
     corrupted = client.get("/v1/runs/api-maintenance", headers=_auth())
     assert corrupted.status_code == 409
     assert corrupted.json()["code"] == "run_integrity_failure"
+
+
+def test_api_queued_grant_returns_202_and_worker_resumes_same_run(tmp_path: Path) -> None:
+    runtime, client = _queued_runtime_client(tmp_path)
+    route = "/v1/pipelines/workspace.maintenance/versions/v1alpha1/runs"
+    request = {
+        "run_id": "api-queued-maintenance",
+        "idempotency_key": "queued-maintenance-1",
+        "payload": {},
+    }
+
+    catalog = client.get("/v1/pipelines", headers=_auth())
+    assert catalog.status_code == 200
+    assert catalog.json()["execution_modes"] == {"workspace.maintenance@v1alpha1": "queued"}
+
+    accepted = client.post(route, headers=_auth(), json=request)
+    assert accepted.status_code == 202, accepted.text
+    assert accepted.headers["location"] == "/v1/runs/api-queued-maintenance"
+    assert accepted.headers["retry-after"] == "1"
+    assert accepted.json()["status"] == "prepared"
+    assert accepted.json()["queue_status"] == "queued"
+    assert accepted.json()["output"] is None
+    assert runtime.jobs.load("api-queued-maintenance").status == "queued"
+
+    pending = client.get("/v1/runs/api-queued-maintenance", headers=_auth())
+    assert pending.status_code == 200
+    assert pending.json()["status"] == "prepared"
+    assert pending.json()["queue_status"] == "queued"
+    denied = client.get(
+        "/v1/runs/api-queued-maintenance",
+        headers=_auth("other-operator-token"),
+    )
+    assert denied.status_code == 403
+
+    result = runtime.create_worker(worker_id="worker:api-test").run_once()
+    assert result is not None and result.status == "succeeded"
+    completed = client.get("/v1/runs/api-queued-maintenance", headers=_auth())
+    assert completed.status_code == 200
+    assert completed.json()["status"] == "succeeded"
+    assert completed.json()["queue_status"] == "completed"
+    assert completed.json()["output"]["schema_version"] == ("axcalib.local-maintenance/v1alpha1")
+    assert "root" not in completed.json()["output"]
+    assert "manifest_uri" not in completed.json()["output"]
+
+    replay = client.post(route, headers=_auth(), json=request)
+    assert replay.status_code == 202
+    assert replay.json()["status"] == "succeeded"
+    assert replay.json()["queue_status"] == "completed"
+    assert replay.json()["replayed"] is True
+    assert replay.json()["output"] is None
+    assert runtime.create_worker(worker_id="worker:empty").run_once() is None
+
+    cancel_request = {
+        "run_id": "api-queued-cancel",
+        "idempotency_key": "queued-cancel-1",
+        "payload": {},
+    }
+    queued_cancel = client.post(route, headers=_auth(), json=cancel_request)
+    assert queued_cancel.status_code == 202
+    cancelled = client.post("/v1/runs/api-queued-cancel/cancel", headers=_auth())
+    assert cancelled.status_code == 200
+    cancelled_result = runtime.create_worker(worker_id="worker:cancel-test").run_once()
+    assert cancelled_result is not None
+    assert cancelled_result.status == "cancelled"
+    cancelled_poll = client.get("/v1/runs/api-queued-cancel", headers=_auth())
+    assert cancelled_poll.status_code == 200
+    assert cancelled_poll.json()["status"] == "cancelled"
 
 
 def test_api_distinguishes_unknown_pipeline_and_redacted_validation(

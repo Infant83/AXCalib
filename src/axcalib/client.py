@@ -47,6 +47,8 @@ from axcalib.runtime import (
     LocalBatchRunner,
     LocalIdempotencyStore,
     LocalPipelineExecutor,
+    LocalPipelineJobQueue,
+    LocalPipelineWorker,
     LocalWorkspaceMaintenance,
     MaintenanceResult,
     PipelineExecutionResult,
@@ -173,6 +175,10 @@ class AXCalib:
             self.service.workspace / "runs",
             self.registry,
         )
+        self.jobs = LocalPipelineJobQueue(
+            self.service.workspace / "jobs",
+            self.executor,
+        )
         self.batch = LocalBatchRunner(self.service.workspace / "batches", self.executor)
 
     def execute_pipeline(
@@ -207,6 +213,37 @@ class AXCalib:
             pipeline_version,
             payload,
             context=context,
+        )
+
+    def enqueue_pipeline(
+        self,
+        pipeline_id: str,
+        pipeline_version: str,
+        payload: object,
+        *,
+        context: PipelineContext,
+    ) -> PipelineExecutionResult:
+        """Persist one validated pipeline command for an explicit local worker."""
+
+        return self.jobs.enqueue(
+            pipeline_id,
+            pipeline_version,
+            payload,
+            context=context,
+        )
+
+    def create_worker(
+        self,
+        *,
+        worker_id: str,
+        lease_seconds: float = 300.0,
+    ) -> LocalPipelineWorker:
+        """Create a one-job-at-a-time worker over this client's durable queue."""
+
+        return LocalPipelineWorker(
+            self.jobs,
+            worker_id=worker_id,
+            lease_seconds=lease_seconds,
         )
 
     def run_batch(

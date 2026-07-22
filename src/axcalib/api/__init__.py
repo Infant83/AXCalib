@@ -7,6 +7,7 @@ from axcalib.api.artifacts import (
     StagedArtifactResolver,
 )
 from axcalib.api.auth import (
+    ApiExecutionMode,
     ApiPipelineGrant,
     ApiPrincipal,
     ApiRole,
@@ -40,6 +41,7 @@ from axcalib.api.models import (
 )
 
 __all__ = [
+    "ApiExecutionMode",
     "ApiPipelineGrant",
     "ApiPrincipal",
     "ApiRole",

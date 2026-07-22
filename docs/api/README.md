@@ -5,8 +5,8 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 
 - [전체 제품 목표 계약](openapi.v1alpha1.json): project evaluation/HITL까지 포함하는
   **pre-implementation target**
-- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime과 WP-06.I2a/I2b/I2c의
-  principal-bound project·education resource command/read/replay **implemented local Alpha**
+- [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime, WP-06.I2a/I2b/I2c의
+  principal-bound resource command/read/replay와 WP-06.I3 durable local 202 Worker **implemented local Alpha**
 
 목표 계약에만 존재하는 endpoint를 실행 가능하다고 간주하지 않는다. 구현 artifact는 FastAPI가
 생성한 schema와 contract test에서 byte 의미 수준으로 비교한다.
@@ -20,6 +20,10 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
   `TokenVerifier`로 주입하며 verifier가 없으면 fail closed한다.
 - registry 등록은 HTTP 공개를 뜻하지 않는다. exact `ApiPipelineGrant`가 있어야 catalog와 run에
   노출된다.
+- grant의 기본 execution mode는 inline이다. deployment가 exact version을 `queued`로 지정한 경우에만
+  validated/hash-bound local job을 기록하고 202를 반환한다.
+- queued payload는 object/1 MiB 한도와 알려진 credential key deny를 통과해야 한다. 이는 DLP나 운영
+  content policy를 대신하지 않는다.
 - run 조회·취소는 owner, administrator 또는 명시적 cross-run scope만 허용한다.
 - project 등록은 project owner/administrator role, `projects:create` scope와 verified organization을
   모두 요구한다. 두 HITL 결정은 administrator role, project decision scope, dossier organization과
@@ -65,8 +69,8 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 | Method | Route | 현재 의미 |
 |---|---|---|
 | GET | `/v1/pipelines` | deployment가 허용한 pipeline catalog |
-| POST | `/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs` | Library async entrypoint를 호출하고 local checkpoint 결과 반환 |
-| GET | `/v1/runs/{run_id}` | result path/hash를 검증한 status/output 조회 |
+| POST | `/v1/pipelines/{pipeline_id}/versions/{pipeline_version}/runs` | inline 200 또는 queued 202 + stable Location; 같은 Library executor 사용 |
+| GET | `/v1/runs/{run_id}` | result path/hash를 검증한 execution status/output와 독립 queue status 조회 |
 | POST | `/v1/runs/{run_id}/cancel` | process kill이 아닌 cooperative marker |
 | POST | `/v1/projects` | principal-bound project 등록; required idempotency key와 staged PPTX hash 검증 |
 | GET | `/v1/projects/{project_id}` | owner/admin scope·organization을 확인한 URI/free-text redacted current state |
@@ -90,7 +94,8 @@ uv run --no-sync python scripts/pipelines/export_runtime_openapi.py
 
 TestClient 계약은 실제 socket이나 외부 인증 endpoint를 열지 않는다. 운영 server, OIDC/JWKS,
 rate limit, immutable upload service, 실제 교육 배정/claim source, project list/report authorization,
-worker/202/SSE는 후속 WP-06 범위다. 운영 NO-GO와 공격면은
+distributed worker/heartbeat와 SSE는 후속 WP-06 범위다. local Worker 경계와 검증은
+[WP-06.I3 리포트](../evaluation/wp06-i3-durable-local-worker-report.md), 운영 NO-GO와 공격면은
 [API Alpha Threat Model](../security/api-alpha-threat-model.md)을
 따른다.
 

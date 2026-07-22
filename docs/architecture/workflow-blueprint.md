@@ -1,18 +1,19 @@
 ---
 document_type: workflow_blueprint
 project: AXCalib
-baseline: v0.3-p1-g4-project-read-replay-alpha
+baseline: v0.3-p1-g4-durable-worker-alpha
 updated_at: 2026-07-22
-status: library_cli_resource_api_local_alpha_exact_model_pending
+status: library_cli_resource_api_durable_worker_local_alpha_exact_model_pending
 ---
 
 # AXCalib Workflow Blueprint
 
 이 문서는 AXCalib의 전체 workflow, 국소 pipeline, module dependency, 사람 승인과 실패·재개
 경로를 시각적으로 고정한다. 0절은 현재 실행되는 slice이고, 나머지 다이어그램에는 향후
-Docling/model/outbox/worker/Web Target도 포함된다. FastAPI node는 runtime과 principal-bound
-project·education command와 project safe read/decision replay의 local Alpha 범위만 구현됐으며 운영 OIDC/RBAC·실제 교육 배정 원장·
-immutable upload·202 worker가 완료된 것으로 해석하지 않는다.
+Docling/model/outbox/worker/Web Target도 포함된다. FastAPI node는 runtime, principal-bound resource API,
+project safe read/decision replay와 single-host durable 202 Worker의 local Alpha 범위만 구현됐으며 운영
+OIDC/RBAC·실제 교육 배정 원장·immutable upload·distributed broker/heartbeat가 완료된 것으로 해석하지
+않는다.
 P/WP/G 일정, Active Slice와 작업 이력은 단일 실행 원장
 [PROJECT_STATE.md](../../PROJECT_STATE.md)에서 관리한다.
 
@@ -59,7 +60,7 @@ deterministic evaluator이고, 명시적 opt-in에서 Docling과 OpenAI-compatib
 같은 application service에 주입한다. image-only slide의 sidecar는 수동 검토 fixture이며
 OCR/VLM 품질을 뜻하지 않는다. 현재 retrieval metric은 작은 synthetic lexical 회귀다. durable
 local outbox, idempotency result store, effective-config, multi-process file lock, transaction recovery,
-pipeline checkpoint/cancel, CLI/batch와 project API는 reference로 추가됐다. 별도
+pipeline checkpoint/cancel, CLI/batch, resource API와 durable local Worker는 reference로 추가됐다. 별도
 `evals/evidence_quality.py`는 runtime을 우회하지 않고 두 Gate report를 읽어 restricted
 render 16/16, gold locator 13/13, reference field 12/12, criterion traceability 13/13과 unsupported
 claim 0건을 회귀한다. 이 경로는 공식 rubric/VLM 의미 정확도를 주장하지 않는다. Vector DB,
@@ -241,6 +242,40 @@ flowchart LR
 replay 전에 현재 principal authorization을 다시 확인한다. local result record는 HTTP response가 전송
 중 유실된 경우를 복구하지만 domain commit과 result write 사이 process crash, multi-host serialization과
 retention은 보장하지 않는다. report/evidence content read도 이 safe GET 범위가 아니다.
+
+### 0.7 WP-06.I3 durable local 202 Worker boundary
+
+```mermaid
+flowchart LR
+    P["Verified caller"] --> G{"Exact delivery grant"}
+    G -->|inline| E["LocalPipelineExecutor"]
+    G -->|queued| V["Registry validation<br/>1 MiB + credential-key guard"]
+    V --> PREP["Prepared run checkpoint"]
+    PREP --> JOB["Hash-bound local job<br/>queued"]
+    JOB --> RESP["202 + Location<br/>Retry-After"]
+    WORKER["Explicit one-job Worker"] --> CLAIM["Oldest available claim<br/>expiring lease"]
+    JOB --> CLAIM
+    CLAIM --> E
+    E --> RESULT{"Execution status"}
+    RESULT -->|retryable + attempts left| JOB
+    RESULT -->|terminal / wait / cancel| DONE["Queue completed or exhausted"]
+    POLL["Authorized poll/cancel"] --> VIEW["execution status + queue status<br/>no local path/URI"]
+    E --> VIEW
+    JOB --> VIEW
+    DONE --> VIEW
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class V,PREP,JOB,E,DONE,VIEW safe;
+    class P,G,RESP,WORKER,CLAIM,RESULT,POLL wait;
+```
+
+API request는 queued grant에서 domain pipeline을 inline 실행하지 않는다. Worker는 같은 executor를
+호출하므로 process가 executor commit 뒤 queue finalization 전에 종료돼도 lease expiry 후 terminal
+result를 replay한다. retryable failure만 bounded backoff로 다시 queued된다. 이 envelope/lease는
+single-host filesystem Alpha이며 plaintext workspace retention, heartbeat, dead-letter, broker/database
+consensus와 실제 OIDC는 운영 adapter 범위다.
 
 ## 1. 전체 계층
 
@@ -479,7 +514,7 @@ flowchart TB
     subgraph I["Delivery Interfaces"]
         direction LR
         M11["M11 Script / CLI"]
-        M12["M12 Resource API + Project Read/Replay / Worker"] --> M13["M13 Web Review"]
+        M12["M12 Resource API + Durable Local Worker"] --> M13["M13 Web Review"]
     end
 
     M00 --> PC
@@ -599,8 +634,8 @@ flowchart LR
 ```
 
 cancel은 process kill 또는 이미 commit된 domain mutation의 rollback이 아니다. terminal result와
-성공 item은 재실행하지 않으며 result path/hash가 바뀌면 replay를 실패시킨다. 이 lease는 single-host
-local Alpha 계약이고 distributed worker lease는 G4 이후 범위다.
+성공 item은 재실행하지 않으며 result path/hash가 바뀌면 replay를 실패시킨다. executor와 job lease는
+single-host local Alpha 계약이고 heartbeat가 있는 distributed worker lease는 후속 운영 범위다.
 
 ## 7. Delivery Wave
 
@@ -610,7 +645,7 @@ flowchart LR
     W1["Wave 1 — WP-01 + WP-01E\nLocal hardening + education composition"]
     W2["Wave 2 — WP-02/03\nRestricted PPT Q1 verified + rubric hardening"]
     W3["Wave 3 — WP-04/05\nRetrieval + Model + Calibration"]
-    W4["Wave 4 — WP-06\nCLI + Project API Alpha · Education/Worker next"]
+    W4["Wave 4 — WP-06\nResource API + Durable Local Worker Alpha"]
     W5["Wave 5 — WP-07/08\nWeb Review + Pilot"]
 
     W0 --> W1 --> W2 --> W3 --> W4 --> W5

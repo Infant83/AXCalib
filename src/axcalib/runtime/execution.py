@@ -122,6 +122,30 @@ class LocalPipelineExecutor:
                 execution_context,
             )
 
+    def prepare(
+        self,
+        pipeline_id: str,
+        pipeline_version: str,
+        payload: Any,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineExecutionResult:
+        """Validate and checkpoint a run without invoking its pipeline."""
+
+        validated = self.registry.validate_request(pipeline_id, pipeline_version, payload)
+        request_value = self._json_value(validated)
+        request_sha256 = hashlib.sha256(canonical_json_bytes(request_value)).hexdigest()
+        execution_context = context or PipelineContext(run_id=f"run-{uuid.uuid4()}")
+        with exclusive_file_lock(self._lease_path(execution_context.run_id)):
+            existed = self._record_path(execution_context.run_id).is_file()
+            record = self._prepare(
+                pipeline_id,
+                pipeline_version,
+                request_sha256,
+                execution_context,
+            )
+            return self._result_from_record(record, replayed=existed)
+
     def _execute_locked(
         self,
         pipeline_id: str,

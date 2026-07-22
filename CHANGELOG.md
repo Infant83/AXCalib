@@ -30,6 +30,9 @@
   enrollment revision contract
 - owner/admin scope와 organization을 검사하는 URI/free-text redacted project current-state GET
 - principal/resource/stage/revision/payload에 고정된 registration/completion decision semantic replay
+- exact delivery grant별 inline/queued mode와 HTTP 202 `Location`/`Retry-After`
+- validated 1 MiB 이하 hash-bound job envelope, oldest-available lease/reclaim와 one-job local Worker
+- retryable-only bounded backoff, terminal replay, 독립 execution/queue poll status와 worker script
 
 ### 변경
 
@@ -51,21 +54,24 @@
   context를 매번 다시 확인한다.
 - API decision은 `verified_api_principal` authority context를 domain record에 남기고 exact successful
   retry만 revision/audit 증가 없이 재생한다. 같은 key의 다른 actor/resource/payload는 409로 닫힌다.
+- queued API는 domain pipeline을 inline 실행하지 않고 prepared checkpoint와 job을 기록한다. generic
+  HTTP output의 local path/URI field도 재귀적으로 제거한다.
 
 ### 현재 검증
 
-- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. project API
-  targeted contract 6/6, runtime+project+education API contract 18/18, full 121 tests, 10 eval groups와
-  Pyright 0/0이 통과했다.
+- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. API+Worker combined
+  contract 27/27, full 130 tests(unit 83/integration 28/contract 19), 10 eval groups, Ruff와 Pyright 0/0이
+  통과했다.
 - clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/17 paths를
-  구성한다. actual-PPTX quickstart는 이전 Alpha checkpoint evidence를 유지한다.
-- project/education local state recovery와 stale artifact maintenance는 검증했지만 report/outbox producer,
-  database/distributed worker, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
+  구성하며 local Worker prepared→succeeded를 실행한다. actual-PPTX quickstart는 이전 Alpha checkpoint
+  evidence를 유지한다.
+- project/education local state recovery, stale artifact maintenance와 single-host local Worker는 검증했지만
+  report/outbox producer, database/distributed worker/heartbeat, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
 
 ### 다음 변경 후보
 
 - G4: immutable upload service와 approved OIDC/RBAC·education assignment source
-- durable 202 worker, poll/SSE와 resume
+- distributed worker/heartbeat/dead-letter, poll event와 optional SSE
 - report/outbox producer와 database/distributed transaction hardening
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증
 - 승인된 rubric과 사람 gold label 기반 품질 평가

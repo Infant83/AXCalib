@@ -20,6 +20,13 @@ class ApiRole(StrEnum):
     ADMINISTRATOR = "administrator"
 
 
+class ApiExecutionMode(StrEnum):
+    """Deployment-owned choice between inline and durable queued execution."""
+
+    INLINE = "inline"
+    QUEUED = "queued"
+
+
 class ApiPrincipal(BaseModel):
     """Verified caller identity supplied by a deployment-owned token verifier."""
 
@@ -38,6 +45,7 @@ class ApiPipelineGrant(BaseModel):
 
     pipeline_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
     pipeline_version: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+    execution_mode: ApiExecutionMode = ApiExecutionMode.INLINE
     execute_roles: frozenset[ApiRole] = Field(
         default_factory=lambda: frozenset({ApiRole.OPERATOR, ApiRole.ADMINISTRATOR})
     )
@@ -81,6 +89,7 @@ class RejectAllTokenVerifier:
 
 
 __all__ = [
+    "ApiExecutionMode",
     "ApiPipelineGrant",
     "ApiPrincipal",
     "ApiRole",

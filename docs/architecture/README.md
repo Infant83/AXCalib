@@ -29,6 +29,8 @@
 | [ADR-014](../adr/ADR-014-progressive-configuration-and-openapi.md) | 최소 facade, expert config와 OpenAPI 제어 경계 |
 | [ADR-022](../adr/ADR-022-fail-closed-runtime-api.md) | runtime API의 fail-closed verifier/grant와 target/implemented 계약 분리 |
 | [ADR-023](../adr/ADR-023-principal-bound-project-api.md) | verified principal project command와 no-path staged artifact 경계 |
+| [ADR-026](../adr/ADR-026-durable-local-worker-and-202-contract.md) | queued 202, local job envelope, lease/retry/replay와 분산 운영 경계 |
+| [WP-06.I3 Worker 리포트](../evaluation/wp06-i3-durable-local-worker-report.md) | single-host Worker 구현·코드리뷰·검증과 남은 위험 |
 | [API Alpha Threat Model](../security/api-alpha-threat-model.md) | current control, residual risk와 운영 NO-GO |
 | [ADR-015](../adr/ADR-015-image-only-pptx-offline-evidence.md) | image-only PPTX sidecar와 same-hash final 처리 결정 |
 | [ADR-016](../adr/ADR-016-review-policy-and-openai-compatible-evaluator.md) | hash-bound 심사기준, structured model, OpenAI/on-prem 환경계약 |

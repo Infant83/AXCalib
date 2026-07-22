@@ -800,6 +800,17 @@
         "additionalProperties": false,
         "description": "Deterministic catalog of allowlisted local pipelines.",
         "properties": {
+          "execution_modes": {
+            "additionalProperties": {
+              "enum": [
+                "inline",
+                "queued"
+              ],
+              "type": "string"
+            },
+            "title": "Execution Modes",
+            "type": "object"
+          },
           "pipelines": {
             "items": {
               "$ref": "#/components/schemas/PipelineDescriptor"
@@ -848,6 +859,18 @@
         ],
         "title": "PipelineDescriptor",
         "type": "object"
+      },
+      "PipelineJobStatus": {
+        "description": "Durable queue lifecycle independent from the pipeline result status.",
+        "enum": [
+          "queued",
+          "claimed",
+          "completed",
+          "exhausted",
+          "blocked"
+        ],
+        "title": "PipelineJobStatus",
+        "type": "string"
       },
       "PipelineRunRequest": {
         "additionalProperties": false,
@@ -956,6 +979,16 @@
           "pipeline_version": {
             "title": "Pipeline Version",
             "type": "string"
+          },
+          "queue_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PipelineJobStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "replayed": {
             "default": false,
@@ -2876,6 +2909,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineRunView"
+                }
+              }
+            },
+            "description": "Pipeline command durably queued for a local worker"
           },
           "401": {
             "content": {
