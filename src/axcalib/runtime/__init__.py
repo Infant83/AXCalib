@@ -1,10 +1,41 @@
 """Runtime configuration, idempotency, and execution helpers."""
 
+from axcalib.runtime.batch import (
+    BatchCheckpoint,
+    BatchConflictError,
+    BatchItem,
+    BatchItemResult,
+    BatchManifest,
+    BatchResult,
+    LocalBatchRunner,
+    load_batch_jsonl,
+)
 from axcalib.runtime.config import LoadedRuntimeConfig, RuntimeConfigError, load_runtime_config
+from axcalib.runtime.enrollment_transactions import (
+    EnrollmentJournalEvent,
+    EnrollmentJournalRecord,
+    EnrollmentReconciliationResult,
+    EnrollmentTransactionCoordinator,
+    EnrollmentTransactionJournal,
+    EnrollmentTransactionPlan,
+)
+from axcalib.runtime.execution import (
+    LocalPipelineExecutor,
+    PipelineExecutionResult,
+    PipelineRunConflictError,
+    PipelineRunIntegrityError,
+    PipelineRunRecord,
+    PipelineRunStatus,
+)
 from axcalib.runtime.idempotency import (
     IdempotencyConflictError,
     IdempotencyError,
     LocalIdempotencyStore,
+)
+from axcalib.runtime.maintenance import (
+    LocalWorkspaceMaintenance,
+    MaintenanceAction,
+    MaintenanceResult,
 )
 from axcalib.runtime.transactions import (
     ProjectTransactionCoordinator,
@@ -22,11 +53,34 @@ from axcalib.runtime.transactions import (
 )
 
 __all__ = [
+    "BatchCheckpoint",
+    "BatchConflictError",
+    "BatchItem",
+    "BatchItemResult",
+    "BatchManifest",
+    "BatchResult",
+    "EnrollmentJournalEvent",
+    "EnrollmentJournalRecord",
+    "EnrollmentReconciliationResult",
+    "EnrollmentTransactionCoordinator",
+    "EnrollmentTransactionJournal",
+    "EnrollmentTransactionPlan",
     "IdempotencyConflictError",
     "IdempotencyError",
     "LoadedRuntimeConfig",
     "RuntimeConfigError",
     "LocalIdempotencyStore",
+    "LocalBatchRunner",
+    "load_batch_jsonl",
+    "LocalPipelineExecutor",
+    "LocalWorkspaceMaintenance",
+    "MaintenanceAction",
+    "MaintenanceResult",
+    "PipelineExecutionResult",
+    "PipelineRunConflictError",
+    "PipelineRunIntegrityError",
+    "PipelineRunRecord",
+    "PipelineRunStatus",
     "ProjectTransactionCoordinator",
     "ProjectTransactionPlan",
     "TransactionArtifactRequirement",

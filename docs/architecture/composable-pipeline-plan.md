@@ -370,7 +370,7 @@ Work Package 적용:
 
 | WP | pipeline 산출물 |
 |---|---|
-| WP-01 | PipelineContext/Run/Registry 최소계약, dossier.initialize/update/freeze, working script |
+| WP-01 | PipelineContext/Run/Registry, dossier.initialize/update/freeze, project/education reconcile, maintenance, JSONL batch와 Alpha CLI |
 | WP-01E | program publish/enroll, milestone progression, project roll-up, program completion HITL |
 | WP-02 | evidence.prepare와 parser adapter contract |
 | WP-03 | registration.evaluate, completion.evaluate, report.render의 deterministic baseline |
@@ -420,7 +420,7 @@ Work Package 적용:
 
 ## 15. 현재 slice와 다음 작은 slice
 
-WP-01의 첫 slice인 `dossier.freeze/v1alpha1`과 WP-01E education composition reference는
+WP-01의 Library MVP/Alpha와 WP-01E education composition reference는 single-host local 범위에서
 구현·검증됐다.
 
 1. typed request/context/result 정의
@@ -428,12 +428,13 @@ WP-01의 첫 slice인 `dossier.freeze/v1alpha1`과 WP-01E education composition 
 3. in-memory/filesystem port 뒤에 저장
 4. stale/invalid/duplicate 결과 분리
 5. `scripts/pipelines/run_dossier_freeze.py`에서 실행
-6. 같은 pipeline을 향후 CLI/API가 호출할 수 있음을 contract test로 검증
+6. 같은 pipeline을 Alpha CLI가 직접 호출하고 향후 API가 재사용할 contract를 검증
 
-여기에 generated JSON Schema, filesystem lock, idempotency, durable local outbox와 actual proposal
-PPTX 기반 education lifecycle 예제가 연결됐다. 이 slice에는 FastAPI, Web, 실제 모델, Vector DB,
-실제 개인정보가 필요하지 않다.
+여기에 request/context/result hash checkpoint, per-run lease, cooperative cancel, project/education
+transaction reconcile, non-destructive maintenance, strict JSONL batch, generated JSON Schema,
+idempotency, durable local outbox와 actual proposal PPTX quickstart가 연결됐다. 이 slice에는 FastAPI,
+Web, 실제 모델, Vector DB, 실제 개인정보가 필요하지 않다.
 
-다음 가장 작은 slice는 `transaction.reconcile/v1alpha1` 설계와 Typer CLI parity다. dossier,
-enrollment, audit, outbox 사이 crash recovery contract를 먼저 고정하고 같은 project/education
-pipeline을 CLI에서 호출한다. 실제 provider나 배포는 포함하지 않는다.
+다음 가장 작은 slice는 G4의 minimal FastAPI adapter다. versioned OpenAPI 3.1 artifact와 실제
+handler가 같은 `AXCalib` registry/run checkpoint를 호출하도록 parity를 검증한다. 운영 배포,
+계정/RBAC, 실제 provider나 원문 전송은 포함하지 않는다.

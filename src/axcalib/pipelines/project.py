@@ -16,6 +16,7 @@ from axcalib.evaluation import EvidenceEvaluator, OfflineEvidenceEvaluator
 from axcalib.ingest import DoclingPptxParser, PptxEvidenceExtractor
 from axcalib.notifications.base import NotificationEvent, NotificationPort, RecordingNotifier
 from axcalib.notifications.outbox import DurableNotificationOutbox
+from axcalib.pipelines.base import PipelineContext
 from axcalib.policies import (
     DEFAULT_REVIEW_PROFILE,
     ResolvedReviewProfile,
@@ -914,15 +915,27 @@ class TwoGatePptxPipeline:
     def __init__(self, service: LocalProjectService) -> None:
         self.service = service
 
-    def run(self, request: TwoGatePptxRequest) -> WorkflowRunSummary:
+    def run(
+        self,
+        request: TwoGatePptxRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> WorkflowRunSummary:
         """Run the local workflow synchronously."""
 
+        if context is not None and context.cancellation_requested():
+            raise TimeoutError("pipeline execution was cancelled before start")
         return self.service.run_two_gate(request)
 
-    async def arun(self, request: TwoGatePptxRequest) -> WorkflowRunSummary:
+    async def arun(
+        self,
+        request: TwoGatePptxRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> WorkflowRunSummary:
         """Run with the same semantics without blocking the event loop."""
 
-        return await asyncio.to_thread(self.run, request)
+        return await asyncio.to_thread(self.run, request, context=context)
 
 
 __all__ = [

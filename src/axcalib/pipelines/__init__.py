@@ -1,6 +1,11 @@
 """Composable local pipeline contracts and implementations."""
 
-from axcalib.pipelines.base import LocalPipeline, PipelineRegistry
+from axcalib.pipelines.base import (
+    LocalPipeline,
+    PipelineContext,
+    PipelineDescriptor,
+    PipelineRegistry,
+)
 from axcalib.pipelines.dossier import (
     DossierFreezePipeline,
     DossierFreezeRequest,
@@ -26,13 +31,21 @@ from axcalib.pipelines.project import (
     TwoGatePptxRequest,
 )
 from axcalib.pipelines.recovery import (
+    EducationTransactionReconcilePipeline,
+    EducationTransactionReconcilePipelineResult,
     TransactionReconcilePipeline,
     TransactionReconcilePipelineResult,
     TransactionReconcileRequest,
+    WorkspaceMaintenancePipeline,
+    WorkspaceMaintenanceRequest,
 )
 
 __all__ = [
+    "EducationTransactionReconcilePipeline",
+    "EducationTransactionReconcilePipelineResult",
     "LocalPipeline",
+    "PipelineContext",
+    "PipelineDescriptor",
     "DossierFreezePipeline",
     "DossierFreezeRequest",
     "DossierInitializePipeline",
@@ -46,6 +59,8 @@ __all__ = [
     "TransactionReconcilePipeline",
     "TransactionReconcilePipelineResult",
     "TransactionReconcileRequest",
+    "WorkspaceMaintenancePipeline",
+    "WorkspaceMaintenanceRequest",
     "BindProjectCommand",
     "DecideProgramCompletionCommand",
     "EducationCommand",

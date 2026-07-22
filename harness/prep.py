@@ -921,6 +921,26 @@ def run_tests() -> int:
             "-m",
             "pytest",
             "-q",
+            "--ignore",
+            "tests/contract/test_docling_adapter.py",
+            "--basetemp",
+            str(base_temp),
+        ]
+    )
+
+
+def run_docling_contract() -> int:
+    """Run the memory-heavy optional Docling contract in an isolated process."""
+
+    base_temp = ROOT / "output" / "pytest-runs" / f"docling-{os.getpid()}"
+    base_temp.parent.mkdir(parents=True, exist_ok=True)
+    return _run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/contract/test_docling_adapter.py",
+            "-q",
             "--basetemp",
             str(base_temp),
         ]
@@ -938,6 +958,7 @@ def run_eval() -> int:
         "evals/model_contract_smoke.py",
         "evals/qwen_capability_contract.py",
         "evals/transaction_recovery.py",
+        "evals/library_mvp_alpha.py",
     ):
         result = _run([sys.executable, script])
         if result:
@@ -947,7 +968,10 @@ def run_eval() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("status", "next", "validate", "test", "eval"))
+    parser.add_argument(
+        "command",
+        choices=("status", "next", "validate", "test", "eval", "docling"),
+    )
     args = parser.parse_args(argv)
     commands = {
         "status": show_status,
@@ -955,6 +979,7 @@ def main(argv: list[str] | None = None) -> int:
         "validate": run_validate,
         "test": run_tests,
         "eval": run_eval,
+        "docling": run_docling_contract,
     }
     return commands[args.command]()
 

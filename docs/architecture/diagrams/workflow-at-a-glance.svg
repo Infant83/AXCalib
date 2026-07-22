@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
   <title id="title">AXCalib 교육 프로그램과 프로젝트 인증 모듈형 워크플로 구조도</title>
-  <desc id="desc">교육 프로그램, 학습자 가입 목표, 프로젝트 두 단계 인증, local transaction recovery, 제한형 PPT 렌더와 hash-bound gold evidence, Qwen 및 대체 multimodal provider proxy와 exact checkpoint 검증 경계, 전달 인터페이스, 국소 파이프라인, 도메인 모듈, 사람 승인 불변조건과 개발 Wave를 보여주는 인포그래픽</desc>
+  <desc id="desc">교육 프로그램, 학습자 가입 목표, 프로젝트 두 단계 인증, project와 education transaction recovery, local pipeline checkpoint와 JSONL batch, 비파괴 maintenance, 제한형 PPT 렌더와 hash-bound evidence, Qwen exact checkpoint 경계, 전달 인터페이스와 사람 승인 불변조건을 보여주는 인포그래픽</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#172033" flood-opacity="0.12"/>
@@ -27,7 +27,7 @@
   <text x="60" y="56" class="title">AXCalib — Composable Workflow Architecture</text>
   <text x="60" y="86" class="subtitle">Versioned Program → Enrollment Goals → Project Two Gates → Authorized Completion</text>
   <rect x="1330" y="42" width="210" height="36" rx="18" fill="#172033"/>
-  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">v0.3-p1 · TX R1A</text>
+  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">v0.3-p1 · LIB MVP α</text>
 
   <!-- Delivery lane -->
   <rect x="60" y="120" width="1080" height="100" rx="18" fill="#EEF4FF" stroke="#BFD2FF" filter="url(#shadow)"/>
@@ -37,13 +37,13 @@
     <rect x="245" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
     <text x="317" y="166" class="box-title">Python Script</text>
     <text x="317" y="186" class="box-note">working entrypoint</text>
-    <rect x="405" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
+    <rect x="405" y="140" width="145" height="60" rx="12" fill="#EAF8F4" stroke="#1E8A75"/>
     <text x="477" y="176" class="box-title">CLI</text>
     <rect x="565" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
     <text x="637" y="176" class="box-title">FastAPI</text>
     <rect x="725" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
     <text x="797" y="166" class="box-title">Worker</text>
-    <text x="797" y="186" class="box-note">async / batch</text>
+    <text x="797" y="186" class="box-note">local batch α</text>
     <rect x="885" y="140" width="145" height="60" rx="12" fill="#FFFFFF" stroke="#2F6BFF"/>
     <text x="957" y="166" class="box-title">Web App</text>
     <text x="957" y="186" class="box-note">review cockpit</text>
@@ -82,7 +82,7 @@
   <g>
     <rect x="245" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="325" y="451" class="box-title">Dossier</text>
-    <text x="325" y="474" class="box-note">init · freeze · reconcile</text>
+    <text x="325" y="474" class="box-note">freeze · project/edu reconcile</text>
     <rect x="420" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="500" y="451" class="box-title">Evidence</text>
     <text x="500" y="474" class="box-note">render · gold · quality</text>
@@ -94,7 +94,7 @@
     <text x="850" y="474" class="box-note">registration · completion</text>
     <rect x="945" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="1025" y="451" class="box-title">Review</text>
-    <text x="1025" y="474" class="box-note">report · request · decide</text>
+    <text x="1025" y="474" class="box-note">report · checkpoint · maintain</text>
   </g>
 
   <path class="arrow" d="M 600 520 L 600 546"/>
@@ -172,8 +172,8 @@
   </g>
   <rect x="1215" y="687" width="290" height="78" rx="12" fill="#252F45" stroke="#465066"/>
   <text x="1360" y="716" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">현재 구현 상태</text>
-  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Project recovery + JSON contract</text>
-  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Exact 397B + completion/gold pending</text>
+  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Local Library MVP Alpha verified</text>
+  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">API/RBAC + exact 397B pending</text>
 
   <!-- Delivery waves -->
   <text x="60" y="848" class="lane-title">Delivery Waves — 날짜가 아니라 dependency Gate</text>
@@ -184,10 +184,10 @@
     <text x="200" y="956" class="wave-note">완료</text>
 
     <path class="arrow" d="M 340 930 L 362 930"/>
-    <rect x="370" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="370" y="870" width="280" height="120" rx="16" fill="#EAF8F4" stroke="#1E8A75" filter="url(#shadow)"/>
     <text x="510" y="906" class="wave-title">Wave 1 · WP-01 / WP-01E</text>
     <text x="510" y="931" class="wave-note">Dossier + Education composition</text>
-    <text x="510" y="956" class="wave-note">project recovery · broader R1.2 남음</text>
+    <text x="510" y="956" class="wave-note">Library MVP Alpha · local verified</text>
 
     <path class="arrow" d="M 650 930 L 672 930"/>
     <rect x="680" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
@@ -196,10 +196,10 @@
     <text x="820" y="956" class="wave-note">proxy 통과 · exact/full rubric 남음</text>
 
     <path class="arrow" d="M 960 930 L 982 930"/>
-    <rect x="990" y="870" width="250" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>
+    <rect x="990" y="870" width="250" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="1115" y="906" class="wave-title">Wave 4 · WP-06</text>
-    <text x="1115" y="931" class="wave-note">Workflow Runtime</text>
-    <text x="1115" y="956" class="wave-note">CLI · API · Worker</text>
+    <text x="1115" y="931" class="wave-note">CLI Alpha 완료</text>
+    <text x="1115" y="956" class="wave-note">API · Worker next</text>
 
     <path class="arrow" d="M 1240 930 L 1262 930"/>
     <rect x="1270" y="870" width="270" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>

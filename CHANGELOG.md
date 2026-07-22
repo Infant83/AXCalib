@@ -10,24 +10,39 @@
 - project create/update의 dossier와 audit를 묶는 append-only hash-chain transaction journal
 - `project.transaction.reconcile@v1alpha1` library pipeline과 thin recovery script
 - prepare, dossier, audit 직후 synthetic crash 3종과 반복 reconciliation evaluation
+- education enrollment/audit용 append-only transaction journal과
+  `education.transaction.reconcile@v1alpha1`
+- request/context/result hash, per-run lease, sync/async, cooperative cancel과 replay를 보존하는 local
+  pipeline executor
+- strict JSONL manifest hash, item별 checkpoint/부분실패와 bounded concurrency를 가진 local batch
+- report-only 기본 stale artifact 검사와 quarantine/archive를 제공하는
+  `workspace.maintenance@v1alpha1`
+- optional `cli` extra의 Typer/Rich Alpha CLI와 실제 PPTX 등록심의 quickstart
+- local Library MVP/Alpha 고정 evaluation
 
 ### 변경
 
 - 등록·완료 HITL dossier 상태를 적용하기 전에 report JSON/Markdown과 recorded outbox hash를 고정한다.
 - audit event append를 event ID 기준 idempotent operation으로 강화했다.
+- Windows PID 확인은 `os.kill(pid, 0)` 대신 비파괴 Win32 process query를 사용한다.
+- 기본 `prep test`에서 optional Docling contract를 분리하고 `prep.ps1 docling`으로 명시 실행한다.
+- terminal/cancelled pipeline run은 재실행하지 않고, retryable failure만 같은 run ID에서 재시도한다.
+- persisted pipeline result path/SHA-256과 batch manifest SHA-256이 바뀌면 fail-closed한다.
 
 ### 현재 검증
 
-- offline tests 88 passed, evaluation 9 groups, validation 0 errors/0 warnings, Ruff/Pyright passed
-- project dossier/audit recovery는 검증됐지만 education transaction, report/outbox producer와 stale-lock
-  cleanup은 아직 진행 중이다.
+- final offline regression은 단계 종료 audit에서 갱신한다. 현재 targeted pipeline/education/
+  maintenance/CLI, clean wheel과 actual-PPTX quickstart가 통과했다.
+- project/education local state recovery와 stale artifact maintenance는 검증했지만 report/outbox producer,
+  database/distributed worker와 운영 provider는 아직 진행 전이다.
 
 ### 다음 변경 후보
 
-- WP-01.R1.2: education, report/outbox producer, stale lock과 orphan journal recovery
+- G4: Library registry와 run checkpoint를 직접 호출하는 minimal FastAPI/OpenAPI parity
+- report/outbox producer와 database/distributed transaction hardening
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증
 - 승인된 rubric과 사람 gold label 기반 품질 평가
-- Typer CLI parity 이후 API, worker, review Web App
+- full product CLI, API, worker, review Web App
 
 ## 0.1.0a0 development snapshot - 2026-07-22
 

@@ -35,5 +35,6 @@
 | D-031 | 2026-07-21 | Accepted | Qwen provider alias capability와 exact checkpoint deployment 검증을 분리한다. 제품/on-prem은 canonical `OPENAI_*` OpenAI-compatible 계약만 사용하고 SkillBoss는 개인환경 proxy에 한정한다. response model 미보고나 alias는 exact identity가 아니며 structured-output dialect/model을 조용히 fallback하지 않고 숨은 reasoning을 보존하지 않는다. |
 | D-032 | 2026-07-22 | Accepted | `json_object` dialect는 gateway가 literal JSON과 canonical schema contract를 prompt에 포함하고 Pydantic으로 재검증한다. wrapped upstream 오류는 allowlisted identifier만 노출한다. 공통 multimodal probe의 기본 `provider_proxy` scope는 model ID가 일치해도 deployment-ready가 될 수 없다. |
 | D-033 | 2026-07-22 | Accepted | Local project command는 hash-chained append-only transaction journal로 dossier/audit를 prepare/apply/commit/reconcile한다. HITL report와 recorded outbox는 hash-bound prerequisite이며 reconcile은 notification을 재전송하지 않는다. enrollment, report/outbox producer와 stale-lock recovery는 후속 범위다. |
+| D-034 | 2026-07-22 | Accepted | Local pipeline은 immutable context, request hash, per-run filesystem lease, result hash, cooperative cancel과 terminal/retryable replay 의미를 checkpoint한다. JSONL batch는 manifest hash와 item별 상태를 보존하고, education/project reconcile 및 report-only 기본 maintenance는 allowlisted pipeline으로 노출한다. Windows PID 확인은 비파괴 Win32 query를 사용하며 optional Docling contract는 저메모리 기본 test와 분리한다. |
 
 세부 근거는 `docs/adr/`의 ADR을 따른다.

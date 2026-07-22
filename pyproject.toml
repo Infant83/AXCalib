@@ -14,7 +14,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+cli = [
+  "rich>=13,<16",
+  "typer>=0.16,<1",
+]
 docling = ["docling>=2.113,<3"]
+
+[project.scripts]
+axcalib = "axcalib.cli:main"
 
 [dependency-groups]
 dev = [
@@ -22,7 +29,9 @@ dev = [
   "pyright>=1.1,<2",
   "python-pptx>=1.0,<2",
   "pytest>=9,<10",
+  "rich>=13,<16",
   "ruff>=0.12,<1",
+  "typer>=0.16,<1",
 ]
 
 [tool.hatch.build.targets.wheel]

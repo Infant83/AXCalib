@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-transaction-r1a
-phase: P2 Domain hardening
-gate: G2 Domain hardening
-gate_status: project_transaction_recovery_verified_broader_hardening_active
-status: wp01_r1_in_progress
-current_work_package: WP-01 Dossier and state hardening
-active_slice: WP-01.R1 transaction-journal-reconciliation
-active_slice_status: active
-next_gate: G2 Domain hardening
+baseline: v0.3-p1-library-mvp-alpha
+phase: P7 Interfaces
+gate: G4 Interfaces
+gate_status: interface_alpha_in_progress
+status: library_mvp_alpha_verified_g4_ready
+current_work_package: WP-06 minimal API parity
+active_slice: WP-06.I1 minimal-api-parity
+active_slice_status: ready
+next_gate: G4 Interfaces entry
 schedule_mode: dependency_only
 updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-004
+last_history_id: HIST-2026-07-22-005
 ---
 
 # AXCalib Project Execution Ledger
@@ -59,13 +59,13 @@ last_history_id: HIST-2026-07-22-004
 
 | 항목 | 현재 값 |
 |---|---|
-| 현재 Phase | **P2 Domain hardening**; P5 provider compatibility Q2 완료 |
-| 현재 Work Package | **WP-01 Dossier and state hardening** |
-| Active Slice | **WP-01.R1 Transaction Journal / Reconciliation** (`active`; R1.1 project recovery verified) |
-| 현재 Gate | **G2 Domain offline reference / hardening in progress** |
-| 다음 Gate | **G2 Domain hardening** |
+| 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
+| 현재 Work Package | **WP-06.I1 minimal API parity** |
+| Active Slice | **WP-06.I1** (`ready`; Library/CLI/batch checkpoint 이후 시작) |
+| 현재 Gate | **G4 Interfaces in progress**; CLI/batch Alpha evidence 확보 |
+| 다음 Gate | **G4 Interfaces**; minimal API/OpenAPI implementation parity 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 88 tests passed, 9 eval groups passed, validation 0 errors/0 warnings, Ruff/Pyright passed |
+| 최근 회귀 | 103 lightweight tests, 10 eval groups, validation 0/0, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·CLI/API/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -103,15 +103,15 @@ gantt
     WP-02.Q1 Actual-PPT evidence quality :done, wp02q1, 2026-07-21, 1d
     WP-05.Q1 Qwen proxy capability      :done, wp05q1, after wp02q1, 2d
     WP-05.Q2 Provider compatibility     :done, wp05q2, after wp05q1, 2d
-    WP-01.R Recovery hardening          :active,crit, wp01r, after wp05q2, 6d
+    WP-01.R Recovery hardening          :done, wp01r, after wp05q2, 6d
     WP-03 Gold rubric evaluation        :crit, wp03, after wp02q1, 8d
     WP-04 Retrieval benchmark           :wp04, after wp03, 10d
     WP-05 Model and calibration         :wp05, after wp04, 10d
     G3 Intelligence quality baseline    :milestone, g3quality, after wp05, 0d
 
     section P7-P9 Delivery
-    Typer CLI parity                    :wpcli, after wp01r, 6d
-    WP-06 API and batch                 :wp06, after wpcli, 10d
+    Typer CLI and local batch Alpha     :done, wpcli, after wp01r, 6d
+    WP-06 API parity and worker         :active,crit, wp06, after wpcli, 10d
     G4 Interfaces                       :milestone, g4, after wp06, 0d
     P8 Human Review Web                 :wpweb, after wp06, 12d
     G5 Web Review                       :milestone, g5, after wpweb, 0d
@@ -127,12 +127,12 @@ gantt
 |---|---|---|---|
 | P0 Planning | baseline 문서·정책 | `offline_reference` | G0 Owner/use-case 공식 sign-off 남음 |
 | P1 Harness | WP-00 | `verified` | G1 local validate/test/eval 통과 |
-| P2 Domain | WP-01, WP-01E, R1 | `active` | project dossier/audit R1.1 검증; education/producer/stale-lock R1.2 진행 |
+| P2 Domain | WP-01, WP-01E, R1 | `verified_local_alpha` | project/education recovery와 maintenance 완료; producer/distributed transaction 남음 |
 | P3 Evidence | WP-02, Q1 | `contract_verified` | 제한형 actual-PPT render/locator/coverage 완료; general VLM 남음 |
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
 | P6 Calibration | WP-05/06 일부 | `not_started` | panel disagreement와 human agreement report |
-| P7 Interfaces | CLI, WP-06 | `planned` | script/CLI/API/batch result parity와 G4 |
+| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch Alpha 완료; API/OpenAPI handler parity와 worker 남음 |
 | P8 Web Review | Web delivery | `blocked_policy` | FE/RBAC 선택, API, reviewer E2E와 G5 |
 | P9 Pilot | pilot package | `not_started` | 승인된 비식별 자료, G6~G7 결정 |
 
@@ -142,9 +142,9 @@ gantt
 |---|---|---|---|
 | G0 Alignment | `reference_ready` | 제품명·철학·T1·설계 기준 정렬 | Product/Evaluation Owner와 첫 공식 use case |
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
-| G2 Domain MVP | `hardening_in_progress` | dossier/snapshot/two-gate/education + project transaction R1.1 | education/producer/stale-lock recovery와 full checkpoint |
+| G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
-| G4 Interfaces | `not_started` | thin working scripts만 존재 | Typer CLI, API, async/batch contract |
+| G4 Interfaces | `in_progress` | Typer CLI, sync/async executor와 JSONL local batch | minimal API/OpenAPI parity, auth contract와 worker |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
 | G6 Pilot | `not_started` | 없음 | 승인된 비식별 paired dataset |
 | G7 Go/No-Go | `not_started` | 없음 | Sponsor Continue/Narrow/Stop 결정 |
@@ -197,35 +197,35 @@ Exit Evidence:
 - [x] SkillBoss 프록시 결과와 exact on-prem 미검증 경계를 개발리포트에 기록한다.
 - [x] offline fake endpoint, 전체 test/eval/validate, Ruff, Pyright 회귀가 통과한다.
 
-### 5.3 현재 Active Slice — WP-01.R1 Transaction Journal / Reconciliation
+### 5.3 종료된 최신 Slice — WP-01.R1.2 Library MVP / Alpha
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `active`; R1.1 project dossier/audit recovery verified, R1.2 pending |
-| 목적 | dossier, snapshot/report, audit와 notification outbox의 다중 파일 변경을 journal로 복구·대조 가능하게 고정 |
-| 대상 Module | M01 dossier, M02 state/approval, M08 audit/notification |
+| 상태 | `verified_local_library_alpha`; 103 tests/10 eval groups/validate 0/0/Ruff/Pyright 통과 |
+| 목적 | 복구 가능한 project/education 상태변경, 명시적 pipeline run, CLI·batch·clean install을 갖춘 제한형 Library MVP/Alpha 완성 |
+| 대상 Module | M00 pipeline, M01 dossier, M02 state, M08 audit/notification, M09 education, M10 runtime, M11 CLI |
 | 입력 | 현재 filesystem CAS, atomic file write, durable recording outbox와 failure-injection fixture |
-| 출력 | transaction journal schema, reconciliation service, idempotent recovery 결과와 audit evidence |
-| 목표 Gate | G2 Domain hardening |
+| 출력 | education transaction, local maintenance, checkpoint/cancel executor, CLI/batch, wheel·quickstart와 audit evidence |
+| 목표 Gate | G2 Domain hardening 종료 후보와 G4 Interfaces 진입 |
 | 외부 호출 | 없음; local filesystem/synthetic failure injection만 사용 |
 
 작업 범위:
 
-1. project command가 바꾸는 dossier/report/audit/outbox 파일 집합과 commit boundary를 열거한다.
-2. prepare → apply → committed/reconcile 상태의 append-only transaction journal contract를 고정한다.
-3. 각 write boundary 직후 crash/failure를 주입하고 재시도 시 중복 없이 복구한다.
-4. notification이 기록되지 않은 HITL 전이와 final state/report 불일치를 fail-closed한다.
-5. stale lock과 orphan temp/journal 처리 정책을 별도 상태·audit event로 남긴다.
-6. recovery test/eval/report와 관련 diagram/module 원장을 같은 change set에서 갱신한다.
+1. education enrollment/audit와 completion outbox를 append-only journal로 복구한다.
+2. stale lock, orphan temp와 journal retention을 삭제 없는 quarantine/archive 정책으로 구현한다.
+3. PipelineContext, checkpoint/resume, cancellation과 retryable/terminal 결과를 고정한다.
+4. allowlisted pipeline catalog를 사용하는 CLI와 bounded local batch를 구현한다.
+5. wheel build, clean `.venv` install과 supplied PPTX quickstart를 검증한다.
+6. Library MVP checkpoint를 audit·문서·diagram과 함께 commit/push한 뒤 G4 첫 slice를 시작한다.
 
 Exit Evidence:
 
-- [x] journal record가 project/revision/command/idempotency key와 대상 artifact를 연결한다.
-- [ ] failure injection 각 지점에서 재시작 후 dossier/report/audit/outbox가 일관된다. Project
-  dossier/audit 3개 boundary와 HITL prerequisite는 통과; producer/enrollment boundary는 남음.
-- [x] reconcile 반복 실행이 idempotent하고 이미 commit된 notification을 중복 생성하지 않는다.
-- [x] 사람 승인·필수 알림·stale revision 불변조건이 recovery 중에도 유지된다.
-- [x] 현재 88 tests와 9 eval groups를 포함한 전체 offline 회귀가 통과한다.
+- [x] education failure injection 뒤 enrollment/audit/outbox가 중복 알림 없이 일관되게 복구된다.
+- [x] stale lock/orphan/journal은 기본 report-only이며 apply도 삭제 대신 quarantine/archive한다.
+- [x] PipelineContext와 run checkpoint가 sync/async, cancel, retryable/terminal 상태를 보존한다.
+- [x] CLI와 batch가 Library registry를 직접 호출하고 일부 실패·재실행을 숨기지 않는다.
+- [x] wheel을 clean environment에 설치하고 실제 PPTX quickstart를 실행한다.
+- [x] 전체 lightweight offline test/eval/validate, Ruff, Pyright와 secret scan이 통과한다.
 - [x] 새 위험·결정과 module/diagram/PROJECT_STATE 변경을 기록한다.
 
 R1.1 결과:
@@ -234,7 +234,8 @@ R1.1 결과:
 - create/update dossier CAS와 audit `append_once` 복구
 - HITL report JSON/Markdown와 recorded outbox hash prerequisite
 - `project.transaction.reconcile@v1alpha1`, working script와 3-boundary synthetic eval
-- 남은 R1.2: education files, report/outbox producer, stale lock/orphan retention
+- R1.1 완료 범위를 유지하며 R1.2 결과는
+  `docs/evaluation/wp01-r1-2-library-mvp-alpha-report.md`와 HIST-2026-07-22-005에 고정했다.
 
 ### 5.4 종료된 최신 Slice — WP-05.Q2 SkillBoss HTTP500 Recovery
 
@@ -258,6 +259,26 @@ Exit Evidence:
 - [x] Qwen/GPT-4o route로 structured text/vision과 registration smoke를 검증하고 GLM vision 실패를 기록한다.
 - [x] 전체 offline test/eval/validate, Ruff, Pyright 회귀와 단계 리포트를 남긴다.
 
+### 5.5 현재 Active Slice — WP-06.I1 Minimal API Parity
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `ready`; Library MVP/Alpha checkpoint commit/push 후 구현 시작 |
+| 목적 | committed OpenAPI 3.1과 실제 HTTP handler가 같은 Library registry/run checkpoint를 호출하게 함 |
+| 대상 Module | M10 runtime, M12 API/worker; M00/M11 의미 재사용 |
+| 입력 | typed pipeline request, run context, bearer auth contract, existing OpenAPI artifact |
+| 출력 | minimal FastAPI app factory, pipeline catalog/run/status/cancel endpoint와 contract test |
+| 목표 Gate | G4 Interfaces |
+| 외부 호출 | 없음; in-process synthetic TestClient만 사용, 배포·계정 생성 없음 |
+
+Exit Evidence:
+
+- [ ] FastAPI는 optional `api` extra이고 Core/Domain module이 이를 import하지 않는다.
+- [ ] OpenAPI 3.1 artifact와 실제 route/request/response 의미가 일치한다.
+- [ ] handler는 script subprocess나 domain 로직 복제 없이 `AXCalib` registry/executor를 호출한다.
+- [ ] unknown pipeline/option, auth failure, run conflict와 result status가 구조적으로 구분된다.
+- [ ] in-process contract/E2E, Ruff, Pyright, validate/test/eval과 문서/diagram drift 검증이 통과한다.
+
 ## 6. 일정·작업 Queue
 
 calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 고정한다. 그 전에는 아래 dependency
@@ -268,18 +289,19 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 1 | P3 / WP-02 | Q1 Actual-PPT evidence quality | `verified` | Docling contract, supplied fixture | 2026-07-21 | 2026-07-21 | G3 quality evidence 일부 |
 | 2 | P5 / WP-05 | Q1 Qwen provider-proxy capability | `partial_verified` | Q1 evidence, user-approved SkillBoss access | 2026-07-21 | 2026-07-21 | G3 evidence 일부 |
 | 3 | P5 / WP-05 | Q2 SkillBoss HTTP500 recovery | `verified_proxy` | Q1 proxy evidence, user-approved live diagnostics | 2026-07-22 | 2026-07-22 | G3 evidence 일부 |
-| 4 | P2 / WP-01 | R1 transaction journal/reconciliation | `active` | Q2 provider compatibility 종료, current filesystem boundary | 2026-07-22 | TBD | G2 hardening |
+| 4 | P2 / WP-01 | R1.1/R1.2 Library MVP recovery | `verified_local_alpha` | Q2 provider compatibility, filesystem boundary | 2026-07-22 | 2026-07-22 | G2 local Alpha |
 | 5 | P5 / WP-03 | Q2 rubric/report gold benchmark | `planned` | Q1 gold evidence, Owner rubric | TBD | TBD | G3 quality |
-| 6 | P7 / CLI | project/education pipeline parity | `planned` | WP-01.R, stable pipeline result | TBD | TBD | G4 |
+| 6 | P7 / CLI | project/education/runtime pipeline parity | `verified_alpha` | WP-01.R, stable pipeline result | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 7 | P4 / WP-04 | embedding/Qdrant/rerank benchmark | `blocked_policy` | approved corpus와 labels | TBD | TBD | G3 quality |
 | 8 | P5-P6 / WP-05 | exact on-prem Qwen/panel/calibration | `blocked_endpoint_policy` | exact endpoint·gold label 승인 | TBD | TBD | G3 quality |
-| 9 | P7 / WP-06 | API/async/batch | `not_started` | CLI parity와 auth contract | TBD | TBD | G4 |
+| 9 | P7 / WP-06 | minimal API/OpenAPI parity | `ready` | CLI/batch Alpha와 auth contract | TBD | TBD | G4 |
 | 10 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-22 | WP-01.R1.2 Library MVP/Alpha | lightweight `prep test/eval`, Ruff, low-memory Pyright, validate, clean wheel/CLI/actual-PPTX | 103 passed, 10 eval groups, Alpha 8/8, Ruff, Pyright 0/0, validate 0/0 | single-host offline Alpha; Docling current-turn rerun·API/RBAC/운영 미포함 |
 | 2026-07-22 | WP-01.R1.1 project transaction recovery | 3-boundary crash eval, full test/eval, Ruff/Pyright | 88 passed, 9 eval groups, recovery 3/3, Ruff passed, Pyright 0/0 | local project dossier/audit only; broader recovery pending |
 | 2026-07-22 | WP-05.Q2 단계 종료 offline 회귀 | `prep test`, `prep eval`, Ruff, Pyright | 79 passed, 8 eval groups, Ruff passed, Pyright 0/0 | fake/offline contract; live quality 아님 |
 | 2026-07-22 | Qwen Plus generic proxy probe | structured text + synthetic vision | passed, 12,415/10,415ms; deployment false | alias capability만 |
@@ -311,8 +333,8 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 2. Windows 전역 Pytest 임시 link 정리의 `WinError 5`가 반복됐다. assertion 실패와 분리했고
    `prep test`가 실행별 `output/pytest-runs/run-{pid}`를 쓰도록 보강했다. 이어 atomic replace에서
    일시적 lock 1건이 재현돼 bounded retry를 추가한 뒤 76 tests가 통과했다.
-3. 현재 working tree에는 2026-07-20 교육 composition/WP-01 hardening 변경이 아직 commit되지
-   않았다. 다음 대규모 slice 전 checkpoint commit이 권장되지만 commit/push는 명시적 승인 대상이다.
+3. 2026-07-20 교육 composition과 R1.1 project recovery는 commit `ebd74ed`까지 반영됐다. R1.2
+   Library Alpha change set은 사용자 승인에 따라 검증 직후 checkpoint commit/push한다.
 4. SkillBoss catalog에는 exact `Qwen3.5-397B-A17B`가 없고 `qwen3.5-plus`만 있다. 기존 full
    registration HTTP 500의 직접 원인은 `json_object` 메시지에 literal `JSON`이 없던 AXCalib 요청과
    upstream 400을 500으로 감싼 proxy mapping 조합으로 확인됐다. exact on-prem 검증은 여전히 필수다.
@@ -322,6 +344,9 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
    진행하지 않는다.
 7. Gantt 미래 bar는 calendar 약속이 아니다. Owner, 담당자, 공수와 목표일이 정해지면 변경 이력과
    함께 calendar baseline을 추가한다.
+8. maintenance test가 traceback 없이 종료된 직접 원인은 Windows의 `os.kill(pid, 0)` self-termination
+   이었다. read-only Win32 process query로 교체해 회귀를 통과했다. 당시 가용 메모리 408~833 MiB는
+   2차 위험이므로 Docling contract를 기본 test에서 분리하고 검증을 순차 실행한다.
 
 ## 9. 작업 이력
 
@@ -552,6 +577,32 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 관련 근거: [ADR-020](docs/adr/ADR-020-local-project-transaction-journal.md),
   [WP-01.R1.1 리포트](docs/evaluation/wp01-r1-transaction-recovery-report.md), D-033,
   R-012/R-029/R-035와 M01/M02/M08/M10 Module Control Board.
+
+### HIST-2026-07-22-005
+
+- Phase / WP / Gate: P2→P7 / WP-01.R1.2 + CLI Alpha / G2 local Alpha→G4 entry
+- 상태: `verified_local_library_alpha_g4_ready`
+- 작업: PipelineContext와 typed registry에 request/context/result hash checkpoint, per-run lease,
+  sync/async, cooperative cancel과 terminal/retryable replay를 고정했다. education enrollment/audit
+  transaction reconcile, report-only 기본 workspace maintenance, strict JSONL batch와 Typer/Rich Alpha
+  CLI를 같은 Library registry에 연결했다. optional Docling contract는 저메모리 기본 test와 분리했다.
+- 변경 파일: `src/axcalib/pipelines`, `runtime/execution.py`, `batch.py`,
+  `enrollment_transactions.py`, `maintenance.py`, education service/client, `src/axcalib/cli`, pyproject/lock,
+  unit/integration/eval, actual-PPTX quickstart, ADR-021, 개발리포트, README/CHANGELOG/GOAL/WORK_SPEC/DESIGN,
+  module plan·Mermaid·SVG, decision/risk와 이 원장.
+- 검증: targeted pipeline 11, education 2, maintenance 1, CLI 2 passed; full lightweight offline 103
+  passed; 10 eval groups와 Alpha 8/8 checks; Ruff passed; low-memory Pyright 0 errors/0 warnings;
+  `prep validate` 0 errors/0 warnings. clean wheel `[cli]` 설치, installed CLI 8개 pipeline catalog와 actual
+  PPTX revision 3 / `registration_hitl_pending` / `waiting_human` quickstart를 확인했다.
+- 특이사항: Windows `os.kill(pid, 0)`가 pytest 자기 process를 종료한 직접 원인을 non-mutating Win32
+  query로 수정했다. 당시 free memory 408~833 MiB는 2차 위험이었다. Docling은 이 실패에 적재되지
+  않았고 이번 단계에서는 별도 재실행하지 않았다; 기존 16-page/0-text 증거를 유지한다.
+- 미검증: report/outbox producer 자체, database/distributed worker lease, exact on-prem Qwen full
+  two-gate, official rubric/human gold, Vector DB, 운영 notification/RBAC/API/Web.
+- 다음 작업: checkpoint commit/push 후 Active Slice `WP-06.I1 minimal-api-parity`를 시작한다.
+- 관련 근거: [ADR-021](docs/adr/ADR-021-local-pipeline-execution-and-alpha-cli.md),
+  [WP-01.R1.2 리포트](docs/evaluation/wp01-r1-2-library-mvp-alpha-report.md), D-034,
+  R-006/R-010/R-012/R-029/R-036/R-037와 M00/M01/M02/M08/M10/M11 Module Control Board.
 
 ## 10. 단계 종료 업데이트 템플릿
 

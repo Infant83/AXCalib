@@ -309,6 +309,7 @@ AXCalib/
 .\prep.ps1 validate
 .\prep.ps1 test
 .\prep.ps1 eval
+.\prep.ps1 docling
 ~~~
 
 - status: 파일을 바꾸지 않고 baseline, Gate, 차단요인, 다음 작업을 표시한다.
@@ -316,8 +317,11 @@ AXCalib/
 - validate: 문서, schema, 링크, 설정, secret, dossier 상태전이를 읽기 전용으로 검사한다.
 - test: offline 단위·통합·계약 테스트를 실행한다.
 - eval: 고정 fixture/dataset으로 parser, retrieval, 평가, 모델 편차 지표를 생성한다.
+- docling: optional Docling PPTX contract를 별도 프로세스로 실행한다. 저메모리 환경의 기본 test에는
+  포함하지 않는다.
 
 status와 validate는 항상 read-only다. 외부 모델을 쓰는 live evaluation은 별도 플래그와 명시적 동의가 필요하다.
+기본 test는 lightweight parser/sidecar 경로를 검증하고 Docling contract는 `prep.ps1 docling`으로 분리한다.
 
 ### 7.2 제품 CLI
 

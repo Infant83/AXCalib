@@ -256,6 +256,7 @@ extensions
 | FR-051 | Evidence quality baseline | 검토 locator gold set과 field coverage, locator recall, criterion traceability, unsupported-claim 지표를 hash-bound fixture로 회귀 | Must |
 | FR-052 | Structured-output compatibility | `json_object`에 literal JSON과 schema contract를 포함하고 wrapped upstream error를 safe identifier로 진단; model-independent multimodal proxy/deployment probe 제공 | Must |
 | FR-053 | Project transaction recovery | project command의 dossier/audit 변경을 revision/hash-bound append-only journal로 복구하고 HITL report/recorded outbox 불일치와 stale revision을 fail-closed | Must |
+| FR-054 | Local execution and education recovery | PipelineContext/run checkpoint/cancel/result hash, JSONL batch partial status, education enrollment/audit reconcile와 non-destructive stale artifact maintenance를 같은 allowlisted Library registry로 제공 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -886,8 +887,10 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] JSON-object schema contract, wrapped-upstream safe diagnostic와 model-independent multimodal probe
 - [x] SkillBoss Qwen Plus/GPT-4o proxy registration HITL smoke; GLM vision 실패 경계 기록
 - [x] project dossier/audit append-only transaction journal, HITL artifact prerequisite와 idempotent recovery
+- [x] PipelineContext/checkpoint/result hash/cooperative cancel, JSONL batch와 Alpha Typer CLI
+- [x] education enrollment/audit recovery와 stale-lock/orphan quarantine·committed-journal archive
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
-- [ ] full PipelineContext/checkpoint/cancel과 education/report-outbox producer/stale-lock recovery
+- [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
 - [ ] data/security 승인
 - [ ] pilot 시작
@@ -909,3 +912,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-21 | v0.3-p1 qwen-capability-q1 | canonical OpenAI-compatible Qwen capability script, alias/exact identity guard, explicit structured-output dialect와 SkillBoss proxy 검증 추가 |
 | 2026-07-22 | v0.3-p1 skillboss-http500-q2 | SkillBoss update, JSON-object 500 원인복구, safe wrapped error와 generic multimodal Qwen/GPT-4o/GLM 비교 추가 |
 | 2026-07-22 | v0.3-p1 transaction-r1a | project dossier/audit hash-chain journal, HITL artifact prerequisite와 idempotent reconciliation 추가 |
+| 2026-07-22 | v0.3-p1 library-alpha | local pipeline checkpoint/cancel/result integrity, education reconcile, non-destructive maintenance, JSONL batch와 Alpha CLI 추가 |

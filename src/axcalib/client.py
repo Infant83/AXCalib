@@ -16,23 +16,42 @@ from axcalib.models import OpenAICompatibleClient
 from axcalib.notifications.base import NotificationPort, RecordingNotifier
 from axcalib.pipelines import (
     DossierFreezePipeline,
+    DossierFreezeRequest,
     DossierInitializePipeline,
+    DossierInitializeRequest,
     DossierUpdatePipeline,
+    DossierUpdateRequest,
     EducationCommand,
     EducationProgramPipeline,
+    EducationTransactionReconcilePipeline,
+    EducationTransactionReconcilePipelineResult,
     LocalProjectService,
+    PipelineContext,
     PipelineRegistry,
     TransactionReconcilePipeline,
     TransactionReconcilePipelineResult,
     TransactionReconcileRequest,
     TwoGatePptxPipeline,
     TwoGatePptxRequest,
+    WorkspaceMaintenancePipeline,
+    WorkspaceMaintenanceRequest,
 )
 from axcalib.policies import DEFAULT_REVIEW_PROFILE, ReviewProfileRegistry
 from axcalib.programs import EducationProgramService
 from axcalib.retrieval import LexicalRetriever, load_historical_cases
-from axcalib.runtime import LocalIdempotencyStore, load_runtime_config
+from axcalib.runtime import (
+    BatchManifest,
+    BatchResult,
+    LocalBatchRunner,
+    LocalIdempotencyStore,
+    LocalPipelineExecutor,
+    LocalWorkspaceMaintenance,
+    MaintenanceResult,
+    PipelineExecutionResult,
+    load_runtime_config,
+)
 from axcalib.schemas import (
+    DossierFreezeResult,
     EducationPipelineResult,
     EducationProgram,
     EffectiveConfigRef,
@@ -81,32 +100,109 @@ class AXCalib:
             TwoGatePptxPipeline.pipeline_id,
             TwoGatePptxPipeline.pipeline_version,
             lambda: TwoGatePptxPipeline(self.service),
+            request_type=TwoGatePptxRequest,
+            result_type=WorkflowRunSummary,
         )
         self.registry.register(
             DossierInitializePipeline.pipeline_id,
             DossierInitializePipeline.pipeline_version,
             lambda: DossierInitializePipeline(self.service),
+            request_type=DossierInitializeRequest,
+            result_type=PipelineResult,
         )
         self.registry.register(
             DossierUpdatePipeline.pipeline_id,
             DossierUpdatePipeline.pipeline_version,
             lambda: DossierUpdatePipeline(self.service),
+            request_type=DossierUpdateRequest,
+            result_type=PipelineResult,
         )
         self.registry.register(
             DossierFreezePipeline.pipeline_id,
             DossierFreezePipeline.pipeline_version,
             lambda: DossierFreezePipeline(self.service),
+            request_type=DossierFreezeRequest,
+            result_type=DossierFreezeResult,
         )
         self.registry.register(
             EducationProgramPipeline.pipeline_id,
             EducationProgramPipeline.pipeline_version,
             lambda: EducationProgramPipeline(self.education),
+            request_type=EducationCommand,
+            result_type=EducationPipelineResult,
         )
         self.registry.register(
             TransactionReconcilePipeline.pipeline_id,
             TransactionReconcilePipeline.pipeline_version,
             lambda: TransactionReconcilePipeline(self.service.transactions),
+            request_type=TransactionReconcileRequest,
+            result_type=TransactionReconcilePipelineResult,
         )
+        self.registry.register(
+            EducationTransactionReconcilePipeline.pipeline_id,
+            EducationTransactionReconcilePipeline.pipeline_version,
+            lambda: EducationTransactionReconcilePipeline(self.education.transactions),
+            request_type=TransactionReconcileRequest,
+            result_type=EducationTransactionReconcilePipelineResult,
+        )
+        self.registry.register(
+            WorkspaceMaintenancePipeline.pipeline_id,
+            WorkspaceMaintenancePipeline.pipeline_version,
+            lambda: WorkspaceMaintenancePipeline(
+                LocalWorkspaceMaintenance(self.service.workspace)
+            ),
+            request_type=WorkspaceMaintenanceRequest,
+            result_type=MaintenanceResult,
+        )
+        self.executor = LocalPipelineExecutor(
+            self.service.workspace / "runs",
+            self.registry,
+        )
+        self.batch = LocalBatchRunner(self.service.workspace / "batches", self.executor)
+
+    def execute_pipeline(
+        self,
+        pipeline_id: str,
+        pipeline_version: str,
+        payload: object,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineExecutionResult:
+        """Execute one allowlisted pipeline with a durable checkpoint."""
+
+        return self.executor.execute(
+            pipeline_id,
+            pipeline_version,
+            payload,
+            context=context,
+        )
+
+    async def aexecute_pipeline(
+        self,
+        pipeline_id: str,
+        pipeline_version: str,
+        payload: object,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineExecutionResult:
+        """Async equivalent of :meth:`execute_pipeline`."""
+
+        return await self.executor.aexecute(
+            pipeline_id,
+            pipeline_version,
+            payload,
+            context=context,
+        )
+
+    def run_batch(
+        self,
+        manifest: BatchManifest,
+        *,
+        max_concurrency: int = 4,
+    ) -> BatchResult:
+        """Run a bounded local batch with per-item checkpoints."""
+
+        return self.batch.run(manifest, max_concurrency=max_concurrency)
 
     @classmethod
     def from_toml(
@@ -272,6 +368,32 @@ class AXCalib:
         """Async equivalent of :meth:`reconcile_transactions`."""
 
         return await asyncio.to_thread(self.reconcile_transactions, transaction_id)
+
+    def reconcile_education_transactions(
+        self,
+        transaction_id: str | None = None,
+    ) -> EducationTransactionReconcilePipelineResult:
+        """Reconcile one or all local education transaction journals."""
+
+        pipeline = self.registry.create(
+            EducationTransactionReconcilePipeline.pipeline_id,
+            EducationTransactionReconcilePipeline.pipeline_version,
+        )
+        result = pipeline.run(TransactionReconcileRequest(transaction_id=transaction_id))
+        if not isinstance(result, EducationTransactionReconcilePipelineResult):
+            raise TypeError("education transaction reconcile returned an invalid result")
+        return result
+
+    async def areconcile_education_transactions(
+        self,
+        transaction_id: str | None = None,
+    ) -> EducationTransactionReconcilePipelineResult:
+        """Async equivalent of :meth:`reconcile_education_transactions`."""
+
+        return await asyncio.to_thread(
+            self.reconcile_education_transactions,
+            transaction_id,
+        )
 
     def register_case(
         self,

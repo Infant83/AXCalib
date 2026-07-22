@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from axcalib.pipelines.base import PipelineContext
 from axcalib.programs import EducationProgramService
 from axcalib.schemas import EducationPipelineResult
 
@@ -102,7 +103,14 @@ class EducationProgramPipeline:
     def __init__(self, service: EducationProgramService) -> None:
         self.service = service
 
-    def run(self, request: EducationCommand) -> EducationPipelineResult:
+    def run(
+        self,
+        request: EducationCommand,
+        *,
+        context: PipelineContext | None = None,
+    ) -> EducationPipelineResult:
+        if context is not None and context.cancellation_requested():
+            raise TimeoutError("pipeline execution was cancelled before start")
         if isinstance(request, EnrollCommand):
             return self.service.enroll(
                 request.program_selector,
@@ -156,8 +164,13 @@ class EducationProgramPipeline:
             )
         raise TypeError(f"unsupported education command: {type(request).__name__}")
 
-    async def arun(self, request: EducationCommand) -> EducationPipelineResult:
-        return await asyncio.to_thread(self.run, request)
+    async def arun(
+        self,
+        request: EducationCommand,
+        *,
+        context: PipelineContext | None = None,
+    ) -> EducationPipelineResult:
+        return await asyncio.to_thread(self.run, request, context=context)
 
 
 __all__ = [

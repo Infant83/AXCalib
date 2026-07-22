@@ -1,9 +1,9 @@
 ---
 document_type: module_delivery_plan
 project: AXCalib
-baseline: v0.3-p1-transaction-r1a
+baseline: v0.3-p1-library-mvp-alpha
 updated_at: 2026-07-22
-status: project_transaction_recovery_verified_broader_hardening_pending
+status: library_mvp_alpha_verified_g4_interfaces_next
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -17,18 +17,18 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 
 | ID | Package / Surface | 현재 상태 | 목표 WP | 직접 선행조건 | 다음 Exit Evidence |
 |---|---|---|---|---|---|
-| M00 | `axcalib.pipelines` | offline_reference | WP-01 | P1 harness | full PipelineContext/checkpoint/cancel contract |
-| M01 | `axcalib.dossier` | contract_verified | WP-01 | core/schema contract | stale-lock/orphan cleanup + education/report producer recovery |
-| M02 | state/approval domain | offline_reference | WP-01 | M01 | project journal verified; education transition journal |
+| M00 | `axcalib.pipelines` | contract_verified | WP-01 | P1 harness | distributed workflow checkpoint/compensation contract |
+| M01 | `axcalib.dossier` | contract_verified | WP-01 | core/schema contract | database/distributed transaction adapter |
+| M02 | state/approval domain | offline_reference | WP-01 | M01 | 운영 identity/RBAC와 producer transaction |
 | M03 | `axcalib.ingest` | contract_verified | WP-02 | ArtifactRef/schema | general composed-slide renderer/OCR/VLM + multi-template coverage |
 | M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + real embedding/Qdrant contract |
 | M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | exact Qwen registration/completion + Owner-approved semantic gold benchmark |
 | M06 | `axcalib.calibration` | not_started | WP-05/06 | M05 | disagreement/agreement metric report |
 | M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | golden/redaction/content-hash contract |
-| M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | report/outbox producer reconciliation + GitLab/email adapter |
+| M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | producer transaction + GitLab/email adapter |
 | M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
-| M10 | `axcalib.runtime` | contract_verified | WP-01/05 | config, M01/M02/M08 | education recovery + exact on-prem capability/allowlist |
-| M11 | scripts / CLI | offline_reference | WP-01/06 | M00, M10, target pipeline; M09 for workflow | Qwen/generic multimodal probe 포함 Typer CLI/script result parity |
+| M10 | `axcalib.runtime` | contract_verified | WP-01/05 | config, M01/M02/M08 | distributed lease/worker + exact on-prem capability/allowlist |
+| M11 | scripts / CLI | contract_verified | WP-01/06 | M00, M10, target pipeline; M09 for workflow | full product command tree와 API parity |
 | M12 | API / worker | not_started | WP-06 | M09, M10 | OpenAPI/202/SSE/resume contract |
 | M13 | Web Review | blocked_policy | WP-07 | M12, FE selection | selected-stack E2E review flow |
 
@@ -115,6 +115,25 @@ transaction 또는 제품 전체 완료가 아니다. 각 행의 다음 Exit Evi
 - prepare/dossier/audit 직후 crash 3종이 재시작 뒤 committed, 반복 실행은 already-committed
 - stale revision, changed outbox와 journal hash 변조는 상태 승격 없이 blocked/failure
 - 품질 경계: project dossier/audit local slice만 검증; education/producer/stale-lock은 미완료
+
+### 1.7 2026-07-22 WP-01.R1.2 Library MVP / Alpha evidence
+
+- `PipelineContext`, typed registry descriptor와 `LocalPipelineExecutor`: request/context identity,
+  filesystem lease, result hash, sync/async checkpoint, cooperative cancel과 terminal/retryable replay
+- `LocalBatchRunner`: strict JSONL, manifest SHA-256, 10 MiB/10,000 item 한도, bounded concurrency,
+  item별 checkpoint와 partial failure/resume
+- `EnrollmentTransactionCoordinator`: enrollment/audit append-only hash chain, completion outbox hash
+  prerequisite, 반복 reconcile의 알림 무중복
+- `education.transaction.reconcile@v1alpha1`, `workspace.maintenance@v1alpha1`: 같은 public registry에서
+  실행되는 typed sync/async pipeline
+- `LocalWorkspaceMaintenance`: report-only 기본, stale lock/orphan quarantine, committed journal archive,
+  blocked journal manual-review 보존과 manifest/audit
+- Windows PID 확인을 `OpenProcess`/`GetExitCodeProcess`로 바꿔 테스트 프로세스 종료를 방지
+- optional `cli` extra의 Typer/Rich pipeline list/run/status/cancel, JSONL batch와 maintenance adapter
+- clean wheel 설치 뒤 설치된 CLI catalog와 supplied actual PPTX의 등록심의 `waiting_human` quickstart
+- `prep test` 100 passed, 10 eval groups, Ruff, Pyright 0/0; Docling은 별도 contract로 분리
+- 품질 경계: single-host local Alpha이며 exact on-prem Qwen, official rubric/gold, distributed worker,
+  RBAC, 운영 notification, API/Web은 완료되지 않음
 
 ## 2. 공통 납품 단위
 
@@ -288,15 +307,14 @@ transaction 또는 제품 전체 완료가 아니다. 각 행의 다음 Exit Evi
 
 ### Wave 1 — WP-01 Foundation + WP-01E Education Composition
 
-- 상태: local lock/schema/idempotency/outbox/effective-config, education composition과 project dossier/audit
-  transaction recovery 검증; education/producer/stale-lock hardening 미완료
+- 상태: single-host Library MVP/Alpha 검증; project/education transaction, PipelineContext/checkpoint,
+  JSONL batch, non-destructive maintenance와 Alpha CLI 완료. producer/database/distributed recovery는 미완료
 - 범위: M00, M01, M02, M08, M09 education overlay, M10 offline, M11 working script
 - 시작근거: 2026-07-16 사용자 local/offline 구현 지시
 - 핵심 demo: actual proposal PPTX dossier 두 Gate와 생성된 program milestone을 연결하고 과정 완료
   관리자 Gate에서 재개
 - 실패기준: stale write 또는 관리자 권한 우회를 허용하면 Gate 실패
-- 남은 Exit: full PipelineContext/checkpoint/cancel, education/report-outbox producer transaction,
-  stale-lock/orphan recovery와 CLI
+- 남은 운영 Exit: report/outbox producer transaction, database/distributed lease, RBAC와 durable provider
 
 ### Wave 2 — WP-02/03 Evidence-to-Report
 
@@ -374,17 +392,17 @@ change set에서 갱신한다.
 
 ## 7. 다음 실행 가능한 작업
 
-현재 next는 `WP-01.R1.1` project recovery 뒤 `WP-01.R1.2` broader reconciliation이다.
+Library MVP/Alpha checkpoint 다음은 G4 Interfaces의 가장 작은 contract-first slice다.
 
-1. M02/M08 education enrollment/audit/outbox와 report/outbox producer를 journal 단계로 확장한다.
-2. M01 stale lock owner/age 판정과 orphan temp/journal quarantine·retention을 구현한다.
-3. M00 full PipelineContext/checkpoint/cancel과 retryable/terminal result를 통합한다.
-4. M09 program publish/retire/rollout/migration 정책과 replayable checkpoint를 고정한다.
+1. M12에서 현재 registry/run checkpoint를 호출하는 minimal authenticated FastAPI adapter와 OpenAPI
+   implementation parity를 만든다. 운영 배포나 계정 생성은 하지 않는다.
+2. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
+3. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
+4. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
 5. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.
 6. M04 labeled query-case set, embedding/Qdrant adapter와 stage leakage benchmark를 실행한다.
 7. M05 exact on-prem `Qwen3.5-397B-A17B` registration/completion·multimodal contract와 approved gold label
    traceability를 실행한다.
-8. M11 Typer CLI를 같은 project/education/reconcile pipeline registry에 연결한다.
-9. `prep.ps1 validate|test|eval`, Ruff, Pyright 회귀를 유지한다.
+8. `prep.ps1 validate|test|eval`, Ruff, Pyright와 별도 Docling contract를 유지한다.
 
 실제 data, 추가 live model, Vector DB, API/Web은 readiness 문서의 승인 Gate를 유지한다.

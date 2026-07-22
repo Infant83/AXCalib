@@ -8,6 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from axcalib.dossier import RevisionConflictError, exclusive_file_lock
+from axcalib.pipelines.base import PipelineContext
 from axcalib.pipelines.project import LocalProjectService
 from axcalib.schemas import DossierFreezeResult, PipelineResult, PipelineStatus, ReviewContext
 
@@ -48,7 +49,14 @@ class DossierInitializePipeline:
     def __init__(self, service: LocalProjectService) -> None:
         self.service = service
 
-    def run(self, request: DossierInitializeRequest) -> PipelineResult:
+    def run(
+        self,
+        request: DossierInitializeRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineResult:
+        if context is not None and context.cancellation_requested():
+            raise TimeoutError("pipeline execution was cancelled before start")
         dossier = self.service.create_project(
             request.proposal_path,
             title=request.title,
@@ -68,8 +76,13 @@ class DossierInitializePipeline:
             message="프로젝트 dossier를 초기화했습니다.",
         )
 
-    async def arun(self, request: DossierInitializeRequest) -> PipelineResult:
-        return await asyncio.to_thread(self.run, request)
+    async def arun(
+        self,
+        request: DossierInitializeRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineResult:
+        return await asyncio.to_thread(self.run, request, context=context)
 
 
 class DossierUpdatePipeline:
@@ -79,7 +92,14 @@ class DossierUpdatePipeline:
     def __init__(self, service: LocalProjectService) -> None:
         self.service = service
 
-    def run(self, request: DossierUpdateRequest) -> PipelineResult:
+    def run(
+        self,
+        request: DossierUpdateRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineResult:
+        if context is not None and context.cancellation_requested():
+            raise TimeoutError("pipeline execution was cancelled before start")
         dossier = self.service.dossiers.load(request.project_id)
         if dossier.revision != request.expected_revision:
             return PipelineResult(
@@ -123,8 +143,13 @@ class DossierUpdatePipeline:
             }
         )
 
-    async def arun(self, request: DossierUpdateRequest) -> PipelineResult:
-        return await asyncio.to_thread(self.run, request)
+    async def arun(
+        self,
+        request: DossierUpdateRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> PipelineResult:
+        return await asyncio.to_thread(self.run, request, context=context)
 
 
 class DossierFreezePipeline:
@@ -134,7 +159,14 @@ class DossierFreezePipeline:
     def __init__(self, service: LocalProjectService) -> None:
         self.service = service
 
-    def run(self, request: DossierFreezeRequest) -> DossierFreezeResult:
+    def run(
+        self,
+        request: DossierFreezeRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> DossierFreezeResult:
+        if context is not None and context.cancellation_requested():
+            raise TimeoutError("pipeline execution was cancelled before start")
         dossier_path = self.service.dossiers.path_for(request.project_id)
         with exclusive_file_lock(dossier_path):
             dossier = self.service.dossiers.load(request.project_id)
@@ -156,8 +188,13 @@ class DossierFreezePipeline:
             message="요청 revision을 불변 snapshot으로 고정했습니다.",
         )
 
-    async def arun(self, request: DossierFreezeRequest) -> DossierFreezeResult:
-        return await asyncio.to_thread(self.run, request)
+    async def arun(
+        self,
+        request: DossierFreezeRequest,
+        *,
+        context: PipelineContext | None = None,
+    ) -> DossierFreezeResult:
+        return await asyncio.to_thread(self.run, request, context=context)
 
 
 __all__ = [

@@ -643,11 +643,13 @@ P0 이후 다음 결정이 필요하다.
 - [x] SkillBoss Qwen Plus full registration의 JSON-object HTTP 500 원인복구와 HITL pending smoke
 - [x] model-independent multimodal probe와 GPT-4o proxy text/vision 대조; GLM vision 실패 경계
 - [x] project dossier/audit transaction journal과 3개 write-boundary crash/reconcile reference
-- [ ] education/report-outbox producer transaction과 stale-lock/orphan recovery
+- [x] education enrollment/audit transaction과 stale-lock/orphan quarantine·journal archive
+- [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] exact on-prem `Qwen3.5-397B-A17B` capability 및 full two-gate quality 검증
 - [x] synthetic stage-aware retrieval baseline과 제한된 live registration smoke
 - [x] 사용자 최신 지시로 local/offline slice 구현 범위 승인
-- [ ] full PipelineContext와 독립 dossier.freeze/update pipeline 구현
+- [x] full PipelineContext/checkpoint/cancel과 독립 dossier.freeze/update pipeline 구현
+- [x] strict JSONL batch, Alpha Typer CLI와 clean-wheel actual-PPTX quickstart
 - [ ] Product/Evaluation Owner의 rubric·운영 baseline 정식 sign-off
 
 ## 17. 기술 근거

@@ -147,6 +147,9 @@ flowchart TB
         COMPP["completion.submit / evaluate / decide"]
         REVIEWP["review.request / report.render"]
         EDUP["program.publish / enroll / milestone / complete"]
+        RECP["project / education transaction.reconcile"]
+        RUNP["pipeline execute / checkpoint / cancel"]
+        MAINTP["workspace.maintenance"]
     end
 
     subgraph M["Element Modules + Domain Invariants"]
@@ -179,7 +182,7 @@ flowchart TB
     classDef adapter fill:#F8EDF2,stroke:#A50034,color:#172033;
     class PY,CLI,API,WORKER,WEB delivery;
     class TGS,READY,RECHECK,EDU,BATCH,RETEVAL workflow;
-    class DOSP,EVIDP,CASEP,REGP,COMPP,REVIEWP,EDUP pipeline;
+    class DOSP,EVIDP,CASEP,REGP,COMPP,REVIEWP,EDUP,RECP,RUNP,MAINTP pipeline;
     class CORE,DOS,ING,RET,EVAL,RPT,PROGRAM module;
     class STORE,PARSER,VECTOR,MODEL,NOTICE adapter;
 ```
@@ -424,9 +427,9 @@ key를 사용하고 새 평가·알림·결정을 중복 생성하지 않는다.
 
 ```mermaid
 flowchart LR
-    CMD["Project command"] --> PREP["prepared\nproject/revision/command/idempotency"]
+    CMD["Project or education command"] --> PREP["prepared\nentity/revision/command/idempotency"]
     PREP --> REQ{"report/outbox\nhash + recorded?"}
-    REQ -->|yes| APPLY["apply dossier CAS"]
+    REQ -->|yes| APPLY["apply dossier/enrollment CAS"]
     APPLY --> AUDIT["append audit once"]
     AUDIT --> COMMIT["committed"]
     REQ -->|no| BLOCK["blocked\nno state promotion"]
@@ -443,9 +446,37 @@ flowchart LR
     class BLOCK stop;
 ```
 
-현재 recovery는 project dossier/audit를 적용하고 report/outbox는 immutable prerequisite로 확인한다.
-notification adapter를 재호출하지 않는다. EducationEnrollment, report/outbox producer와 stale-lock
-quarantine은 R1.2 범위다.
+현재 recovery는 project dossier와 education enrollment의 audit를 적용하고 report/outbox는 immutable
+prerequisite로 확인한다. reconcile은 notification adapter를 재호출하지 않는다. stale lock과 orphan
+temp는 삭제하지 않고 quarantine하며 committed journal만 archive한다. report/outbox producer 자체와
+database/distributed transaction은 후속 범위다.
+
+### 6.2 Library Alpha run checkpoint와 batch
+
+```mermaid
+flowchart LR
+    INPUT["typed request + PipelineContext"] --> LEASE["per-run filesystem lease"]
+    LEASE --> HASH["request/context identity checkpoint"]
+    HASH --> EXEC["allowlisted pipeline run/arun"]
+    EXEC --> RESULT{"typed status"}
+    RESULT -->|success/wait/block/stale/terminal/cancel| FINAL["result hash + terminal replay"]
+    RESULT -->|retryable| RETRY["same run ID · attempt + 1"]
+    RETRY --> LEASE
+    JSONL["strict JSONL batch\nmanifest SHA-256"] --> ITEMS["bounded item execution"]
+    ITEMS --> LEASE
+    CANCEL["cooperative cancel marker"] -.-> EXEC
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class LEASE,HASH,FINAL,ITEMS safe;
+    class INPUT,EXEC,RESULT,RETRY,JSONL wait;
+    class CANCEL stop;
+```
+
+cancel은 process kill 또는 이미 commit된 domain mutation의 rollback이 아니다. terminal result와
+성공 item은 재실행하지 않으며 result path/hash가 바뀌면 replay를 실패시킨다. 이 lease는 single-host
+local Alpha 계약이고 distributed worker lease는 G4 이후 범위다.
 
 ## 7. Delivery Wave
 
@@ -455,7 +486,7 @@ flowchart LR
     W1["Wave 1 — WP-01 + WP-01E\nLocal hardening + education composition"]
     W2["Wave 2 — WP-02/03\nRestricted PPT Q1 verified + rubric hardening"]
     W3["Wave 3 — WP-04/05\nRetrieval + Model + Calibration"]
-    W4["Wave 4 — WP-06\nWorkflow Runtime + CLI/API/Worker"]
+    W4["Wave 4 — WP-06\nCLI Alpha · API/Worker next"]
     W5["Wave 5 — WP-07/08\nWeb Review + Pilot"]
 
     W0 --> W1 --> W2 --> W3 --> W4 --> W5
@@ -463,9 +494,9 @@ flowchart LR
     classDef done fill:#EAF8F4,stroke:#1E8A75,color:#172033;
     classDef partial fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
     classDef future fill:#F2F3F5,stroke:#7A8495,color:#172033;
-    class W0 done;
-    class W1,W2,W3 partial;
-    class W4,W5 future;
+    class W0,W1 done;
+    class W2,W3,W4 partial;
+    class W5 future;
 ```
 
 Wave는 달력 일정이 아니라 dependency Gate다. Owner, 인력과 운영환경이 확정되지 않았으므로

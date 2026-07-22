@@ -10,7 +10,9 @@ from typing import Literal
 from axcalib.audit import AuditLog
 from axcalib.dossier import DossierRepository
 from axcalib.notifications.base import NotificationEvent, NotificationPort
+from axcalib.notifications.outbox import DurableNotificationOutbox
 from axcalib.programs.repository import EnrollmentRepository, ProgramRepository
+from axcalib.runtime.enrollment_transactions import EnrollmentTransactionCoordinator
 from axcalib.schemas import (
     EducationEnrollment,
     EducationPipelineResult,
@@ -63,6 +65,11 @@ class EducationProgramService:
         self.dossiers = dossiers
         self.notifier = notifier
         self.audit = AuditLog(self.workspace / "audit" / "education-events.jsonl")
+        self.transactions = EnrollmentTransactionCoordinator(
+            self.workspace,
+            enrollments=self.enrollments,
+            audit=self.audit,
+        )
 
     def publish_program(self, program: EducationProgram) -> ProgramRef:
         """Publish one immutable reference or idempotently return the same version."""
@@ -120,16 +127,22 @@ class EducationProgramService:
             milestones=progress,
             audit_event_ids=(event_id,),
         )
-        self.enrollments.create(enrollment)
-        self._append_event(
+        event = self._event(
             event_id,
-            enrollment,
+            enrollment.enrollment_id,
+            1,
             "learner_enrolled",
             actor_id=learner_ref,
             actor_role="learner",
             details={"program": reference.selector, "program_sha256": reference.sha256},
         )
-        return self._result(enrollment, "교육 프로그램 가입과 단계별 목표 생성이 완료됐습니다.")
+        saved = self.transactions.execute_create(
+            enrollment,
+            event,
+            command="learner_enrolled",
+            idempotency_key=event_id,
+        )
+        return self._result(saved, "교육 프로그램 가입과 단계별 목표 생성이 완료됐습니다.")
 
     def start_milestone(
         self,
@@ -402,10 +415,10 @@ class EducationProgramService:
                 "audit_event_ids": (*enrollment.audit_event_ids, event_id),
             }
         )
-        saved = self.enrollments.save(candidate, expected_revision=enrollment.revision)
-        self._append_event(
+        event = self._event(
             event_id,
-            saved,
+            enrollment.enrollment_id,
+            enrollment.revision + 1,
             "program_completion_decided",
             actor_id=actor_id,
             actor_role="administrator",
@@ -413,6 +426,13 @@ class EducationProgramService:
                 "command": command,
                 "reopened_milestones": ",".join(reopen_milestone_ids),
             },
+        )
+        saved = self.transactions.execute_update(
+            candidate,
+            expected_revision=enrollment.revision,
+            event=event,
+            command="program_completion_decided",
+            idempotency_key=event_id,
         )
         message = "교육 프로그램 완료가 관리자에 의해 확정됐습니다."
         if command == "return_for_revision":
@@ -463,10 +483,10 @@ class EducationProgramService:
                 "audit_event_ids": (*enrollment.audit_event_ids, event_id),
             }
         )
-        saved = self.enrollments.save(candidate, expected_revision=enrollment.revision)
-        self._append_event(
+        event = self._event(
             event_id,
-            saved,
+            enrollment.enrollment_id,
+            enrollment.revision + 1,
             "requirement_recorded",
             actor_id=actor_id,
             actor_role=actor_role,
@@ -476,6 +496,13 @@ class EducationProgramService:
                 "satisfied": result.satisfied,
                 "source": result.source,
             },
+        )
+        saved = self.transactions.execute_update(
+            candidate,
+            expected_revision=enrollment.revision,
+            event=event,
+            command="requirement_recorded",
+            idempotency_key=event_id,
         )
         saved = self._request_program_completion_if_ready(saved, program)
         return self._result(saved, "마일스톤 조건과 과정 진행률을 갱신했습니다.")
@@ -499,17 +526,16 @@ class EducationProgramService:
             return enrollment
         if enrollment.status is EnrollmentStatus.COMPLETION_HITL_PENDING:
             return enrollment
-        self.notifier.send(
-            NotificationEvent(
-                event_type="education_program_completion_approval_requested",
-                project_id=enrollment.enrollment_id,
-                stage=f"education_program_completion:r{enrollment.revision}",
-                revision=enrollment.revision + 1,
-                report_ref=(
-                    f"education-enrollment:{enrollment.enrollment_id}@r{enrollment.revision}"
-                ),
-            )
+        notification_event = NotificationEvent(
+            event_type="education_program_completion_approval_requested",
+            project_id=enrollment.enrollment_id,
+            stage=f"education_program_completion:r{enrollment.revision}",
+            revision=enrollment.revision + 1,
+            report_ref=(
+                f"education-enrollment:{enrollment.enrollment_id}@r{enrollment.revision}"
+            ),
         )
+        self.notifier.send(notification_event)
         event_id = self._event_id()
         notification = ProgramNotificationRecord(
             enrollment_revision=enrollment.revision + 1
@@ -521,14 +547,29 @@ class EducationProgramService:
                 "audit_event_ids": (*enrollment.audit_event_ids, event_id),
             }
         )
-        saved = self.enrollments.save(candidate, expected_revision=enrollment.revision)
-        self._append_event(
+        event = self._event(
             event_id,
-            saved,
+            enrollment.enrollment_id,
+            enrollment.revision + 1,
             "program_completion_requested",
             actor_id="system:education-runtime",
             actor_role="system",
             details={"required_milestones": ",".join(sorted(required_ids))},
+        )
+        if not isinstance(self.notifier, DurableNotificationOutbox):
+            raise EducationProgramError(
+                "education completion requires a durable notification outbox"
+            )
+        requirement = self.transactions.require_outbox(
+            self.notifier.path_for(notification_event)
+        )
+        saved = self.transactions.execute_update(
+            candidate,
+            expected_revision=enrollment.revision,
+            event=event,
+            command="program_completion_requested",
+            idempotency_key=event_id,
+            required_artifacts=(requirement,),
         )
         return saved
 
@@ -695,16 +736,22 @@ class EducationProgramService:
                 "audit_event_ids": (*enrollment.audit_event_ids, event_id),
             }
         )
-        saved = self.enrollments.save(candidate, expected_revision=enrollment.revision)
-        self._append_event(
+        event = self._event(
             event_id,
-            saved,
+            enrollment.enrollment_id,
+            enrollment.revision + 1,
             event_type,
             actor_id=actor_id,
             actor_role=actor_role,
             details=details,
         )
-        return saved
+        return self.transactions.execute_update(
+            candidate,
+            expected_revision=enrollment.revision,
+            event=event,
+            command=event_type,
+            idempotency_key=event_id,
+        )
 
     @staticmethod
     def _replace_progress(
@@ -716,26 +763,25 @@ class EducationProgramService:
             for item in values
         )
 
-    def _append_event(
-        self,
+    @staticmethod
+    def _event(
         event_id: str,
-        enrollment: EducationEnrollment,
+        enrollment_id: str,
+        enrollment_revision: int,
         event_type: str,
         *,
         actor_id: str,
         actor_role: str,
         details: dict[str, object],
-    ) -> None:
-        self.audit.append(
-            ProgramAuditEvent(
-                event_id=event_id,
-                enrollment_id=enrollment.enrollment_id,
-                event_type=event_type,
-                actor_id=actor_id,
-                actor_role=actor_role,
-                enrollment_revision=enrollment.revision,
-                details=details,
-            )
+    ) -> ProgramAuditEvent:
+        return ProgramAuditEvent(
+            event_id=event_id,
+            enrollment_id=enrollment_id,
+            event_type=event_type,
+            actor_id=actor_id,
+            actor_role=actor_role,
+            enrollment_revision=enrollment_revision,
+            details=details,
         )
 
     def _result(
