@@ -62,6 +62,8 @@
   HTTP output의 local path/URI field도 재귀적으로 제거한다.
 - 공개 API·workflow·설정·보안·프로젝트 구조가 바뀌면 관련 `wiki/` page를 같은 change set에서
   갱신하고 dual-target parity를 검증하도록 작업 완료 계약을 강화했다.
+- GitHub Wiki workflow의 checkout/setup-python을 Node.js 24 기반 v6로 올려 Node.js 20
+  deprecation annotation을 제거한다.
 
 ### 현재 검증
 

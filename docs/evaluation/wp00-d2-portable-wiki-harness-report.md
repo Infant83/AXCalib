@@ -57,8 +57,8 @@ separately to preserve the low-memory and interruption-recovery contract.
 ## Remaining external work
 
 - GitHub main: deployed as `b2c6e48`; Actions run `30014678127` validated the source successfully.
-- GitHub Wiki: live push/render verified and repository publish variable enabled; automatic workflow
-  publication still needs one end-to-end run.
+- GitHub Wiki: live push/render and automatic validate/publish jobs verified. The action runtime was upgraded
+  to checkout/setup-python v6 after Node.js 20 deprecation annotations; the v6 live run remains to verify.
 - GitLab: provide the on-prem Wiki remote, runner, deploy credential and protected variables.
 - Verify Markdown and image rendering in the actual GitLab UI.
 - Decide retention and review policy for any team-owned Wiki pages outside the AXCalib manifest.
