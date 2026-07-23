@@ -1,0 +1,65 @@
+name: AXCalib Wiki
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "wiki/**"
+      - "PROJECT_STATE.md"
+      - "harness/wiki.py"
+      - "scripts/wiki/**"
+      - "tests/unit/test_wiki_harness.py"
+      - "tests/integration/test_wiki_script.py"
+      - ".github/workflows/wiki.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate portable Wiki source
+        run: python scripts/wiki/sync_wiki.py validate
+      - name: Verify both platform exports
+        run: |
+          python scripts/wiki/sync_wiki.py export --target github --output output/wiki-ci/github
+          python scripts/wiki/sync_wiki.py export --target gitlab --output output/wiki-ci/gitlab
+      - name: Run Wiki contract tests
+        run: python tests/wiki_ci_contract.py
+
+  publish-github:
+    needs: validate
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.AXCALIB_WIKI_PUBLISH_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    env:
+      AXCALIB_GITHUB_WIKI_URL: >-
+        https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.wiki.git
+    steps:
+      - name: Check out main repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Publish canonical content to GitHub Wiki
+        run: >-
+          python scripts/wiki/sync_wiki.py publish
+          --target github
+          --remote-url-env AXCALIB_GITHUB_WIKI_URL
+          --checkout output/wiki-checkouts/github
+          --push

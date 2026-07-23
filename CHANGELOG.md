@@ -33,6 +33,10 @@
 - exact delivery grant별 inline/queued mode와 HTTP 202 `Location`/`Retry-After`
 - validated 1 MiB 이하 hash-bound job envelope, oldest-available lease/reclaim와 one-job local Worker
 - retryable-only bounded backoff, terminal replay, 독립 execution/queue poll status와 worker script
+- GitHub/GitLab Wiki에 공통 배포하는 platform-neutral `wiki/` 사용자 매뉴얼과 실습 page
+- `PROJECT_STATE.md`를 `Development-Ledger.md`로 mirror하는 manifest 기반 Wiki export
+- remote env, dry-run 기본, dirty/origin guard와 managed-file prune를 가진 Wiki publisher
+- opt-in GitHub Action과 GitLab Self-Managed CI Wiki validation/publication 계약
 
 ### 변경
 
@@ -56,17 +60,21 @@
   retry만 revision/audit 증가 없이 재생한다. 같은 key의 다른 actor/resource/payload는 409로 닫힌다.
 - queued API는 domain pipeline을 inline 실행하지 않고 prepared checkpoint와 job을 기록한다. generic
   HTTP output의 local path/URI field도 재귀적으로 제거한다.
+- 공개 API·workflow·설정·보안·프로젝트 구조가 바뀌면 관련 `wiki/` page를 같은 change set에서
+  갱신하고 dual-target parity를 검증하도록 작업 완료 계약을 강화했다.
 
 ### 현재 검증
 
-- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. API+Worker combined
-  contract 27/27, full 130 tests(unit 83/integration 28/contract 19), 10 eval groups, Ruff와 Pyright 0/0이
-  통과했다.
+- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. Wiki targeted 6/6,
+  dual-target parity 1/1, full 136 tests(unit 86/integration 31/contract 19), 10 eval groups, Ruff와
+  Pyright 0/0이 통과했다. 직전 API+Worker combined contract 27/27 evidence도 유지한다.
 - clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/17 paths를
   구성하며 local Worker prepared→succeeded를 실행한다. actual-PPTX quickstart는 이전 Alpha checkpoint
   evidence를 유지한다.
 - project/education local state recovery, stale artifact maintenance와 single-host local Worker는 검증했지만
   report/outbox producer, database/distributed worker/heartbeat, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
+- Wiki source/target export와 local bare-repository publication은 검증했지만 GitHub 최초 Home과 사내
+  GitLab runner/credential/live Wiki push는 아직 수행하지 않았다.
 
 ### 다음 변경 후보
 

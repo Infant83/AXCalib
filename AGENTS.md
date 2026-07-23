@@ -158,6 +158,28 @@ reference slice를 제품 MVP 전체나 모델·retrieval·운영 API 품질 검
 - `prep.ps1 validate`가 frontmatter, P0~P9/G0~G8, Active Slice, Gantt, 마지막 history ID와
   `updated_at` 일치를 검사한다.
 
+### 4.2 GitHub/GitLab Wiki 문서 전달
+
+- 사용자용 Wiki의 단일 원본은 메인 저장소의 `wiki/`다. GitHub Wiki와 사내 GitLab Wiki는 별도
+  Git 저장소지만 배포 target으로만 취급하고 웹 화면에서 따로 편집하지 않는다.
+- Library 공개 API, workflow, config/on-prem, API/Worker/Web, 보안/HITL, 프로젝트 구조가 바뀌면
+  관련 `wiki/*.md`를 같은 change set에서 갱신한다.
+- 개발과정·진행이력은 `PROJECT_STATE.md`를 기준으로 하며 Wiki export가
+  `Development-Ledger.md`로 자동 mirror한다. 별도의 수동 이력 사본을 기준으로 만들지 않는다.
+- `wiki/wiki-manifest.json`에 page, mirror, asset과 sidebar를 allowlist한다. 임의 파일 복사나
+  플랫폼별 서로 다른 본문을 만들지 않는다.
+- GitHub `_Sidebar.md`와 GitLab `_sidebar.md` 차이는 target export에서만 변환한다.
+  platform-neutral 상대 link와 committed asset만 사용한다.
+- `prep.ps1 validate`, `python scripts/wiki/sync_wiki.py validate`와 dependency-free dual-target parity
+  contract가 통과해야 문서 checkpoint를 완료로 기록한다.
+- Wiki remote URL, token, SSH private key와 사내 hostname은 commit하지 않는다. remote는 승인된
+  환경변수/CI secret으로만 주입하고 publish는 명시적 `--push` 없이는 전송하지 않는다.
+- 과거 deployed manifest에 AXCalib 관리 파일로 기록된 항목만 prune한다. 다른 팀의 Wiki page를
+  삭제하거나 강제 push하지 않는다.
+- GitHub 최초 Home, GitLab project Wiki/runner/credential과 enable variable은 플랫폼 Owner 승인 뒤
+  opt-in한다. local export 성공을 실제 Wiki publication 성공으로 기록하지 않는다.
+- 상세 운영계약은 `docs/operations/wiki-publication.md`와 ADR-027을 따른다.
+
 ## 5. 구현 원칙
 
 ### 5.1 패키지와 의존성
@@ -262,6 +284,7 @@ AXCalib/
     architecture/
       diagrams/
     adr/
+    operations/
     schemas/
     rubrics/
     evaluation/
@@ -286,6 +309,7 @@ AXCalib/
     api/
   scripts/
     pipelines/
+    wiki/
   apps/
     api/
     worker/
@@ -297,6 +321,7 @@ AXCalib/
     integration/
     contract/
   evals/
+  wiki/
   output/
 ~~~
 
@@ -327,6 +352,16 @@ AXCalib/
 - eval: 고정 fixture/dataset으로 parser, retrieval, 평가, 모델 편차 지표를 생성한다.
 - docling: optional Docling PPTX contract를 별도 프로세스로 실행한다. 저메모리 환경의 기본 test에는
   포함하지 않는다.
+
+Wiki 원본과 두 target export는 다음 명령으로 별도 확인한다. `publish`는 기본 dry-run이며 실제
+commit/push에는 명시적 `--push`와 승인된 remote 환경변수가 필요하다.
+
+~~~powershell
+uv run --no-sync python scripts/wiki/sync_wiki.py validate
+uv run --no-sync python scripts/wiki/sync_wiki.py export --target github --output output/wiki-preview/github
+uv run --no-sync python scripts/wiki/sync_wiki.py export --target gitlab --output output/wiki-preview/gitlab
+uv run --no-sync python tests/wiki_ci_contract.py
+~~~
 
 status와 validate는 항상 read-only다. 외부 모델을 쓰는 live evaluation은 별도 플래그와 명시적 동의가 필요하다.
 기본 test는 lightweight parser/sidecar 경로를 검증하고 Docling contract는 `prep.ps1 docling`으로 분리한다.
@@ -375,6 +410,7 @@ CLI와 API는 동일한 schema 및 application service를 사용해야 한다.
 - 동일 fixture와 동일 mock 설정의 재현성
 - architecture 문서의 local link, Mermaid 필수 view, SVG XML/title/desc와 M00~M13 control board
 - 코드/상태 변경 시 workflow 구조도와 module 상태의 drift 방지
+- portable Wiki 필수 page/link/asset, Development Ledger mirror와 GitHub/GitLab export parity
 
 ### 8.3 품질 지표
 
@@ -399,6 +435,7 @@ CLI와 API는 동일한 schema 및 application service를 사용해야 한다.
 6. 새로 생긴 결정, 위험, 후속 작업
 7. 구조·상태·dependency를 바꿨다면 갱신한 diagram과 module control 항목
 8. `PROJECT_STATE.md`에 갱신한 Active Slice, Gate, 검증 결과, 특이사항과 append-only 이력 ID
+9. 사용자 인터페이스·운영법·프로젝트 구조가 바뀌었다면 갱신한 `wiki/` page와 dual-target 검증 결과
 
 문서만 작성한 단계에서는 제품 기능이 완료됐다고 표현하지 않는다. 테스트가 없으면 없다고 말하고, live model을 호출하지 않았으면 모델 품질이 검증됐다고 말하지 않는다.
 
@@ -413,6 +450,7 @@ CLI와 API는 동일한 schema 및 application service를 사용해야 한다.
 - 운영 DB/API 변경, 배포, 계정·권한 생성
 - 유료 모델 대량 호출 또는 대규모 embedding
 - Git 초기화, 원격 저장소 생성, commit, push
+- GitHub/GitLab Wiki 최초 page 생성, remote Wiki push, CI variable·deploy key·runner 설정
 - 라이선스 또는 LG 브랜드 자산의 공식 사용 선언
 
 불명확하지만 안전한 synthetic/offline 작업으로 진전할 수 있으면 그 범위에서 계속하고, 필요한 결정은 GOAL.md의 Open Decisions에 남긴다.

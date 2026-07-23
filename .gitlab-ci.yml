@@ -1,0 +1,47 @@
+wiki:validate:
+  stage: .pre
+  variables:
+    GIT_DEPTH: "0"
+  rules:
+    - if: '$AXCALIB_WIKI_CI_ENABLED == "true"'
+      changes:
+        - wiki/**/*
+        - PROJECT_STATE.md
+        - harness/wiki.py
+        - scripts/wiki/**/*
+        - tests/wiki_ci_contract.py
+        - .gitlab-ci.yml
+    - when: never
+  script:
+    - python --version
+    - python scripts/wiki/sync_wiki.py validate
+    - python scripts/wiki/sync_wiki.py export --target github --output output/wiki-ci/github
+    - python scripts/wiki/sync_wiki.py export --target gitlab --output output/wiki-ci/gitlab
+    - python tests/wiki_ci_contract.py
+
+wiki:publish:
+  stage: .post
+  variables:
+    GIT_DEPTH: "0"
+  needs:
+    - wiki:validate
+  rules:
+    - if: >-
+        $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH &&
+        $AXCALIB_WIKI_CI_ENABLED == "true" &&
+        $AXCALIB_WIKI_PUBLISH_ENABLED == "true"
+      changes:
+        - wiki/**/*
+        - PROJECT_STATE.md
+        - harness/wiki.py
+        - scripts/wiki/**/*
+        - tests/wiki_ci_contract.py
+        - .gitlab-ci.yml
+    - when: never
+  script:
+    - >-
+      python scripts/wiki/sync_wiki.py publish
+      --target gitlab
+      --remote-url-env AXCALIB_GITLAB_WIKI_URL
+      --checkout output/wiki-checkouts/gitlab
+      --push

@@ -1,7 +1,7 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-durable-worker-alpha
+baseline: v0.3-p1-g4-portable-wiki
 phase: P7 Interfaces
 gate: G4 Interfaces
 gate_status: interface_alpha_in_progress
@@ -11,8 +11,8 @@ active_slice: WP-06.I4 approved-identity-upload-boundary
 active_slice_status: blocked_policy
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
-updated_at: 2026-07-22
-last_history_id: HIST-2026-07-22-013
+updated_at: 2026-07-23
+last_history_id: HIST-2026-07-23-002
 ---
 
 # AXCalib Project Execution Ledger
@@ -60,12 +60,12 @@ last_history_id: HIST-2026-07-22-013
 | 항목 | 현재 값 |
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
-| 현재 Work Package | **WP-06 interface hardening** |
+| 현재 Work Package | **WP-06 interface hardening**; WP-00.D2 portable Wiki checkpoint 완료 |
 | Active Slice | **WP-06.I4** (`blocked_policy`; approved OIDC/assignment/immutable upload boundary) |
 | 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/durable local Worker Alpha evidence 확보 |
 | 다음 Gate | **G4 Interfaces**; OIDC/immutable upload와 distributed execution evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 130 lightweight tests, 10 eval groups, API+Worker 27/27, validation 0/0, Ruff, Pyright 0/0 |
+| 최근 회귀 | 136 lightweight tests(86/31/19), 10 eval groups, Wiki parity 1/1, validation 0/0, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -377,6 +377,21 @@ Exit Evidence:
 승인되지 않은 issuer, 실제 계정, 운영 object store 또는 사내 데이터를 임의로 만들지 않는다. Owner/
 Security 결정 전에는 현재 fail-closed verifier/resolver와 local synthetic contract를 유지한다.
 
+### 5.11 유지보수 Active Slice — WP-00.D2 Portable Dual-Wiki Harness
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `completed_verified_local_contract` |
+| 목적 | 메인 저장소의 플랫폼 중립 Wiki 원본을 GitHub/GitLab Wiki에 같은 정보로 배포 |
+| 대상 | `wiki/`, Wiki validation/export/publish script, GitHub/GitLab CI opt-in template |
+| 선행조건 | 실제 Wiki remote는 별도 Git 저장소이며 secret과 on-prem URL은 저장소에 기록하지 않음 |
+| Exit Evidence | 필수 페이지·상대 링크·asset·manifest 검증, 두 target export parity, dry-run publish test |
+| 제품 Gate 영향 | 제품 기능 Gate는 승격하지 않으며 WP-06.I4 `blocked_policy`를 유지 |
+
+이 slice는 문서 전달 하네스다. Wiki가 보인다는 사실을 제품 기능 또는 운영 배포 완료의 증거로
+사용하지 않는다. GitHub 최초 Home page와 사내 GitLab remote/runner/credential은 각 플랫폼 Owner가
+승인한 뒤 opt-in 한다.
+
 ## 6. 일정·작업 Queue
 
 calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 고정한다. 그 전에는 아래 dependency
@@ -399,11 +414,13 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 13 | P7 / WP-06 | durable local 202 worker contract | `verified_local_contract` | runtime checkpoint, resource authorization | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 14 | P7 / WP-06 | approved identity/assignment/immutable upload boundary | `blocked_policy` | Product/Security/Platform Owner 결정 | TBD | TBD | G4 |
 | 15 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
+| 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `verified_local_contract` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-23 | WP-00.D2 portable dual-Wiki harness | Wiki validate/export/parity, local bare publish, split full test/eval, Ruff/Pyright/validate, CI YAML parse | Wiki targeted 6/6, parity 1/1, full 136 (86/31/19), 10 eval groups, Ruff, Pyright 0/0, validate 0/0 | local source/export only; GitHub initial Home와 GitLab runner/credential/live push 미검증 |
 | 2026-07-22 | WP-06.I3 durable local Worker | split full test/eval, API+Worker contract, Ruff/Pyright/validate, clean API wheel, SVG/PNG audit | 130 passed (83/28/19), combined 27/27, 10 eval groups, Ruff, Pyright 0/0, validate 0/0, OpenAPI 17 paths | single-host filesystem Alpha; OIDC/upload/heartbeat/distributed broker 미포함 |
 | 2026-07-22 | WP-06.I2c project safe read/decision replay | project/runtime/education API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | project API 6/6, combined API 18/18, full 121 passed, 10 eval groups, Ruff check, changed format 7/7, Pyright 0/0, validate 0/0, OpenAPI 17 paths | local response-loss contract; commit-record crash window, distributed idempotency/OIDC 미포함 |
 | 2026-07-22 | WP-06.I2b principal-bound education API | education/runtime/project API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | education API 5/5, combined API 17/17, full 120 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0, OpenAPI 16 paths | in-process resource scope contract; actual OIDC/assignment source/server 미포함 |
@@ -442,8 +459,8 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
    `prep test`가 실행별 `output/pytest-runs/run-{pid}`를 쓰도록 보강했다. 이어 atomic replace에서
    일시적 lock 1건이 재현돼 bounded retry를 추가한 뒤 76 tests가 통과했다.
 3. 2026-07-20 교육 composition과 R1.1 project recovery는 commit `ebd74ed`, R1.2 Library Alpha는
-   `a03a633`, WP-06.I2b/I2c는 `e74ea69`/`c089d6d`까지 `origin/main`에 반영됐다. WP-06.I3는 현재
-   closeout change set을 checkpoint commit/push한다.
+   `a03a633`, WP-06.I2b/I2c는 `e74ea69`/`c089d6d`, WP-06.I3는 `70f8404`까지 `origin/main`에
+   반영됐다. WP-00.D2 portable Wiki change set은 현재 local 검증 완료 상태이며 아직 commit/push하지 않았다.
 4. SkillBoss catalog에는 exact `Qwen3.5-397B-A17B`가 없고 `qwen3.5-plus`만 있다. 기존 full
    registration HTTP 500의 직접 원인은 `json_object` 메시지에 literal `JSON`이 없던 AXCalib 요청과
    upstream 400을 500으로 감싼 proxy mapping 조합으로 확인됐다. exact on-prem 검증은 여전히 필수다.
@@ -469,6 +486,9 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
     닫힌 stdout flush에서 `OSError 22`가 뒤따랐다. unit/integration/contract를 독립 pytest process로
     분리하고 group 선택을 추가했다. 각 group 83/28/19와 aggregate 130이 통과해 중단 시 해당 group만
     재개할 수 있다.
+13. GitHub repository API에서 Wiki feature enabled를 확인했지만 `Infant83/AXCalib.wiki.git`은 아직
+    repository not found다. 최초 Home page가 없는 상태로 판단하며 main commit/push, GitHub Home 생성,
+    Wiki remote push와 사내 GitLab URL/runner/credential 설정은 이번 local slice에서 수행하지 않았다.
 
 ## 9. 작업 이력
 
@@ -932,6 +952,45 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 관련 근거: [ADR-026](docs/adr/ADR-026-durable-local-worker-and-202-contract.md),
   [WP-06.I3 리포트](docs/evaluation/wp06-i3-durable-local-worker-report.md), D-039,
   R-010/R-012/R-039/R-044와 M10/M12 Module Control Board.
+
+### HIST-2026-07-23-001
+
+- Phase / WP / Gate: P0 maintenance / WP-00.D2 / documentation control; 제품 G4 판정 불변
+- 상태: `active_portable_dual_wiki_harness`
+- 작업: 사용 매뉴얼, 실습 사례, 코드·프로젝트 설명과 개발과정을 메인 저장소에서 관리하고
+  GitHub/GitLab Wiki 별도 Git 저장소에 같은 내용으로 배포하는 문서 전달 계약을 착수했다.
+- 변경 파일: 착수 시점에는 `PROJECT_STATE.md`의 Active Slice, queue와 이력만 갱신했다.
+- 검증: working tree clean, GitHub repository `has_wiki=true`, `AXCalib.wiki.git`은 아직 initial page가
+  없어 clone 불가함을 read-only로 확인했다. GitLab remote는 사내 URL이 제공되지 않아 호출하지 않았다.
+- 특이사항: Wiki를 메인 저장소와 별도로 직접 편집하면 두 플랫폼과 코드 문서가 갈라지므로 `wiki/`를
+  단일 원본으로 두고 target별 sidebar 파일명만 export에서 변환한다. credential/remote URL은 commit하지 않는다.
+- 미검증: GitHub initial Home 생성과 실제 Wiki push, 사내 GitLab runner/권한/remote push.
+- 다음 작업: canonical Wiki pages, manifest, cross-platform export/publish와 validation/test를 구현한다.
+- 관련 근거: WP-00.D2 Exit Evidence와 후속 ADR/운영 매뉴얼.
+
+### HIST-2026-07-23-002
+
+- Phase / WP / Gate: P0 maintenance / WP-00.D2 / documentation control; 제품 G4 판정 불변
+- 상태: `completed_verified_local_contract`
+- 작업: 사용자 매뉴얼·두 Gate 실습·Library/API/Web/App·on-prem·보안·개발 프로세스를 `wiki/`
+  단일 원본으로 구성했다. manifest가 page/mirror/asset/sidebar를 allowlist하고 GitHub/GitLab export가
+  본문 parity와 target별 sidebar를 만든다. PROJECT_STATE는 Development Ledger로 자동 mirror된다.
+- 변경 파일: `wiki/`, `harness/wiki.py`, `scripts/wiki/sync_wiki.py`, Wiki unit/integration/CI contract,
+  `.github/workflows/wiki.yml`, `.gitlab-ci.yml`; AGENTS/WORK_SPEC/GOAL/DESIGN/README/CHANGELOG/HANDOFF/
+  memory bank, ADR-027, Wiki runbook/report, DECISIONS/RISK_REGISTER와 이 원장.
+- 검증: Wiki targeted 6/6와 dependency-free parity 1/1, local bare Wiki dry-run→push→second no-change,
+  split full tests 136 passed(unit 86, integration 31, contract 19), `prep eval` 10 groups, `ruff check .`,
+  Pyright 0/0, `prep validate` 0/0, GitHub/GitLab CI YAML parse가 통과했다.
+- 특이사항: publisher는 환경변수 remote, error redaction, dirty checkout/origin mismatch guard, atomic
+  export, 이전 AXCalib managed-file manifest 범위의 prune와 명시적 `--push`를 사용한다. CI publish는
+  enable variable이 없으면 실행되지 않는다. 긴 전체 pytest 대신 세 group을 독립 실행했다.
+- 미검증: GitHub 최초 Home과 실제 GitHub Wiki push/render, 사내 GitLab hostname·runner·deploy
+  credential·protected variable·Wiki push/render. 실제 remote는 변경하지 않았다.
+- 다음 작업: platform Owner가 Wiki bootstrap을 승인·구성하면 GitHub/GitLab live publication을 각각
+  검증한다. 제품 Active Slice는 WP-06.I4 `blocked_policy`로 복귀하며 승인 전 fail-closed 경계를 유지한다.
+- 관련 근거: [ADR-027](docs/adr/ADR-027-portable-github-gitlab-wiki-source.md),
+  [Wiki runbook](docs/operations/wiki-publication.md),
+  [WP-00.D2 report](docs/evaluation/wp00-d2-portable-wiki-harness-report.md), D-040과 R-045.
 
 ## 10. 단계 종료 업데이트 템플릿
 

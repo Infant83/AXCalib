@@ -261,6 +261,7 @@ extensions
 | FR-056 | Principal-bound education API | learner/mentor/instructor/administrator command는 actor 없는 resource endpoint에서 principal·program/enrollment assignment scope·organization·revision에 bind하고 project context를 재검증 | Must |
 | FR-057 | Project read and decision replay | owner/admin project GET은 URI·자유서술을 redaction하고 두 HITL decision은 principal·resource·stage·revision·payload에 고정된 성공 결과만 idempotent replay | Must |
 | FR-058 | Durable queued execution | exact delivery grant는 inline/queued를 분리하고 queued request를 typed/hash-bound envelope로 보존해 202·authorized poll/cancel·lease reclaim·bounded retry·terminal replay를 같은 Library executor로 제공 | Must |
+| FR-059 | Portable Wiki distribution | 사용자 매뉴얼·실습·코드/프로젝트 설명과 개발 원장을 main `wiki/` 단일 원본으로 관리하고 GitHub/GitLab Wiki에 manifest·검증·opt-in publish로 동일 배포 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -864,6 +865,7 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 30. 교육 가입·진행·평가자·완료결정 권한 바인딩 | FR-056, ADR-024, API threat model, WP-06.I2b report | In-process education API contract verified; approved IdP/assignment source pending |
 | 31. project 안전 조회와 관리자 decision 응답 유실 복구 | FR-057, ADR-025, API threat model, WP-06.I2c report | In-process read/replay contract verified; distributed idempotency/OIDC pending |
 | 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/OIDC pending |
+| 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | Canonical source/export/parity local verified; initial remote Wiki/runner/live push pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 
@@ -909,6 +911,7 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] principal-bound education enrollment/milestone/완료결정 endpoint와 program hash·resource scope 계약
 - [x] URI-redacted owner/admin project GET과 registration/completion decision semantic replay 계약
 - [x] exact queued grant의 202, local durable queue/lease/retry/terminal replay와 one-job Worker 계약
+- [x] main `wiki/` 단일 원본, PROJECT_STATE mirror와 GitHub/GitLab target export/publish 하네스
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
 - [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
@@ -937,3 +940,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-22 | v0.3-p1 education-api-alpha | learner/mentor/instructor/administrator resource scope, organization, revision과 project-context 재검증 추가 |
 | 2026-07-22 | v0.3-p1 project-read-replay-alpha | owner/admin safe project GET, verified authority context와 principal/resource/payload-bound decision replay 추가 |
 | 2026-07-22 | v0.3-p1 durable-worker-alpha | exact inline/queued grant, 202/poll queue status, hash-bound local job, lease reclaim와 bounded retry Worker 추가 |
+| 2026-07-23 | v0.3-p1 portable-wiki | GitHub/GitLab Wiki 공통 원본, 개발원장 mirror, 검증·export와 opt-in CI publication 계약 추가 |

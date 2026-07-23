@@ -17,6 +17,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
@@ -33,6 +35,24 @@ REQUIRED_PATHS = (
     "pyproject.toml",
     "uv.lock",
     "prep.ps1",
+    ".github/workflows/wiki.yml",
+    ".gitlab-ci.yml",
+    "wiki/wiki-manifest.json",
+    "wiki/Home.md",
+    "wiki/Getting-Started.md",
+    "wiki/Library-Manual.md",
+    "wiki/Two-Gate-Tutorial.md",
+    "wiki/Examples-and-Recipes.md",
+    "wiki/API-Web-App-Integration.md",
+    "wiki/Configuration-and-On-Prem.md",
+    "wiki/Architecture-and-Project.md",
+    "wiki/Security-and-HITL.md",
+    "wiki/Development-Process.md",
+    "wiki/Documentation-Governance.md",
+    "wiki/_Sidebar.md",
+    "harness/wiki.py",
+    "scripts/wiki/sync_wiki.py",
+    "tests/wiki_ci_contract.py",
     "config/axcalib.toml",
     "config/axcalib.expert.example.toml",
     "docs/schemas/runtime-config.schema.json",
@@ -44,6 +64,8 @@ REQUIRED_PATHS = (
     "docs/api/examples/registration-evaluation.request.json",
     "docs/api/examples/completion-evaluation.request.json",
     "docs/api/examples/run-accepted.response.json",
+    "docs/operations/README.md",
+    "docs/operations/wiki-publication.md",
     "docs/product/product-brief.md",
     "docs/manuals/README.md",
     "docs/manuals/00-excalibur-concept.md",
@@ -63,6 +85,8 @@ REQUIRED_PATHS = (
     "docs/evaluation/qwen35-capability-validation-report.md",
     "docs/evaluation/wp01-r1-transaction-recovery-report.md",
     "docs/adr/ADR-020-local-project-transaction-journal.md",
+    "docs/adr/ADR-027-portable-github-gitlab-wiki-source.md",
+    "docs/evaluation/wp00-d2-portable-wiki-harness-report.md",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -183,6 +207,8 @@ def _local_markdown_link_errors() -> list[str]:
         "docs/evaluation/g3-intelligence-development-report.md",
         "docs/evaluation/wp02-actual-ppt-evidence-quality-report.md",
         "docs/api/README.md",
+        "docs/operations/README.md",
+        "docs/operations/wiki-publication.md",
         "docs/readiness/development-readiness-audit.md",
         "apps/api/README.md",
         "apps/web/README.md",
@@ -821,6 +847,7 @@ def validate_workspace() -> tuple[list[str], list[str]]:
 
     from axcalib.schemas.export import export_schema_artifacts
     from axcalib.workflows.two_gate import approval_transition_errors
+    from harness.wiki import validate_wiki
 
     errors.extend(approval_transition_errors())
     errors.extend(export_schema_artifacts(ROOT / "docs" / "schemas", check=True))
@@ -843,6 +870,7 @@ def validate_workspace() -> tuple[list[str], list[str]]:
     errors.extend(_project_ledger_errors())
     errors.extend(_pptx_fixture_errors())
     errors.extend(_review_policy_errors())
+    errors.extend(validate_wiki(ROOT))
     errors.extend(_secret_errors())
     return errors, warnings
 
@@ -866,6 +894,7 @@ def show_status() -> int:
         "no Vector DB"
     )
     print("  architecture control: required Mermaid views + 2 SVGs + M00-M13 module board")
+    print("  documentation control: portable wiki/ source + GitHub/GitLab export contract")
     print(
         "  implemented: actual-PPT project gates + evidence Q1 + Qwen proxy capability + "
         "education goals + Library/CLI/batch/resource API/local Worker Alpha"

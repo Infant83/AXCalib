@@ -170,6 +170,27 @@ dependency Gantt, Active Slice, Gate 판정, 실제 검증과 append-only 작업
 구조는 이 문서와 workflow/module 문서에 링크한다. 승인되지 않은 미래 일정은 dependency anchor로
 표시하고 실제 calendar baseline과 구분한다.
 
+#### 4.2.1 Portable Wiki publication
+
+사용자용 장문 매뉴얼은 코드 저장소와 분리된 GitHub/GitLab Wiki에 각각 직접 작성하지 않는다.
+main repository의 `wiki/`를 단일 원본으로 사용하고 manifest가 page, repository mirror와 asset을
+allowlist한다.
+
+```mermaid
+flowchart LR
+    W["main wiki/ source"] --> V["validate + dual-target parity"]
+    L["PROJECT_STATE.md"] --> M["Development-Ledger.md mirror"]
+    M --> V
+    V --> GH["GitHub Wiki Git repository"]
+    V --> GL["On-prem GitLab Wiki Git repository"]
+```
+
+본문은 두 target에서 byte-equivalent하게 유지한다. GitHub `_Sidebar.md`와 GitLab `_sidebar.md`
+파일명만 export adapter가 변환한다. publish는 환경변수 remote, dirty checkout/origin mismatch guard,
+atomic export, managed-file manifest와 명시적 `--push`를 사용한다. CI는 초기 Home과 credential Owner가
+확정되기 전에는 enable variable이 없는 fail-closed 상태다. 상세 결정과 운영 절차는 ADR-027과
+`docs/operations/wiki-publication.md`를 따른다.
+
 ### 4.3 Education Program → Enrollment → Project Composition
 
 교육과정 progression은 project dossier를 확장 필드로 비대하게 만들지 않고 별도 aggregate로

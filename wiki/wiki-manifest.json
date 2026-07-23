@@ -1,0 +1,75 @@
+{
+  "schema_version": "axcalib.wiki/v1",
+  "pages": [
+    {
+      "source": "Home.md",
+      "destination": "Home.md"
+    },
+    {
+      "source": "Getting-Started.md",
+      "destination": "Getting-Started.md"
+    },
+    {
+      "source": "Library-Manual.md",
+      "destination": "Library-Manual.md"
+    },
+    {
+      "source": "Two-Gate-Tutorial.md",
+      "destination": "Two-Gate-Tutorial.md"
+    },
+    {
+      "source": "Examples-and-Recipes.md",
+      "destination": "Examples-and-Recipes.md"
+    },
+    {
+      "source": "API-Web-App-Integration.md",
+      "destination": "API-Web-App-Integration.md"
+    },
+    {
+      "source": "Configuration-and-On-Prem.md",
+      "destination": "Configuration-and-On-Prem.md"
+    },
+    {
+      "source": "Architecture-and-Project.md",
+      "destination": "Architecture-and-Project.md"
+    },
+    {
+      "source": "Security-and-HITL.md",
+      "destination": "Security-and-HITL.md"
+    },
+    {
+      "source": "Development-Process.md",
+      "destination": "Development-Process.md"
+    },
+    {
+      "source": "Documentation-Governance.md",
+      "destination": "Documentation-Governance.md"
+    }
+  ],
+  "mirrors": [
+    {
+      "source": "PROJECT_STATE.md",
+      "destination": "Development-Ledger.md",
+      "strip_frontmatter": true
+    }
+  ],
+  "assets": [
+    {
+      "source": "docs/architecture/diagrams/axcalib-ecosystem-infographic.png",
+      "destination": "assets/axcalib-ecosystem-infographic.png"
+    },
+    {
+      "source": "docs/manuals/assets/axcalib-authority-hero.jpg",
+      "destination": "assets/axcalib-authority-hero.jpg"
+    },
+    {
+      "source": "docs/manuals/assets/axcalib-six-panel-tutorial.jpg",
+      "destination": "assets/axcalib-six-panel-tutorial.jpg"
+    }
+  ],
+  "sidebar": {
+    "source": "_Sidebar.md",
+    "github": "_Sidebar.md",
+    "gitlab": "_sidebar.md"
+  }
+}
