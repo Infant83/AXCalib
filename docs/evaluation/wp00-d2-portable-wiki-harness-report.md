@@ -55,9 +55,12 @@ separately to preserve the low-memory and interruption-recovery contract.
 
 ## Remaining external work
 
-- GitHub: create the initial Home page, enable the repository variable and verify the live Wiki render/push.
+- GitHub main: deployed as `b2c6e48`; Actions run `30014678127` validated the source successfully.
+- GitHub Wiki: create the initial Home page, enable the repository variable and verify the live render/push.
 - GitLab: provide the on-prem Wiki remote, runner, deploy credential and protected variables.
 - Verify Markdown and image rendering in both actual web UIs.
 - Decide retention and review policy for any team-owned Wiki pages outside the AXCalib manifest.
 
-No GitHub or GitLab Wiki was remotely modified during this local slice.
+The GitHub main repository was modified by the approved deployment. No GitHub or GitLab Wiki was remotely
+modified because GitHub still requires the initial web Home and the GitLab deployment environment is not
+available here.

@@ -12,7 +12,7 @@ active_slice_status: blocked_policy
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-23
-last_history_id: HIST-2026-07-23-002
+last_history_id: HIST-2026-07-23-003
 ---
 
 # AXCalib Project Execution Ledger
@@ -421,6 +421,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
 | 2026-07-23 | WP-00.D2 portable dual-Wiki harness | Wiki validate/export/parity, local bare publish, split full test/eval, Ruff/Pyright/validate, CI YAML parse | Wiki targeted 6/6, parity 1/1, full 136 (86/31/19), 10 eval groups, Ruff, Pyright 0/0, validate 0/0 | local source/export only; GitHub initial Home와 GitLab runner/credential/live push 미검증 |
+| 2026-07-23 | WP-00.D2 GitHub main deployment | `git push origin main`, remote SHA 확인, GitHub Actions run 30014678127 | `b2c6e48` local/remote 일치, Wiki validate job success | Wiki publish job은 enable variable 부재로 skipped; 최초 Home 미생성으로 Wiki remote는 아직 없음 |
 | 2026-07-22 | WP-06.I3 durable local Worker | split full test/eval, API+Worker contract, Ruff/Pyright/validate, clean API wheel, SVG/PNG audit | 130 passed (83/28/19), combined 27/27, 10 eval groups, Ruff, Pyright 0/0, validate 0/0, OpenAPI 17 paths | single-host filesystem Alpha; OIDC/upload/heartbeat/distributed broker 미포함 |
 | 2026-07-22 | WP-06.I2c project safe read/decision replay | project/runtime/education API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | project API 6/6, combined API 18/18, full 121 passed, 10 eval groups, Ruff check, changed format 7/7, Pyright 0/0, validate 0/0, OpenAPI 17 paths | local response-loss contract; commit-record crash window, distributed idempotency/OIDC 미포함 |
 | 2026-07-22 | WP-06.I2b principal-bound education API | education/runtime/project API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | education API 5/5, combined API 17/17, full 120 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0, OpenAPI 16 paths | in-process resource scope contract; actual OIDC/assignment source/server 미포함 |
@@ -459,8 +460,8 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
    `prep test`가 실행별 `output/pytest-runs/run-{pid}`를 쓰도록 보강했다. 이어 atomic replace에서
    일시적 lock 1건이 재현돼 bounded retry를 추가한 뒤 76 tests가 통과했다.
 3. 2026-07-20 교육 composition과 R1.1 project recovery는 commit `ebd74ed`, R1.2 Library Alpha는
-   `a03a633`, WP-06.I2b/I2c는 `e74ea69`/`c089d6d`, WP-06.I3는 `70f8404`까지 `origin/main`에
-   반영됐다. WP-00.D2 portable Wiki change set은 현재 local 검증 완료 상태이며 아직 commit/push하지 않았다.
+   `a03a633`, WP-06.I2b/I2c는 `e74ea69`/`c089d6d`, WP-06.I3는 `70f8404`, WP-00.D2 portable Wiki
+   harness는 `b2c6e48`까지 `origin/main`에 반영됐다.
 4. SkillBoss catalog에는 exact `Qwen3.5-397B-A17B`가 없고 `qwen3.5-plus`만 있다. 기존 full
    registration HTTP 500의 직접 원인은 `json_object` 메시지에 literal `JSON`이 없던 AXCalib 요청과
    upstream 400을 500으로 감싼 proxy mapping 조합으로 확인됐다. exact on-prem 검증은 여전히 필수다.
@@ -487,8 +488,10 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
     분리하고 group 선택을 추가했다. 각 group 83/28/19와 aggregate 130이 통과해 중단 시 해당 group만
     재개할 수 있다.
 13. GitHub repository API에서 Wiki feature enabled를 확인했지만 `Infant83/AXCalib.wiki.git`은 아직
-    repository not found다. 최초 Home page가 없는 상태로 판단하며 main commit/push, GitHub Home 생성,
-    Wiki remote push와 사내 GitLab URL/runner/credential 설정은 이번 local slice에서 수행하지 않았다.
+    repository not found다. `b2c6e48` main push와 Action validate는 성공했고, exported Wiki의 direct
+    initial Git push도 같은 404로 거부됐다. GitHub 공식 절차대로 웹에서 최초 Home을 한 번 생성해야
+    한다. 현재 Chrome connector는 `codex/sandbox-state-meta: missing field sandboxPolicy`로 연결되지
+    않아 자동 bootstrap을 진행하지 않았다. 사내 GitLab URL/runner/credential도 미제공 상태다.
 
 ## 9. 작업 이력
 
@@ -991,6 +994,26 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 관련 근거: [ADR-027](docs/adr/ADR-027-portable-github-gitlab-wiki-source.md),
   [Wiki runbook](docs/operations/wiki-publication.md),
   [WP-00.D2 report](docs/evaluation/wp00-d2-portable-wiki-harness-report.md), D-040과 R-045.
+
+### HIST-2026-07-23-003
+
+- Phase / WP / Gate: P0 maintenance / WP-00.D2 / GitHub documentation deployment; 제품 G4 판정 불변
+- 상태: `partial_main_deployed_wiki_bootstrap_blocked`
+- 작업: WP-00.D2 change set을 `origin/main`에 배포하고 GitHub Actions의 portable Wiki validation을
+  확인했다. 별도 Wiki 저장소의 초기화를 위해 exported content direct push도 시험했다.
+- 변경 파일: 첫 배포 commit의 36개 WP-00.D2 파일과 배포 증적을 갱신한 이 원장·README·CHANGELOG·
+  개발리포트·memory bank.
+- 검증: main local/remote SHA `b2c6e489c41c4ff6ccd6c7e1bea525384b38db4b` 일치,
+  GitHub Actions run `30014678127`의 `validate` success, `publish-github` skipped.
+- 특이사항: GitHub Wiki는 최초 웹 Home 이전에는 Git remote가 존재하지 않아 direct push도
+  `Repository not found`로 fail closed했다. Chrome connector의 session metadata 오류로 웹 bootstrap을
+  자동화하지 않았으며 credential이나 원문을 다른 endpoint로 보내지 않았다.
+- 미검증: GitHub 최초 Home 생성, repository variable 활성화, 실제 Wiki push/render와 사내 GitLab
+  runner/credential/live push.
+- 다음 작업: 저장소 Owner가 GitHub Wiki에서 최초 Home을 한 번 생성한 뒤 canonical publisher로
+  전체 page를 push·render 검증한다. 제품 Active Slice는 WP-06.I4 `blocked_policy`를 유지한다.
+- 관련 근거: GitHub main commit `b2c6e48`, Actions run `30014678127`,
+  [Wiki runbook](docs/operations/wiki-publication.md)과 R-045.
 
 ## 10. 단계 종료 업데이트 템플릿
 
