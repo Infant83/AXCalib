@@ -12,7 +12,7 @@ active_slice_status: blocked_policy
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-23
-last_history_id: HIST-2026-07-23-005
+last_history_id: HIST-2026-07-23-006
 ---
 
 # AXCalib Project Execution Ledger
@@ -65,7 +65,7 @@ last_history_id: HIST-2026-07-23-005
 | 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/durable local Worker Alpha evidence 확보 |
 | 다음 Gate | **G4 Interfaces**; OIDC/immutable upload와 distributed execution evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 136 lightweight tests(86/31/19), 10 eval groups, Wiki parity 1/1, GitHub Wiki 4 pages/3 assets live smoke, validation 0/0, Ruff, Pyright 0/0 |
+| 최근 회귀 | 136 lightweight tests(86/31/19), 10 eval groups, Wiki parity 1/1, GitHub Wiki v6 automatic publish/annotation 0, validation 0/0, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -424,6 +424,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 2026-07-23 | WP-00.D2 GitHub main deployment | `git push origin main`, remote SHA 확인, GitHub Actions run 30014678127 | `b2c6e48` local/remote 일치, Wiki validate job success | Wiki publish job은 enable variable 부재로 skipped; 최초 Home 미생성으로 Wiki remote는 아직 없음 |
 | 2026-07-23 | WP-00.D2 GitHub Wiki live publication | canonical publisher dry-run→push, remote SHA, public HTTP render, Actions variable API | Wiki `f384648` local/remote 일치, pages 4/4와 assets 3/3 HTTP 200, publish variable `true` | GitHub live delivery만 검증; 사내 GitLab runner/credential/render는 미검증 |
 | 2026-07-23 | WP-00.D2 GitHub automatic publication | Actions run 30016911593 job API와 Wiki remote | validate/publish jobs success, Wiki `9523ce2`로 갱신 | run 상단 상태 반영 지연; Node 20 deprecation annotation을 v6 action으로 교정 중 |
+| 2026-07-23 | WP-00.D2 Node 24 workflow closeout | Actions run 30017233639, check-run annotations, Wiki remote | run success, jobs 2/2 success, annotations 0/0, Wiki `d8bf053` | GitHub 자동 문서 전달 검증; 사내 GitLab 증거로 확대하지 않음 |
 | 2026-07-22 | WP-06.I3 durable local Worker | split full test/eval, API+Worker contract, Ruff/Pyright/validate, clean API wheel, SVG/PNG audit | 130 passed (83/28/19), combined 27/27, 10 eval groups, Ruff, Pyright 0/0, validate 0/0, OpenAPI 17 paths | single-host filesystem Alpha; OIDC/upload/heartbeat/distributed broker 미포함 |
 | 2026-07-22 | WP-06.I2c project safe read/decision replay | project/runtime/education API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | project API 6/6, combined API 18/18, full 121 passed, 10 eval groups, Ruff check, changed format 7/7, Pyright 0/0, validate 0/0, OpenAPI 17 paths | local response-loss contract; commit-record crash window, distributed idempotency/OIDC 미포함 |
 | 2026-07-22 | WP-06.I2b principal-bound education API | education/runtime/project API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | education API 5/5, combined API 17/17, full 120 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0, OpenAPI 16 paths | in-process resource scope contract; actual OIDC/assignment source/server 미포함 |
@@ -1057,6 +1058,25 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   append한다. 제품 Active Slice는 WP-06.I4 `blocked_policy`를 유지한다.
 - 관련 근거: [Actions run 30016911593](https://github.com/Infant83/AXCalib/actions/runs/30016911593),
   GitHub Wiki `9523ce2`와 공식 checkout/setup-python v6 release.
+
+### HIST-2026-07-23-006
+
+- Phase / WP / Gate: P0 maintenance / WP-00.D2 / GitHub Wiki automatic delivery closeout; 제품 G4 판정 불변
+- 상태: `completed_github_live_automatic_verified`
+- 작업: Node.js 24 기반 checkout/setup-python v6 workflow를 실제 main push로 실행해 validate와
+  publish를 완료하고 Node.js 20 deprecation annotation 제거를 확인했다.
+- 변경 파일: `PROJECT_STATE.md`, README/GOAL/CHANGELOG, WP-00.D2 report, handoff/memory bank와 Wiki
+  governance status.
+- 검증: Actions run `30017233639` completed/success, validate `89240300470`과 publish
+  `89240362177` success, 두 check-run annotation 0/0, Wiki remote
+  `d8bf0537772a29ff5d486196c14f0718a7aa9b74`.
+- 특이사항: 이전 run의 상단 status 지연과 Node.js 20 warning은 v6 run에서 재현되지 않았다.
+  `GITHUB_TOKEN` 기반 publication이 실제 Wiki Git repository에 성공함을 확인했다.
+- 미검증: 사내 GitLab hostname·runner·deploy credential·protected variable과 live page/image render.
+- 다음 작업: 사내 개발서버가 GitHub main을 pull해 GitLab main으로 push한 뒤 GitLab Wiki target을
+  같은 하네스로 검증한다. 제품 Active Slice는 WP-06.I4 `blocked_policy`를 유지한다.
+- 관련 근거: [Actions run 30017233639](https://github.com/Infant83/AXCalib/actions/runs/30017233639),
+  GitHub Wiki `d8bf053`, [Wiki runbook](docs/operations/wiki-publication.md)과 R-045.
 
 ## 10. 단계 종료 업데이트 템플릿
 

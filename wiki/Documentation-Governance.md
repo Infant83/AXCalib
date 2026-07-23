@@ -33,7 +33,8 @@ GitHub Wiki가 초기화되기 전에는 자동 publish를 켜지 않는다. 현
 
 AXCalib GitHub target은 2026-07-23 최초 Home, canonical page·asset publication과
 `AXCALIB_WIKI_PUBLISH_ENABLED=true` 설정을 완료했다. 이후 GitHub Wiki 화면을 직접 고치지 않고
-main의 `wiki/`와 `PROJECT_STATE.md`를 갱신한다.
+main의 `wiki/`와 `PROJECT_STATE.md`를 갱신한다. Node.js 24 기반 checkout/setup-python v6
+automatic workflow도 validate/publish와 annotation 0건으로 검증했다.
 
 ## 사내 GitLab Wiki 설정
 

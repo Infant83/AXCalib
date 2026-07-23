@@ -72,7 +72,7 @@
   Pyright 0/0이 통과했다. 직전 API+Worker combined contract 27/27 evidence도 유지한다.
 - WP-00.D2는 GitHub main에 배포됐고 canonical GitHub Wiki 17개 관리 파일은 commit `f384648`로
   live push됐다. 핵심 page 4개와 image asset 3개 render가 HTTP 200이며 automatic publish variable도
-  활성화됐다.
+  활성화됐다. Node.js 24 workflow run `30017233639`는 두 job과 annotation 0/0으로 통과했다.
 - clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/17 paths를
   구성하며 local Worker prepared→succeeded를 실행한다. actual-PPTX quickstart는 이전 Alpha checkpoint
   evidence를 유지한다.

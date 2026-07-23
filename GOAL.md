@@ -102,8 +102,8 @@ OIDC/JWKS·immutable upload·distributed broker/heartbeat와 운영 품질평가
 2026-07-23 WP-00.D2에서는 사용자 매뉴얼·실습·코드/프로젝트 설명을 main `wiki/` 단일 원본으로
 두고 `PROJECT_STATE.md` 개발원장을 자동 mirror하는 GitHub/GitLab portable publication contract를
 추가했다. local validation/export parity와 GitHub Wiki live push/page·asset render를 검증하고
-automatic publish variable도 활성화했다. 사내 GitLab remote·runner·credential과 실제 화면
-publication은 플랫폼 Owner 작업으로 남는다.
+Node.js 24 workflow automatic publish도 완료했다. 사내 GitLab remote·runner·credential과 실제
+화면 publication은 플랫폼 Owner 작업으로 남는다.
 
 2026-07-21 `WP-02.Q1`에서는 제공 PPTX의 16/16 slide를 제한형 embedded-image renderer로
 재현하고, 13개 reviewed locator와 12개 reference field를 source/sidecar hash에 고정한 품질

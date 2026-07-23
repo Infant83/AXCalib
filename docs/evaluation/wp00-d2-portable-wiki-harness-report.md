@@ -50,6 +50,7 @@ copying.
 | GitHub Action / GitLab CI YAML | both parsed successfully |
 | Local bare Wiki repository publication | first push succeeded; second run had no changes |
 | GitHub Wiki live publication | `f384648`, pages 4/4 and image assets 3/3 returned HTTP 200 |
+| GitHub automatic publication | run `30017233639` success; validate/publish 2/2, annotations 0/0 |
 
 The full test command was not run as one long process. Unit, integration and contract groups were executed
 separately to preserve the low-memory and interruption-recovery contract.
@@ -57,8 +58,7 @@ separately to preserve the low-memory and interruption-recovery contract.
 ## Remaining external work
 
 - GitHub main: deployed as `b2c6e48`; Actions run `30014678127` validated the source successfully.
-- GitHub Wiki: live push/render and automatic validate/publish jobs verified. The action runtime was upgraded
-  to checkout/setup-python v6 after Node.js 20 deprecation annotations; the v6 live run remains to verify.
+- GitHub Wiki: live push/render and Node.js 24 automatic validate/publish workflow verified.
 - GitLab: provide the on-prem Wiki remote, runner, deploy credential and protected variables.
 - Verify Markdown and image rendering in the actual GitLab UI.
 - Decide retention and review policy for any team-owned Wiki pages outside the AXCalib manifest.
