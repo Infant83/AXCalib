@@ -68,15 +68,16 @@
 - 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. Wiki targeted 6/6,
   dual-target parity 1/1, full 136 tests(unit 86/integration 31/contract 19), 10 eval groups, Ruff와
   Pyright 0/0이 통과했다. 직전 API+Worker combined contract 27/27 evidence도 유지한다.
-- WP-00.D2는 GitHub main commit `b2c6e48`로 배포됐고 Actions run `30014678127`의 validation이
-  통과했다. 최초 Home 전의 Wiki remote는 404이므로 실제 Wiki publication은 아직 완료되지 않았다.
+- WP-00.D2는 GitHub main에 배포됐고 canonical GitHub Wiki 17개 관리 파일은 commit `f384648`로
+  live push됐다. 핵심 page 4개와 image asset 3개 render가 HTTP 200이며 automatic publish variable도
+  활성화됐다.
 - clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/17 paths를
   구성하며 local Worker prepared→succeeded를 실행한다. actual-PPTX quickstart는 이전 Alpha checkpoint
   evidence를 유지한다.
 - project/education local state recovery, stale artifact maintenance와 single-host local Worker는 검증했지만
   report/outbox producer, database/distributed worker/heartbeat, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
-- Wiki source/target export와 local bare-repository publication은 검증했지만 GitHub 최초 Home과 사내
-  GitLab runner/credential/live Wiki push는 아직 수행하지 않았다.
+- GitHub Wiki live publication은 검증했지만 사내 GitLab runner/credential/live Wiki push는 아직
+  수행하지 않았다.
 
 ### 다음 변경 후보
 

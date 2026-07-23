@@ -16,8 +16,8 @@
 - 현재 위치: P7 / WP-06.I3 completed local Alpha / G4 Interfaces
 - 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a/I2b/I2c resource API/read-replay + I3 local Worker
 - 다음 dependency: WP-06.I4 approved OIDC/assignment/immutable upload boundary `blocked_policy`
-- 문서 전달: WP-00.D2 portable `wiki/` source, PROJECT_STATE mirror와 GitHub/GitLab export local contract;
-  GitHub main `b2c6e48`/Action validation 완료, 최초 Wiki Home은 대기
+- 문서 전달: WP-00.D2 portable `wiki/` source, PROJECT_STATE mirror와 GitHub/GitLab export contract;
+  GitHub Wiki `f384648` live render와 automatic publish variable 완료, 사내 GitLab은 대기
 - 최근 증거: 136 lightweight tests(unit 86/integration 31/contract 19), 10 eval groups,
   Wiki targeted 6/6와 parity 1/1, Ruff check, Pyright 0/0, validation 0/0; 직전 Worker API 27/27
 - 최근 해결: SkillBoss proxy의 `json_object` HTTP 500 원인을 JSON keyword/schema contract로 복구

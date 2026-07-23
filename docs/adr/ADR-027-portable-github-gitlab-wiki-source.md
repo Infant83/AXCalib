@@ -42,7 +42,8 @@ drift가 생긴다.
 - 공개 API, workflow, 설정 또는 운영법을 바꾸는 change set은 `wiki/`도 검토해야 한다.
 - GitHub와 GitLab에서 각각 최초 Wiki Home, runner/permission/credential을 한 번 구성해야 한다.
 - 플랫폼별 Markdown renderer의 세부 차이는 계속 parity smoke와 실제 화면 확인이 필요하다.
-- 현재 local contract는 실제 GitHub/GitLab Wiki publication 성공을 증명하지 않는다.
+- 2026-07-23 GitHub live publication은 검증했다. 이 증거는 사내 GitLab publication 성공을
+  증명하지 않는다.
 
 ## Rejected alternatives
 

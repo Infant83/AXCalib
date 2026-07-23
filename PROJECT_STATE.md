@@ -12,7 +12,7 @@ active_slice_status: blocked_policy
 next_gate: G4 Interfaces remaining evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-23
-last_history_id: HIST-2026-07-23-003
+last_history_id: HIST-2026-07-23-004
 ---
 
 # AXCalib Project Execution Ledger
@@ -60,12 +60,12 @@ last_history_id: HIST-2026-07-23-003
 | 항목 | 현재 값 |
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
-| 현재 Work Package | **WP-06 interface hardening**; WP-00.D2 portable Wiki checkpoint 완료 |
+| 현재 Work Package | **WP-06 interface hardening**; WP-00.D2 GitHub Wiki live publication 완료 |
 | Active Slice | **WP-06.I4** (`blocked_policy`; approved OIDC/assignment/immutable upload boundary) |
 | 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/durable local Worker Alpha evidence 확보 |
 | 다음 Gate | **G4 Interfaces**; OIDC/immutable upload와 distributed execution evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 136 lightweight tests(86/31/19), 10 eval groups, Wiki parity 1/1, validation 0/0, Ruff, Pyright 0/0 |
+| 최근 회귀 | 136 lightweight tests(86/31/19), 10 eval groups, Wiki parity 1/1, GitHub Wiki 4 pages/3 assets live smoke, validation 0/0, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -381,16 +381,16 @@ Security 결정 전에는 현재 fail-closed verifier/resolver와 local syntheti
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `completed_verified_local_contract` |
+| 상태 | `github_live_verified_gitlab_pending` |
 | 목적 | 메인 저장소의 플랫폼 중립 Wiki 원본을 GitHub/GitLab Wiki에 같은 정보로 배포 |
 | 대상 | `wiki/`, Wiki validation/export/publish script, GitHub/GitLab CI opt-in template |
 | 선행조건 | 실제 Wiki remote는 별도 Git 저장소이며 secret과 on-prem URL은 저장소에 기록하지 않음 |
-| Exit Evidence | 필수 페이지·상대 링크·asset·manifest 검증, 두 target export parity, dry-run publish test |
+| Exit Evidence | 필수 페이지·상대 링크·asset·manifest 검증, 두 target export parity, GitHub live push/render |
 | 제품 Gate 영향 | 제품 기능 Gate는 승격하지 않으며 WP-06.I4 `blocked_policy`를 유지 |
 
-이 slice는 문서 전달 하네스다. Wiki가 보인다는 사실을 제품 기능 또는 운영 배포 완료의 증거로
-사용하지 않는다. GitHub 최초 Home page와 사내 GitLab remote/runner/credential은 각 플랫폼 Owner가
-승인한 뒤 opt-in 한다.
+이 slice는 문서 전달 하네스다. Wiki가 보인다는 사실을 제품 기능 또는 인증 운영 배포 완료의
+증거로 사용하지 않는다. GitHub 최초 Home, live push/render와 repository enable variable은
+검증했다. 사내 GitLab remote/runner/credential은 플랫폼 Owner가 승인한 뒤 별도로 opt-in 한다.
 
 ## 6. 일정·작업 Queue
 
@@ -414,7 +414,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 13 | P7 / WP-06 | durable local 202 worker contract | `verified_local_contract` | runtime checkpoint, resource authorization | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 14 | P7 / WP-06 | approved identity/assignment/immutable upload boundary | `blocked_policy` | Product/Security/Platform Owner 결정 | TBD | TBD | G4 |
 | 15 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
-| 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `verified_local_contract` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
+| 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `github_live_verified_gitlab_pending` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
 
 ## 7. 최근 검증 증거
 
@@ -422,6 +422,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 |---|---|---|---|---|
 | 2026-07-23 | WP-00.D2 portable dual-Wiki harness | Wiki validate/export/parity, local bare publish, split full test/eval, Ruff/Pyright/validate, CI YAML parse | Wiki targeted 6/6, parity 1/1, full 136 (86/31/19), 10 eval groups, Ruff, Pyright 0/0, validate 0/0 | local source/export only; GitHub initial Home와 GitLab runner/credential/live push 미검증 |
 | 2026-07-23 | WP-00.D2 GitHub main deployment | `git push origin main`, remote SHA 확인, GitHub Actions run 30014678127 | `b2c6e48` local/remote 일치, Wiki validate job success | Wiki publish job은 enable variable 부재로 skipped; 최초 Home 미생성으로 Wiki remote는 아직 없음 |
+| 2026-07-23 | WP-00.D2 GitHub Wiki live publication | canonical publisher dry-run→push, remote SHA, public HTTP render, Actions variable API | Wiki `f384648` local/remote 일치, pages 4/4와 assets 3/3 HTTP 200, publish variable `true` | GitHub live delivery만 검증; 사내 GitLab runner/credential/render는 미검증 |
 | 2026-07-22 | WP-06.I3 durable local Worker | split full test/eval, API+Worker contract, Ruff/Pyright/validate, clean API wheel, SVG/PNG audit | 130 passed (83/28/19), combined 27/27, 10 eval groups, Ruff, Pyright 0/0, validate 0/0, OpenAPI 17 paths | single-host filesystem Alpha; OIDC/upload/heartbeat/distributed broker 미포함 |
 | 2026-07-22 | WP-06.I2c project safe read/decision replay | project/runtime/education API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | project API 6/6, combined API 18/18, full 121 passed, 10 eval groups, Ruff check, changed format 7/7, Pyright 0/0, validate 0/0, OpenAPI 17 paths | local response-loss contract; commit-record crash window, distributed idempotency/OIDC 미포함 |
 | 2026-07-22 | WP-06.I2b principal-bound education API | education/runtime/project API contract, full test/eval, Ruff, Pyright, validate, clean API wheel, SVG/PNG visual audit | education API 5/5, combined API 17/17, full 120 passed, 10 eval groups, Ruff check, Pyright 0/0, validate 0/0, OpenAPI 16 paths | in-process resource scope contract; actual OIDC/assignment source/server 미포함 |
@@ -487,11 +488,11 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
     닫힌 stdout flush에서 `OSError 22`가 뒤따랐다. unit/integration/contract를 독립 pytest process로
     분리하고 group 선택을 추가했다. 각 group 83/28/19와 aggregate 130이 통과해 중단 시 해당 group만
     재개할 수 있다.
-13. GitHub repository API에서 Wiki feature enabled를 확인했지만 `Infant83/AXCalib.wiki.git`은 아직
-    repository not found다. `b2c6e48` main push와 Action validate는 성공했고, exported Wiki의 direct
-    initial Git push도 같은 404로 거부됐다. GitHub 공식 절차대로 웹에서 최초 Home을 한 번 생성해야
-    한다. 현재 Chrome connector는 `codex/sandbox-state-meta: missing field sandboxPolicy`로 연결되지
-    않아 자동 bootstrap을 진행하지 않았다. 사내 GitLab URL/runner/credential도 미제공 상태다.
+13. GitHub Owner가 최초 Home을 생성한 뒤 canonical publisher가 17개 관리 파일을 Wiki
+    `f384648`로 push했다. 공개 Home/Getting Started/Development Ledger/API page와 3개 image asset은
+    HTTP 200으로 확인했고 repository variable도 활성화했다. Chrome connector metadata 오류는
+    bootstrap 자동화만 막았으며 실제 Git push/render에는 영향이 없었다. 사내 GitLab
+    URL/runner/credential은 여전히 미제공 상태다.
 
 ## 9. 작업 이력
 
@@ -1013,6 +1014,28 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 다음 작업: 저장소 Owner가 GitHub Wiki에서 최초 Home을 한 번 생성한 뒤 canonical publisher로
   전체 page를 push·render 검증한다. 제품 Active Slice는 WP-06.I4 `blocked_policy`를 유지한다.
 - 관련 근거: GitHub main commit `b2c6e48`, Actions run `30014678127`,
+  [Wiki runbook](docs/operations/wiki-publication.md)과 R-045.
+
+### HIST-2026-07-23-004
+
+- Phase / WP / Gate: P0 maintenance / WP-00.D2 / GitHub Wiki live delivery; 제품 G4 판정 불변
+- 상태: `github_live_verified_gitlab_pending`
+- 작업: Owner가 생성한 최초 Home을 기준으로 canonical publisher dry-run에서 17개 관리 파일만
+  변경됨을 확인한 뒤 GitHub Wiki에 push했다. 이후 repository variable
+  `AXCALIB_WIKI_PUBLISH_ENABLED=true`를 활성화했다.
+- 변경 파일: GitHub Wiki의 Home, 10개 추가 page, Development Ledger, sidebar, deployment manifest와
+  3개 image asset; main에서는 현재 상태 문서와 Wiki governance page.
+- 검증: Wiki local/remote SHA `f3846480ac461e398ae91b5f83f5644e939688a7` 일치, checkout clean,
+  Home/Getting Started/Development Ledger/API-Web-App page 4/4 HTTP 200, PNG/JPEG asset 3/3 HTTP 200,
+  repository variable read-back `true`.
+- 특이사항: 최초 임시 Home은 canonical Home으로 대체됐다. manifest 밖 team-owned page는 삭제하지
+  않았고 credential은 출력·파일·로그에 남기지 않았다.
+- 미검증: enable variable을 사용한 GitHub Actions publish job end-to-end와 사내 GitLab
+  hostname·runner·deploy credential·live render.
+- 다음 작업: 이 change set의 main push로 GitHub Actions automatic publish를 검증한다. GitLab은 사내
+  Platform Owner가 remote/runner/credential을 제공한 뒤 동일 하네스로 검증한다. 제품 Active Slice는
+  WP-06.I4 `blocked_policy`를 유지한다.
+- 관련 근거: GitHub Wiki commit `f384648`, [live Wiki](https://github.com/Infant83/AXCalib/wiki),
   [Wiki runbook](docs/operations/wiki-publication.md)과 R-045.
 
 ## 10. 단계 종료 업데이트 템플릿

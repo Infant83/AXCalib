@@ -38,6 +38,10 @@ uv run --no-sync python tests/wiki_ci_contract.py
 3. `git ls-remote https://github.com/OWNER/REPO.wiki.git`이 성공하는지 확인한다.
 4. repository variable `AXCALIB_WIKI_PUBLISH_ENABLED=true`를 설정한다.
 5. `.github/workflows/wiki.yml`을 수동 실행하고 validate와 publish job을 확인한다.
+
+AXCalib GitHub target은 2026-07-23 최초 Home, canonical live push와 page/image render를 검증했고
+`AXCALIB_WIKI_PUBLISH_ENABLED=true`를 활성화했다. 이후 변경은 main의 `wiki/`와
+`PROJECT_STATE.md`를 기준으로 자동 배포한다.
 6. Home, sidebar, asset과 Development Ledger가 실제 화면에서 렌더링되는지 확인한다.
 
 현재 public repository는 Wiki feature가 enabled지만 2026-07-23 read-only 확인에서

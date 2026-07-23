@@ -31,6 +31,10 @@ publish job을 opt-in할 수 있다. workflow는 먼저 두 target export와 par
 GitHub Wiki가 초기화되기 전에는 자동 publish를 켜지 않는다. 현재 `AXCalib.wiki.git`이 clone되지 않는
 상태라면 최초 Home이 없거나 권한이 없는지 확인한다.
 
+AXCalib GitHub target은 2026-07-23 최초 Home, canonical page·asset publication과
+`AXCALIB_WIKI_PUBLISH_ENABLED=true` 설정을 완료했다. 이후 GitHub Wiki 화면을 직접 고치지 않고
+main의 `wiki/`와 `PROJECT_STATE.md`를 갱신한다.
+
 ## 사내 GitLab Wiki 설정
 
 사내 흐름은 다음과 같다.

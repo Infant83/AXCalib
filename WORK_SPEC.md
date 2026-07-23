@@ -865,7 +865,7 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 30. 교육 가입·진행·평가자·완료결정 권한 바인딩 | FR-056, ADR-024, API threat model, WP-06.I2b report | In-process education API contract verified; approved IdP/assignment source pending |
 | 31. project 안전 조회와 관리자 decision 응답 유실 복구 | FR-057, ADR-025, API threat model, WP-06.I2c report | In-process read/replay contract verified; distributed idempotency/OIDC pending |
 | 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/OIDC pending |
-| 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | Canonical source/export/parity local verified; initial remote Wiki/runner/live push pending |
+| 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | GitHub live push/render verified; GitLab runner/credential/live push pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 

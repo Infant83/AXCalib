@@ -49,6 +49,7 @@ copying.
 | `prep.ps1 validate` | 0 errors, 0 warnings |
 | GitHub Action / GitLab CI YAML | both parsed successfully |
 | Local bare Wiki repository publication | first push succeeded; second run had no changes |
+| GitHub Wiki live publication | `f384648`, pages 4/4 and image assets 3/3 returned HTTP 200 |
 
 The full test command was not run as one long process. Unit, integration and contract groups were executed
 separately to preserve the low-memory and interruption-recovery contract.
@@ -56,11 +57,11 @@ separately to preserve the low-memory and interruption-recovery contract.
 ## Remaining external work
 
 - GitHub main: deployed as `b2c6e48`; Actions run `30014678127` validated the source successfully.
-- GitHub Wiki: create the initial Home page, enable the repository variable and verify the live render/push.
+- GitHub Wiki: live push/render verified and repository publish variable enabled; automatic workflow
+  publication still needs one end-to-end run.
 - GitLab: provide the on-prem Wiki remote, runner, deploy credential and protected variables.
-- Verify Markdown and image rendering in both actual web UIs.
+- Verify Markdown and image rendering in the actual GitLab UI.
 - Decide retention and review policy for any team-owned Wiki pages outside the AXCalib manifest.
 
-The GitHub main repository was modified by the approved deployment. No GitHub or GitLab Wiki was remotely
-modified because GitHub still requires the initial web Home and the GitLab deployment environment is not
-available here.
+The GitHub main repository and GitHub Wiki were modified by the approved deployment. The GitLab Wiki was not
+modified because the on-prem deployment environment is not available here.
