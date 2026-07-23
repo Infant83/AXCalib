@@ -12,7 +12,7 @@ active_slice_status: ready
 next_gate: G4 approved remote identity-upload-distributed evidence
 schedule_mode: dependency_only
 updated_at: 2026-07-24
-last_history_id: HIST-2026-07-24-002
+last_history_id: HIST-2026-07-24-003
 ---
 
 # AXCalib Project Execution Ledger
@@ -456,6 +456,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-24 | I4 GitHub main + Wiki delivery | main/Wiki remote SHA, Actions run 30050877129 jobs/check annotations, public page GET | main `7052530`, run/jobs 2/2 success, annotations 0/0, Wiki `49b1fbc`, pages 4/4 HTTP 200 | GitHub delivery만 검증; 사내 GitLab runner/credential/live publish 미검증 |
 | 2026-07-24 | WP-06.I4.0-1 identity decision + local OIDC/JWKS reference | identity targeted, split full test/eval, Ruff/Pyright/validate, clean core/identity wheel, Wiki contract, SVG visual review | identity 24, full 160 (108/31/21), 10 eval groups, Ruff, new format 3/3, Pyright 0/0, validate 0/0, Wiki targeted 9 + CI 1, clean wheels | local synthetic signed token/key만 검증; 실제 IdP·rotation·revocation·assignment·upload·deployment 미검증 |
 | 2026-07-23 | WP-00.D2 portable dual-Wiki harness | Wiki validate/export/parity, local bare publish, split full test/eval, Ruff/Pyright/validate, CI YAML parse | Wiki targeted 6/6, parity 1/1, full 136 (86/31/19), 10 eval groups, Ruff, Pyright 0/0, validate 0/0 | local source/export only; GitHub initial Home와 GitLab runner/credential/live push 미검증 |
 | 2026-07-23 | WP-00.D2 GitHub main deployment | `git push origin main`, remote SHA 확인, GitHub Actions run 30014678127 | `b2c6e48` local/remote 일치, Wiki validate job success | Wiki publish job은 enable variable 부재로 skipped; 최초 Home 미생성으로 Wiki remote는 아직 없음 |
@@ -1168,6 +1169,25 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   없이는 remote identity/upload adapter를 구현하지 않는다.
 - 관련 근거: [I4 report](docs/evaluation/wp06-i4-identity-jwks-reference-report.md),
   [decision packet](docs/security/identity-upload-decision-packet.md), ADR-028, D-041, R-046와 M12.
+
+### HIST-2026-07-24-003
+
+- Phase / WP / Gate: P0/P7 / WP-00.D2 delivery closeout / G4 evidence publication
+- 상태: `github_main_and_wiki_live_verified`
+- 작업: I4 local identity reference, 원장, 구조도, 개발 리포트와 WP-00.Q1 계획을 GitHub main에
+  배포하고 canonical Wiki 자동 publication을 확인했다.
+- 변경 파일: `PROJECT_STATE.md`, `CHANGELOG.md`, I4 report의 delivery evidence.
+- 검증: main local/remote
+  `705253036995b4dd523db7ff4c547e32ac30a77e` 일치, Actions run `30050877129`의 validate와
+  publish-github job 2/2 success, check annotation 0/0, Wiki remote
+  `49b1fbc62a7718a8e8f9bc2396e81210c9b2d24f`, Home/API/Development/Examples page 4/4 HTTP 200.
+- 특이사항: Wiki commit message가 `HIST-2026-07-24-002`를 가리켜 첫 기능 checkpoint와 일치한다.
+  이 closeout entry를 반영한 후속 자동 publish도 별도로 확인한다.
+- 미검증: 사내 GitLab runner/credential/protected variable과 live Wiki publication.
+- 다음 작업: Active Slice `WP-00.Q1 goal-alignment-usability-example-audit`.
+- 관련 근거: [Actions run 30050877129](https://github.com/Infant83/AXCalib/actions/runs/30050877129),
+  GitHub main `7052530`, GitHub Wiki `49b1fbc`와
+  [Wiki 운영 안내](docs/operations/wiki-publication.md).
 
 ## 10. 단계 종료 업데이트 템플릿
 

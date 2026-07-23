@@ -82,6 +82,9 @@
 - WP-00.D2는 GitHub main에 배포됐고 canonical GitHub Wiki 17개 관리 파일은 commit `f384648`로
   live push됐다. 핵심 page 4개와 image asset 3개 render가 HTTP 200이며 automatic publish variable도
   활성화됐다. Node.js 24 workflow run `30017233639`는 두 job과 annotation 0/0으로 통과했다.
+- I4 checkpoint main `7052530`은 원격과 일치하고 Wiki workflow run `30050877129`의 validate/publish
+  job과 annotation 0/0이 통과했다. Wiki `49b1fbc`에서 갱신된 Home/API/Development/Examples
+  page 4개가 HTTP 200으로 확인됐다.
 - clean core wheel은 FastAPI/PyJWT 없이 import되고 clean `[identity]` wheel은 FastAPI 0.139.2,
   PyJWT 2.13.0과 verifier를 import한다. clean `[api]` wheel의 OpenAPI 3.1/17 paths와 local Worker
   prepared→succeeded, actual-PPTX quickstart는 이전 Alpha checkpoint evidence를 유지한다.

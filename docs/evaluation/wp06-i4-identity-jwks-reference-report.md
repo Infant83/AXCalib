@@ -73,6 +73,7 @@ penetration test 결과가 아니다.
 | Wiki contract | targeted 9 passed; dependency-free CI contract 1 passed; Wiki validation 0 errors |
 | Packaging smoke | clean core wheel has no FastAPI/PyJWT; clean `[identity]` imports FastAPI 0.139.2, PyJWT 2.13.0 and verifier |
 | Visual review | two stakeholder SVGs rendered; XML/title/desc and status labels checked |
+| GitHub delivery | main `7052530`; Actions `30050877129` jobs 2/2, annotations 0/0; Wiki `49b1fbc`; pages 4/4 HTTP 200 |
 
 Repository-wide `ruff format --check src tests harness scripts examples evals`는 이번 변경에서
 일괄 수정하지 않은 51개 파일의 기존 formatting drift를 보고한다. 새 Python 파일 3개는 별도
