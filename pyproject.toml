@@ -20,6 +20,10 @@ cli = [
   "typer>=0.16,<1",
 ]
 docling = ["docling>=2.113,<3"]
+identity = [
+  "fastapi>=0.139,<0.140",
+  "pyjwt[crypto]>=2.13,<3",
+]
 
 [project.scripts]
 axcalib = "axcalib.cli:main"
@@ -29,6 +33,7 @@ dev = [
   "coverage>=7,<8",
   "fastapi>=0.139,<0.140",
   "httpx2>=2.7,<3",
+  "pyjwt[crypto]>=2.13,<3",
   "pyright>=1.1,<2",
   "python-pptx>=1.0,<2",
   "pytest>=9,<10",
@@ -54,5 +59,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pyright]
 pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
 include = ["src", "harness", "evals", "tests"]
 typeCheckingMode = "standard"

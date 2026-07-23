@@ -37,6 +37,11 @@
 - `PROJECT_STATE.md`를 `Development-Ledger.md`로 mirror하는 manifest 기반 Wiki export
 - remote env, dry-run 기본, dirty/origin guard와 managed-file prune를 가진 Wiki publisher
 - opt-in GitHub Action과 GitLab Self-Managed CI Wiki validation/publication 계약
+- identity/upload 운영 결정을 Owner·승인값·Exit Evidence로 분리한 WP-06.I4 decision packet
+- optional `identity` extra의 provider-neutral RFC 9068 OIDC/JWKS access-token verifier
+- RS256/PS256/ES256, exact issuer/audience/type/time/JTI, issuer-bound key와 role/scope/org
+  positive/negative contract
+- GOAL 추적, 공개 API 단순성, script 감사와 EX-01~EX-12를 정의한 Library 표준화/example 계획
 
 ### 변경
 
@@ -64,26 +69,32 @@
   갱신하고 dual-target parity를 검증하도록 작업 완료 계약을 강화했다.
 - GitHub Wiki workflow의 checkout/setup-python을 Node.js 24 기반 v6로 올려 Node.js 20
   deprecation annotation을 제거한다.
+- invalid bearer와 identity key provider/config 장애를 401/503으로 구분하고 token-controlled
+  `jku/x5u/x5c`, unknown/ambiguous authority mapping을 fail closed한다.
+- Pyright가 workspace `.venv`의 optional dependency를 같은 방식으로 해석하도록 실행환경을
+  `pyproject.toml`에 고정한다.
 
 ### 현재 검증
 
-- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. Wiki targeted 6/6,
-  dual-target parity 1/1, full 136 tests(unit 86/integration 31/contract 19), 10 eval groups, Ruff와
-  Pyright 0/0이 통과했다. 직전 API+Worker combined contract 27/27 evidence도 유지한다.
+- 단계 종료 전체 수치는 `PROJECT_STATE.md`의 최신 history와 검증 표에 고정한다. identity targeted
+  24/24, full 160 tests(unit 108/integration 31/contract 21), 10 eval groups, Wiki targeted 9와
+  dependency-free CI contract 1, Ruff와 Pyright 0/0이 통과했다.
 - WP-00.D2는 GitHub main에 배포됐고 canonical GitHub Wiki 17개 관리 파일은 commit `f384648`로
   live push됐다. 핵심 page 4개와 image asset 3개 render가 HTTP 200이며 automatic publish variable도
   활성화됐다. Node.js 24 workflow run `30017233639`는 두 job과 annotation 0/0으로 통과했다.
-- clean core wheel은 FastAPI 없이 import되고 clean `[api]` wheel은 generated OpenAPI 3.1/17 paths를
-  구성하며 local Worker prepared→succeeded를 실행한다. actual-PPTX quickstart는 이전 Alpha checkpoint
-  evidence를 유지한다.
+- clean core wheel은 FastAPI/PyJWT 없이 import되고 clean `[identity]` wheel은 FastAPI 0.139.2,
+  PyJWT 2.13.0과 verifier를 import한다. clean `[api]` wheel의 OpenAPI 3.1/17 paths와 local Worker
+  prepared→succeeded, actual-PPTX quickstart는 이전 Alpha checkpoint evidence를 유지한다.
 - project/education local state recovery, stale artifact maintenance와 single-host local Worker는 검증했지만
-  report/outbox producer, database/distributed worker/heartbeat, OIDC/RBAC와 운영 provider는 아직 진행 전이다.
+  report/outbox producer, database/distributed worker/heartbeat, approved remote identity/RBAC와 운영
+  provider는 아직 진행 전이다. local signed OIDC/JWKS targeted contract는 24/24 통과했다.
 - GitHub Wiki live publication은 검증했지만 사내 GitLab runner/credential/live Wiki push는 아직
   수행하지 않았다.
 
 ### 다음 변경 후보
 
-- G4: immutable upload service와 approved OIDC/RBAC·education assignment source
+- WP-00.Q1: GOAL alignment, public API 단순성, script inventory와 다양한 example self-check
+- G4: immutable upload service와 approved remote OIDC/RBAC·education assignment source
 - distributed worker/heartbeat/dead-letter, poll event와 optional SSE
 - report/outbox producer와 database/distributed transaction hardening
 - exact on-prem `Qwen3.5-397B-A17B` registration/completion 검증

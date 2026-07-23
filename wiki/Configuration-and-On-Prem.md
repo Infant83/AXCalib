@@ -52,6 +52,20 @@ uv sync --frozen --extra docling
 필요하면 OOXML 기반 제한형 parser와 sidecar evidence를 offline fallback으로 사용하되 OCR/VLM 품질을
 주장하지 않는다.
 
+## OIDC/JWKS identity
+
+identity는 모델 환경변수와 분리한다. `OPENAI_*`는 평가 모델 endpoint용이며 사용자 인증 token이나
+IdP 설정에 재사용하지 않는다. optional `identity` extra의 local reference는 approved policy와
+`JwkSetProvider`를 주입받는다.
+
+```powershell
+uv sync --locked --dev --extra api --extra identity
+```
+
+저장소는 실제 issuer, audience, role/scope claim 이름이나 key URL을 자동 추정하지 않는다. 운영값은
+Identity/Security Owner가 확정하고 remote discovery/cache/rotation/revocation adapter를 별도로
+검증해야 한다.
+
 ## Retrieval
 
 offline baseline은 lexical adapter와 similarity portion `0.0`이다. portion이 0보다 큰데 adapter나

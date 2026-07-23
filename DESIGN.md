@@ -3,9 +3,9 @@ document_type: architecture_and_product_design
 project: AXCalib
 baseline: v0.3-p1
 created_at: 2026-07-12
-updated_at: 2026-07-22
+updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g3_intelligence_reference_implemented_hardening_pending
+status: g4_identity_local_reference_operational_policy_pending
 ---
 
 # AXCalib Architecture와 App Design
@@ -23,6 +23,9 @@ embedding/Vector DB, panel/calibration, 운영 API/Web 설계는 여전히 Targe
 2026-07-22 WP-06.I3에는 validated request를 hash-bound local envelope로 보존하고 exact queued grant에
 202를 반환하는 single-host Worker Alpha가 추가됐다. 이는 분산 broker, OIDC, immutable upload 또는
 운영 scheduler 완료가 아니다.
+2026-07-24 WP-06.I4.0-1에는 운영값을 임의로 만들지 않는 identity/upload decision packet과
+provider-neutral OIDC/JWKS local signed reference가 추가됐다. 실제 issuer/discovery/key rotation,
+revocation, 교육 배정과 immutable upload는 계속 운영 정책·adapter 범위다.
 
 제품은 다음 네 층으로 분리한다.
 
@@ -983,6 +986,27 @@ code-owned invariant
 - run manifest에는 secret을 제거한 effective-config hash와 각 값의 source를 기록한다.
 - Python 3.12 `tomllib` 호환을 위해 작성 문법은 TOML 1.0 범위로 제한한다.
 
+### 15.2 Identity composition
+
+~~~text
+approved identity policy
+  + issuer-bound JwkSetProvider
+  → OidcTokenVerifier
+  → ApiPrincipal(subject, role, organization, scopes)
+  → resource authorization
+  → domain HITL / revision guard
+~~~
+
+- Core Library와 기본 API port는 JWT library를 요구하지 않는다. `identity` optional extra만 PyJWT와
+  public-key crypto를 사용한다.
+- API는 ID token이 아니라 RFC 9068 `at+jwt` access token을 검증한다.
+- algorithm은 policy의 RS256/PS256/ES256 allowlist이고 token header가 목록이나 key URL을 정하지 않는다.
+- issuer/audience/time/JTI/client ID, issuer-bound unique `kid` key와 exact role/scope/organization
+  mapping을 통과해야 principal이 생긴다.
+- invalid token은 401, key source/configuration 장애는 503이며 raw token/전체 claim을 기록하지 않는다.
+- 현재 `StaticJwkSetProvider`는 local fixture용이다. remote discovery/JWKS HTTPS fetch, cache/refresh,
+  rotation/revocation과 assignment source는 decision packet 승인 뒤 별도 adapter로 구현한다.
+
 ## 16. Backend 전략
 
 ### 16.1 계층
@@ -1002,6 +1026,8 @@ route와 working script에서 model call, file parse, 상태판정을 직접 수
 - OpenAPI 3.1.0과 JSON Schema Draft 2020-12를 사용한다.
 - Library registry 등록과 HTTP 공개를 분리하고 exact delivery grant가 없으면 route 실행을 404로
   거부한다. verifier와 grant 기본값은 fail closed다.
+- optional identity reference는 signed access token을 principal로 바꾸는 delivery adapter이며 role,
+  scope, organization, assignment와 domain authority를 대신 계산하지 않는다.
 - generic pipeline route는 request actor/admin decision을 받지 않는다. 사람 권한 command는
   verified principal을 domain actor에 bind하는 전용 endpoint에서만 노출한다.
 - 구현된 project Alpha에서 등록은 verified `project_owner|administrator` + `projects:create` +
@@ -1068,8 +1094,8 @@ HTTP message와 내부 stack trace를 분리하고 trace_id를 제공한다.
 HTTP Alpha의 `project_owner`, `learner`, `mentor`, `instructor`, `operator`, `administrator`, `viewer`는
 전달계층 역할이다. project decision의 administrator와 education completion administrator는 각각
 domain HITL guard와 resource scope를 함께 사용하며, 한 역할을 다른 업무 권한이나 전사 운영권한으로
-자동 승격하지 않는다. mentor/instructor assignment scope와 역할 조합은 승인된 OIDC/RBAC·교육 배정
-정책 전까지 deployment-ready가 아니다.
+자동 승격하지 않는다. local OIDC/JWKS reference가 있어도 mentor/instructor assignment scope와 역할
+조합은 승인된 issuer/RBAC·교육 배정 정책 전까지 deployment-ready가 아니다.
 
 역할만으로 충분하지 않으며 project/organization/access_classification scope를 함께 검사한다.
 

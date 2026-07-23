@@ -1,9 +1,9 @@
 ---
 document_type: module_delivery_plan
 project: AXCalib
-baseline: v0.3-p1-g4-durable-worker-alpha
-updated_at: 2026-07-22
-status: library_cli_resource_api_durable_worker_local_alpha_verified
+baseline: v0.3-p1-g4-identity-reference
+updated_at: 2026-07-24
+status: library_cli_resource_api_worker_identity_local_contract_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -19,7 +19,7 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 |---|---|---|---|---|---|
 | M00 | `axcalib.pipelines` | contract_verified | WP-01 | P1 harness | distributed workflow checkpoint/compensation contract |
 | M01 | `axcalib.dossier` | contract_verified | WP-01 | core/schema contract | database/distributed transaction adapter |
-| M02 | state/approval domain | offline_reference | WP-01 | M01 | 운영 identity/RBAC와 producer transaction |
+| M02 | state/approval domain | offline_reference | WP-01 | M01 | 승인된 remote identity/assignment와 producer transaction |
 | M03 | `axcalib.ingest` | contract_verified | WP-02 | ArtifactRef/schema | general composed-slide renderer/OCR/VLM + multi-template coverage |
 | M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + real embedding/Qdrant contract |
 | M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | exact Qwen registration/completion + Owner-approved semantic gold benchmark |
@@ -29,14 +29,14 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 | M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
 | M10 | `axcalib.runtime` | contract_verified | WP-01/05/06 | config, M01/M02/M08 | distributed queue/heartbeat + exact on-prem capability/allowlist |
 | M11 | scripts / CLI | contract_verified | WP-01/06 | M00, M10, target pipeline; M09 for workflow | full product command tree와 API parity |
-| M12 | API / worker | contract_verified | WP-06 | M09, M10 | OIDC/RBAC, upload boundary, distributed worker/SSE |
+| M12 | API / worker | contract_verified | WP-06 | M09, M10 | approved remote JWKS/assignment, upload boundary, distributed worker/SSE |
 | M13 | Web Review | blocked_policy | WP-07 | M12, FE selection | selected-stack E2E review flow |
 
 `offline_reference`는 제품 module 완료가 아니다. 현재 local/synthetic slice에서 실행되고 회귀
 test가 있다는 뜻이다. M01의 `contract_verified`도 filesystem dossier/freeze 계약에 한정하며 운영
 transaction 또는 제품 전체 완료가 아니다. M12의 `contract_verified`는 fail-closed in-process
-runtime/project/education resource API와 single-host durable Worker 계약에 한정하며 운영 인증·분산 worker
-완료가 아니다. 각 행의 다음 Exit
+runtime/project/education resource API, single-host durable Worker와 local signed OIDC/JWKS reference에
+한정하며 운영 인증·remote key rotation·분산 worker 완료가 아니다. 각 행의 다음 Exit
 Evidence가 남아 있다.
 
 ### 1.1 2026-07-16 slice evidence
@@ -150,6 +150,21 @@ Evidence가 남아 있다.
 - unit/contract/integration과 Library Alpha eval; 상세 수치는 WP-06.I3 리포트와 `PROJECT_STATE.md`에 고정
 - 품질 경계: single-host filesystem Alpha이며 OIDC, immutable upload, heartbeat, broker/database queue,
   distributed consensus와 socket load는 미검증
+
+### 1.9 2026-07-24 WP-06.I4.0-1 identity policy/JWKS reference evidence
+
+- 운영 issuer/audience/claim/assignment와 immutable upload 결정을 Owner/승인값/Exit Evidence로 분리한
+  decision packet; 값이 비어 있으면 운영 NO-GO
+- optional `identity` extra의 `OidcIdentityPolicy`, issuer-bound `JwkSetProvider`와
+  `OidcTokenVerifier`; Core Library dependency 불변
+- RFC 9068 `at+jwt`, exact issuer/audience/time/JTI/client ID, policy-owned RS256/PS256/ES256 allowlist,
+  unique `kid`, signature-use key와 exact role/scope/organization mapping
+- ID token/type confusion, `none`/HS algorithm, token-controlled `jku/x5u/x5c`, signature 변조, 만료,
+  wrong issuer/audience/key/claim/role/scope/org와 oversized token fail-closed 회귀
+- 기존 FastAPI auth boundary에 valid principal은 연결하고 invalid token 401, key source/config failure
+  503, raw token 비저장을 contract test로 확인
+- 품질 경계: local static signed fixture다. remote discovery/JWKS fetch/cache/rotation/revocation,
+  authoritative education assignment와 운영 configuration은 미구현
 
 ## 2. 공통 납품 단위
 
@@ -309,6 +324,8 @@ Evidence가 남아 있다.
   decision semantic replay
 - 다섯 번째 slice: exact grant별 inline/queued mode, durable local job, one-job Worker, 202/poll queue status와
   bounded retry/restart replay
+- 여섯 번째 slice: identity/upload decision packet와 optional provider-neutral OIDC/JWKS local signed
+  reference; 기존 resource authorization에 principal 연결
 - 검증: generated OpenAPI 3.1/Draft 2020-12, fail-closed verifier/grant, reserved authority field
   rejection, principal/role/resource-scope/organization/program-hash/revision, staged hash, project context,
   project read redaction, actor/resource/payload decision conflict, deterministic idempotent retry, run/job conflict,
@@ -316,8 +333,9 @@ Evidence가 남아 있다.
 - 현재 완료증거: `tests/contract/test_runtime_api_contract.py`,
   `tests/contract/test_project_api_contract.py`, `tests/contract/test_education_api_contract.py`,
   `tests/unit/test_local_worker.py`, `tests/integration/test_worker_script.py`,
-  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024/025/026와 API Alpha threat model
-- 남은 완료증거: immutable upload/staging service, approved OIDC/RBAC·education assignment source,
+  `tests/unit/test_oidc_identity.py`, `tests/contract/test_oidc_api_contract.py`,
+  `docs/api/openapi.runtime.v1alpha1.json`, ADR-022/023/024/025/026/028와 API threat model
+- 남은 완료증거: immutable upload/staging service, approved remote JWKS/claim policy·education assignment source,
   project list/report/evidence authorization, distributed worker/heartbeat/SSE 및 full workflow result parity
 
 ### M13 — Web Review
@@ -429,8 +447,8 @@ change set에서 갱신한다.
 Library/CLI/runtime/project·education API, project read/replay와 durable local Worker Alpha checkpoint 다음은
 G4 Interfaces의 운영 identity/artifact/distributed execution 경계다.
 
-1. approved OIDC/JWKS claim mapping, education assignment source와 immutable upload/staging service 계약을 운영 Owner 승인 대상으로
-   분리한다.
+1. identity/upload decision packet의 실제 issuer/audience/claim/revocation, education assignment와
+   immutable upload 값을 운영 Owner가 승인한 뒤 remote JWKS/rotation과 staging adapter를 구현한다.
 2. local poll 의미를 유지하는 broker/database queue, heartbeat, dead-letter, metrics와 optional SSE adapter를
    운영 dependency로 설계한다.
 3. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.

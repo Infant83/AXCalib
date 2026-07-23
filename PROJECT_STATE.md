@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-portable-wiki
+baseline: v0.3-p1-g4-identity-reference
 phase: P7 Interfaces
 gate: G4 Interfaces
-gate_status: interface_alpha_in_progress
-status: g4_identity_upload_policy_blocked
-current_work_package: WP-06 interface hardening
-active_slice: WP-06.I4 approved-identity-upload-boundary
-active_slice_status: blocked_policy
-next_gate: G4 Interfaces remaining evidence
+gate_status: interface_identity_reference_in_progress
+status: g4_local_identity_verified_operational_policy_blocked
+current_work_package: WP-00 quality and usability audit
+active_slice: WP-00.Q1 goal-alignment-usability-example-audit
+active_slice_status: ready
+next_gate: G4 approved remote identity-upload-distributed evidence
 schedule_mode: dependency_only
-updated_at: 2026-07-23
-last_history_id: HIST-2026-07-23-006
+updated_at: 2026-07-24
+last_history_id: HIST-2026-07-24-002
 ---
 
 # AXCalib Project Execution Ledger
@@ -60,13 +60,13 @@ last_history_id: HIST-2026-07-23-006
 | 항목 | 현재 값 |
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
-| 현재 Work Package | **WP-06 interface hardening**; WP-00.D2 GitHub Wiki live publication 완료 |
-| Active Slice | **WP-06.I4** (`blocked_policy`; approved OIDC/assignment/immutable upload boundary) |
-| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/durable local Worker Alpha evidence 확보 |
-| 다음 Gate | **G4 Interfaces**; OIDC/immutable upload와 distributed execution evidence 필요 |
+| 현재 Work Package | **WP-00.Q1 quality/usability audit ready**; WP-06.I4 local identity reference 완료 |
+| Active Slice | **WP-00.Q1** (`ready`; GOAL trace, public API/script 단순성, EX-01~12 self-check) |
+| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/local Worker/OIDC signed reference evidence 확보 |
+| 다음 Gate | **G4 Interfaces**; approved remote identity/assignment, immutable upload와 distributed execution evidence 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 136 lightweight tests(86/31/19), 10 eval groups, Wiki parity 1/1, GitHub Wiki v6 automatic publish/annotation 0, validation 0/0, Ruff, Pyright 0/0 |
-| 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API/OIDC/worker/Web·운영 인증 미완료 |
+| 최근 회귀 | 160 tests(108/31/21), identity targeted 24, 10 eval groups, Wiki targeted 9 + CI 1, clean core/identity wheel, validation 0/0, Ruff, Pyright 0/0 |
+| 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API·remote identity/upload/distributed worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
 Library 호출로 연결했다. 제출 프로젝트의 `completion_accepted`는 교육 milestone 근거가 되지만,
@@ -132,7 +132,7 @@ gantt
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
 | P5 Evaluation | WP-03, WP-05.Q1/Q2/05 | `proxy_registration_verified_exact_pending` | JSON-mode 500 복구, Qwen/GPT-4o proxy registration 완료; exact on-prem/approved gold 남음 |
 | P6 Calibration | WP-05/06 일부 | `not_started` | panel disagreement와 human agreement report |
-| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/resource API/read-replay/durable local Worker Alpha 완료; OIDC/upload/distributed worker 남음 |
+| P7 Interfaces | CLI, WP-06 | `active` | CLI/batch/resource API/read-replay/local Worker/OIDC signed reference 완료; approved remote identity/upload/distributed worker 남음 |
 | P8 Web Review | Web delivery | `blocked_policy` | FE/RBAC 선택, API, reviewer E2E와 G5 |
 | P9 Pilot | pilot package | `not_started` | 승인된 비식별 자료, G6~G7 결정 |
 
@@ -144,7 +144,7 @@ gantt
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
 | G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
-| G4 Interfaces | `in_progress` | Typer CLI, executor/batch, principal-bound resource API, project read/replay, queued 202/local Worker/OpenAPI | OIDC/RBAC, immutable upload, distributed worker/heartbeat와 SSE |
+| G4 Interfaces | `in_progress` | Typer CLI, executor/batch, principal-bound resource API, project read/replay, queued 202/local Worker/OpenAPI, local signed OIDC/JWKS validation | approved remote issuer/JWKS/RBAC·assignment, immutable upload, distributed worker/heartbeat와 SSE |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
 | G6 Pilot | `not_started` | 없음 | 승인된 비식별 paired dataset |
 | G7 Go/No-Go | `not_started` | 없음 | Sponsor Continue/Narrow/Stop 결정 |
@@ -363,19 +363,33 @@ Exit Evidence:
 - [x] script/CLI/API/worker가 같은 request/result/error 의미와 PipelineRegistry/executor를 사용한다.
 - [x] 실제 broker, multi-host lease, OIDC/JWKS와 운영 배포는 별도 Gate로 유지한다.
 
-### 5.10 다음 Active Dependency — WP-06.I4 Approved Identity and Upload Boundary
+### 5.10 종료된 Slice — WP-06.I4.0-1 Identity Policy and JWKS Contract
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `blocked_policy` |
-| 목적 | local principal/staging port를 승인된 IdP claim과 immutable artifact trust boundary에 연결 |
+| 상태 | `verified_local_reference`; 실제 IdP·assignment·upload 정책은 계속 `blocked_policy` |
+| 목적 | 승인 전에 결정해야 할 identity/upload 항목을 명시하고, local principal port에 공급자 중립 OIDC/JWKS access-token 검증 reference를 연결 |
 | 대상 Module | M02 authority, M10 deployment composition, M12 API/worker |
 | 선행결정 | OIDC issuer/audience/claims/revocation, assignment source, object ACL/version/malware/retention Owner |
-| 안전 진행범위 | 실제 계정·업로드·배포 없이 schema/port/threat model 검토 |
+| 안전 진행범위 | 실제 계정·원격 JWKS·업로드·배포 없이 schema/port, local signed fixture, negative security contract와 threat model 검토 |
 | 목표 Gate | G4 Interfaces |
 
 승인되지 않은 issuer, 실제 계정, 운영 object store 또는 사내 데이터를 임의로 만들지 않는다. Owner/
 Security 결정 전에는 현재 fail-closed verifier/resolver와 local synthetic contract를 유지한다.
+
+Exit Evidence:
+
+- [x] I4-0 decision packet이 issuer/audience/claim mapping/revocation과 immutable upload의 Owner,
+  승인값, 검증증거를 구분하고 미정값을 명시한다.
+- [x] I4-1 verifier가 asymmetric algorithm allowlist, exact issuer/audience, access-token type,
+  expiry/issued-at/JTI, issuer-bound JWKS와 allowlisted role/scope mapping을 fail closed로 검증한다.
+- [x] signature 변조, 만료, 잘못된 issuer/audience/type/algorithm/key/claim/role/scope/org를 모두
+  거부하고 token/raw claim을 기록하지 않는다.
+- [x] Core Library는 JWT/FastAPI 의존성 없이 import되며 identity dependency는 optional extra다.
+- [x] 운영 remote discovery/JWKS refresh, 계정 회수, assignment source와 immutable upload는
+  구현 완료로 표시하지 않는다.
+- [x] 후속 품질 slice가 GOAL 추적, 첫 사용 API 단순성, 정상·오류·경계 example matrix와
+  self-check Exit Evidence를 가진다.
 
 ### 5.11 유지보수 Active Slice — WP-00.D2 Portable Dual-Wiki Harness
 
@@ -391,6 +405,27 @@ Security 결정 전에는 현재 fail-closed verifier/resolver와 local syntheti
 이 slice는 문서 전달 하네스다. Wiki가 보인다는 사실을 제품 기능 또는 인증 운영 배포 완료의
 증거로 사용하지 않는다. GitHub 최초 Home, live push/render와 repository enable variable은
 검증했다. 사내 GitLab remote/runner/credential은 플랫폼 Owner가 승인한 뒤 별도로 opt-in 한다.
+
+### 5.12 다음 Active Slice — WP-00.Q1 Goal Alignment, Usability and Example Audit
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `ready` |
+| 목적 | 현재까지의 Target/WP/Gate·코드·script를 GOAL에 추적하고 Library 단순성·안전성·유용성을 다양한 example로 자가검증 |
+| 대상 | public facade, Dossier/pipeline/result/error, scripts/CLI/API/worker, package extra, README/Wiki |
+| 입력 | `docs/readiness/library-standardization-and-example-plan.md` EX-01~EX-12 |
+| 출력 | GOAL trace matrix, script inventory, usability/code/security review, executable example catalog와 defect log |
+| 안전 경계 | synthetic/offline 기본; 실제 endpoint/data/계정/upload 없음 |
+| 목표 Gate | G2/G4 local standardization evidence; G3 품질·운영 Gate는 자동 승격하지 않음 |
+
+Exit Evidence:
+
+- [ ] T1, WP-00~08와 G0~G8 각 항목이 code/test/example/pending 중 하나에 연결된다.
+- [ ] 첫 사용자 경로와 expert/deployment 경로가 분리되고 public API의 중복·모호한 명칭을 기록한다.
+- [ ] 모든 working script가 Library application service를 호출하며 domain 판정/retry를 복제하지 않는다.
+- [ ] EX-01~EX-12가 정상, 사람 대기, 반려, stale, dependency/validation/retry failure를 예상 상태로 검증한다.
+- [ ] clean core/cli/api/identity/docling extra와 문서 예제의 실행 가능성·secret/경계 표기를 확인한다.
+- [ ] defect 수정 뒤 전체 split test/eval/static/validate와 Wiki를 갱신한다.
 
 ## 6. 일정·작업 Queue
 
@@ -412,14 +447,16 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 11 | P7 / WP-06 | education principal binding contract | `verified_local_contract` | project API contract, education domain reference | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 12 | P7 / WP-06 | project read and decision replay contract | `verified_local_contract` | project resource auth, local idempotency | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 13 | P7 / WP-06 | durable local 202 worker contract | `verified_local_contract` | runtime checkpoint, resource authorization | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
-| 14 | P7 / WP-06 | approved identity/assignment/immutable upload boundary | `blocked_policy` | Product/Security/Platform Owner 결정 | TBD | TBD | G4 |
+| 14 | P7 / WP-06 | identity/upload decision packet + local OIDC/JWKS contract | `verified_local_reference` | 실제 운영값은 Product/Security/Platform Owner 결정 | 2026-07-24 | 2026-07-24 | G4 evidence 일부 |
 | 15 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 | 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `github_live_verified_gitlab_pending` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
+| 17 | P0/P7 / WP-00.Q1 | GOAL alignment, Library/script usability와 EX-01~12 self-check | `ready` | I4 local checkpoint, current docs/tests | TBD | TBD | G2/G4 local standardization |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-24 | WP-06.I4.0-1 identity decision + local OIDC/JWKS reference | identity targeted, split full test/eval, Ruff/Pyright/validate, clean core/identity wheel, Wiki contract, SVG visual review | identity 24, full 160 (108/31/21), 10 eval groups, Ruff, new format 3/3, Pyright 0/0, validate 0/0, Wiki targeted 9 + CI 1, clean wheels | local synthetic signed token/key만 검증; 실제 IdP·rotation·revocation·assignment·upload·deployment 미검증 |
 | 2026-07-23 | WP-00.D2 portable dual-Wiki harness | Wiki validate/export/parity, local bare publish, split full test/eval, Ruff/Pyright/validate, CI YAML parse | Wiki targeted 6/6, parity 1/1, full 136 (86/31/19), 10 eval groups, Ruff, Pyright 0/0, validate 0/0 | local source/export only; GitHub initial Home와 GitLab runner/credential/live push 미검증 |
 | 2026-07-23 | WP-00.D2 GitHub main deployment | `git push origin main`, remote SHA 확인, GitHub Actions run 30014678127 | `b2c6e48` local/remote 일치, Wiki validate job success | Wiki publish job은 enable variable 부재로 skipped; 최초 Home 미생성으로 Wiki remote는 아직 없음 |
 | 2026-07-23 | WP-00.D2 GitHub Wiki live publication | canonical publisher dry-run→push, remote SHA, public HTTP render, Actions variable API | Wiki `f384648` local/remote 일치, pages 4/4와 assets 3/3 HTTP 200, publish variable `true` | GitHub live delivery만 검증; 사내 GitLab runner/credential/render는 미검증 |
@@ -495,6 +532,12 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
     HTTP 200으로 확인했고 repository variable도 활성화했다. Chrome connector metadata 오류는
     bootstrap 자동화만 막았으며 실제 Git push/render에는 영향이 없었다. 사내 GitLab
     URL/runner/credential은 여전히 미제공 상태다.
+14. I4 전체 `uv sync --all-extras --dev`는 기존 editable dist-info 제거 중 access denied로
+    실패했다. lockfile 갱신 뒤 identity dependency만 현재 `.venv`에 설치해 검증했고, clean
+    core/identity wheel 환경으로 의존성 격리를 별도 재확인했다. repository-wide format check는
+    일괄 정리하지 않은 기존 51개 파일의 drift를 보고하지만 새 Python 3개는 통과했다. direct
+    Pyright가 처음 base Conda path를 읽은 문제는 `pyproject.toml`에 workspace `.venv`를 고정해
+    0/0으로 복구했다. 실제 issuer/JWKS/계정/token/upload 또는 원문 데이터는 사용하지 않았다.
 
 ## 9. 작업 이력
 
@@ -1077,6 +1120,54 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   같은 하네스로 검증한다. 제품 Active Slice는 WP-06.I4 `blocked_policy`를 유지한다.
 - 관련 근거: [Actions run 30017233639](https://github.com/Infant83/AXCalib/actions/runs/30017233639),
   GitHub Wiki `d8bf053`, [Wiki runbook](docs/operations/wiki-publication.md)과 R-045.
+
+### HIST-2026-07-24-001
+
+- Phase / WP / Gate: P7 / WP-06.I4.0-1 / G4 Interfaces
+- 상태: `active_offline_contract`
+- 작업: 운영 identity/upload 승인을 대신하지 않는 I4-0 결정 패킷과 공급자 중립 I4-1
+  OIDC/JWKS access-token reference contract를 착수했다. 이후 GOAL 정렬, 첫 사용 API 단순성,
+  안전성·재현성 리뷰와 다양한 example self-check를 별도 품질 slice로 이어가도록 Exit Evidence에
+  포함했다.
+- 변경 파일: 착수 시점에는 `PROJECT_STATE.md`의 Active Slice, queue와 Exit Evidence만 갱신했다.
+- 검증: RFC 8725/9068, OpenID Connect Discovery와 PyJWT 검증 계약을 기준으로 fixed asymmetric
+  algorithm allowlist, exact issuer/audience, `at+jwt`, issuer-bound JWKS와 claim allowlist를 설계했다.
+- 특이사항: 사내 issuer/audience/claim name, 계정 회수·배정 source와 object storage 정책은 제공되지
+  않았으므로 실제 endpoint·계정·upload를 만들지 않는다. local synthetic key/token만 사용한다.
+- 미검증: 실제 discovery/JWKS key rotation·revocation, 교육 배정 원장, immutable object version/ACL/
+  malware/retention, socket deployment와 penetration test.
+- 다음 작업: 정책 결정 패킷, optional identity adapter와 negative security contract를 구현·검증하고
+  threat model, module control, Wiki와 단계 종료 이력을 같은 change set에서 갱신한다.
+- 관련 근거: 5.10 Exit Evidence, R-021/R-039/R-043와 M02/M12.
+
+### HIST-2026-07-24-002
+
+- Phase / WP / Gate: P7 / WP-06.I4.0-1 → P0/P7 / WP-00.Q1 / G4 Interfaces
+- 상태: `completed_local_reference_operational_policy_blocked`
+- 작업: identity/upload 운영 결정 패킷과 provider-neutral OIDC/JWKS access-token verifier를
+  추가했다. asymmetric algorithm·issuer·audience·token type·time/JTI·issuer-bound key와
+  role/scope/organization mapping을 fail closed로 검증하고 기존 `TokenVerifier`를 통해 API에
+  조합했다. 위협모델, ADR, module/구조도, Wiki와 후속 Library 표준화/example 계획을 함께 갱신했다.
+- 변경 파일: `src/axcalib/api/oidc.py`, identity unit/API contract, `pyproject.toml`, `uv.lock`,
+  identity/upload decision packet, ADR-028, I4 report, threat model, GOAL/WORK_SPEC/DESIGN/README,
+  architecture diagram/module board, Wiki, CHANGELOG와 이 원장.
+- 검증: identity targeted 24 passed, split full 160 passed(unit 108/integration 31/contract 21),
+  10 eval groups, `ruff check .`, 새 Python format 3/3, Pyright 0 errors/0 warnings,
+  `prep validate` 0 errors/0 warnings, Wiki targeted 9와 dependency-free CI contract 1 passed.
+  clean core wheel은 FastAPI/PyJWT가 없고 clean `[identity]` wheel은 FastAPI 0.139.2,
+  PyJWT 2.13.0과 verifier import를 확인했다. 두 stakeholder SVG를 렌더해 상태 라벨을 검토했다.
+- 특이사항: 전체 `uv sync --all-extras --dev`는 기존 editable dist-info 제거 중 access denied로
+  실패해 dependency만 좁게 설치했고 clean wheel로 격리를 재검증했다. repository 전체 format
+  check는 기존 51개 파일 drift를 보고해 이번 변경에서 일괄 재작성하지 않았다. direct Pyright의
+  base Conda 탐색은 workspace `.venv`를 명시해 재현 가능한 0/0 명령으로 교정했다.
+- 미검증: 실제 discovery/JWKS HTTPS fetch·rotation·revocation, authoritative account/education
+  assignment, immutable upload/ACL/malware/retention, reverse proxy/socket/penetration test와 사내
+  GitLab publication.
+- 다음 작업: Active Slice `WP-00.Q1 goal-alignment-usability-example-audit`에서 전체 GOAL trace,
+  public facade와 script 단순성, EX-01~EX-12 정상·오류·경계 self-check를 수행한다. 승인된 운영값
+  없이는 remote identity/upload adapter를 구현하지 않는다.
+- 관련 근거: [I4 report](docs/evaluation/wp06-i4-identity-jwks-reference-report.md),
+  [decision packet](docs/security/identity-upload-decision-packet.md), ADR-028, D-041, R-046와 M12.
 
 ## 10. 단계 종료 업데이트 템플릿
 

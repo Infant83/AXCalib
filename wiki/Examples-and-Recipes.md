@@ -81,3 +81,18 @@ uv run --no-sync python scripts/wiki/sync_wiki.py export `
 
 원격 전송은 일어나지 않는다. 실제 publication 규칙은 [문서 운영 규칙](Documentation-Governance)을
 따른다.
+
+## Recipe 7: OIDC/JWKS local signed contract
+
+실제 사내 IdP를 호출하지 않고 ephemeral RSA/EC key와 synthetic claim으로 valid/invalid 경계를
+검증한다.
+
+```powershell
+uv sync --locked --dev --extra api --extra identity
+uv run --no-sync pytest tests/unit/test_oidc_identity.py `
+  tests/contract/test_oidc_api_contract.py -q
+```
+
+정상 token만 `ApiPrincipal`로 매핑된다. signature 변조, 만료, 다른 issuer/audience/type/key,
+unmapped role/scope/org는 거부되고 key provider/config 장애는 503으로 구분된다. 이 recipe는 실제
+SSO 연결·계정 회수·key rotation 증거가 아니다.

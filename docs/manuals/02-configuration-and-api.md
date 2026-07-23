@@ -70,6 +70,10 @@ verifier와 pipeline grant 기본값은 모두 닫혀 있다. generic payload의
 거부하며 교육 runtime은 generic grant 자체를 허용하지 않는다. bearer token과 local checkpoint,
 dossier, enrollment URI는 결과나 OpenAPI에 기록하지 않는다.
 
+optional `identity` extra는 RFC 9068 access token과 issuer-bound JWK snapshot을 검증하는 local
+reference를 제공한다. 실제 issuer/audience/claim mapping, remote key refresh/revocation과 교육 배정
+source는 `docs/security/identity-upload-decision-packet.md` 승인 뒤 deployment adapter로 주입한다.
+
 project decision의 `Idempotency-Key`는 같은 principal, project, stage, expected revision, command,
 rationale와 adjustment 재시도에만 사용할 수 있다. exact retry는 같은 semantic 결과를 반환하고 다른
 actor/resource/payload 재사용은 409다. 이 record는 local Alpha filesystem 범위이며 distributed
@@ -84,6 +88,6 @@ transaction 보장은 아니다.
 
 `202 Accepted`는 인증 승인이 아니라 실행 요청 접수다. 현재 runtime/project/education API는
 synchronous local Alpha이며 actor 없는 전용 resource route가 principal·scope·organization·revision을
-검사한다. full evaluation route와 OIDC/RBAC·실제 교육 배정/immutable upload/worker는 WP-06 후속
-범위다. 오류는
+검사한다. full evaluation route와 approved remote OIDC/RBAC·실제 교육 배정/immutable upload/
+distributed worker는 WP-06 후속 범위다. 오류는
 현재 구현에서도 redacted RFC 9457-shaped Problem code로 구분한다.

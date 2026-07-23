@@ -16,7 +16,8 @@ AXCalib는 **AX Certification Agent Library**다. 다양한 과제 증거를 구
 
 현재 작업공간은 **G3 Intelligence reference baseline과 evidence Q1 검증 완료, Qwen3.5 Plus/GPT-4o
 provider-proxy registration 검증 완료, Library/CLI/batch, fail-closed runtime API, WP-06.I2a/I2b/I2c
-principal-bound resource API/read-replay와 WP-06.I3 durable local 202 Worker Alpha 완료 단계**다.
+principal-bound resource API/read-replay, WP-06.I3 durable local 202 Worker Alpha와 WP-06.I4.1
+provider-neutral OIDC/JWKS local signed reference 완료 단계**다.
 dossier/snapshot, hash-bound review policy, 제한된 PPTX와 optional Docling manifest, synthetic
 lexical retrieval, deterministic/structured model evaluator, report, recording notification, 두 HITL과
 `two-gate-pptx@v1alpha1` working script가 존재한다. SkillBoss JSON-mode HTTP 500 원인은 복구했고
@@ -27,7 +28,8 @@ register/두 HITL command, education self enrollment/role별 milestone/completio
 검증했다. exact queued grant의 202, typed/hash-bound local job, oldest-available lease/reclaim,
 retryable-only bounded retry, terminal replay와 one-job Worker도 같은 executor로 검증했다. exact on-prem `Qwen3.5-397B-A17B`, full rubric,
 report/outbox producer transaction, embedding/Vector DB, multi-model 품질, durable 운영 알림, full CLI,
-full evaluation API, OIDC/RBAC·실제 교육 배정 원장, immutable upload, distributed broker/worker heartbeat와 Web은 아직 완료되지 않았다. 이
+full evaluation API, approved remote issuer/JWKS rotation/revocation·실제 교육 배정 원장, immutable
+upload, distributed broker/worker heartbeat와 Web은 아직 완료되지 않았다. 이
 reference slice를 제품 MVP 전체나 모델·retrieval·운영 API 품질 검증 완료로 기록하지 않는다.
 
 ## 2. 기준정보 우선순위

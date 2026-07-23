@@ -57,6 +57,17 @@ uv run --no-sync python scripts/wiki/sync_wiki.py validate
 문서만 작성한 단계는 제품 기능 완료가 아니다. synthetic test는 실제 사내 데이터 품질이나 운영 보안을
 증명하지 않는다.
 
+## 다음 품질 감사
+
+WP-06 identity reference checkpoint 뒤에는 `WP-00.Q1 goal-alignment-usability-example-audit`을
+진행한다. GOAL의 Target/WP/Gate를 code/test/example/pending 상태에 연결하고, public facade와 모든
+working script가 단순한지, domain 판단을 복제하지 않는지 확인한다. 등록 반려, mentor guard, stale,
+notification 실패, retrieval unavailable, malformed model output, OIDC 오류, Worker retry와 교육
+context 불일치까지 synthetic example matrix로 자가검증한다.
+
+초보자 문서에는 최소 등록심의와 two-gate 예제만 먼저 보이고, 오류·운영 예제는 별도 catalog로
+분리해 첫 인터페이스를 복잡하게 만들지 않는다.
+
 ## 현재 진행상태 읽기
 
 가장 최신 내용은 [개발 실행 원장](Development-Ledger)에서 확인한다. 사용자 관점의 실행법은

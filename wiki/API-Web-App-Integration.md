@@ -24,7 +24,29 @@ Python Library
 - report 결과에서 로컬 filesystem URI나 secret을 노출하지 않는다.
 
 현재 계약 artifact는 메인 저장소의 `docs/api/openapi.runtime.v1alpha1.json`과
-`docs/api/openapi.v1alpha1.json`이다. 현재 구현은 local Alpha이며 운영 OIDC server가 아니다.
+`docs/api/openapi.v1alpha1.json`이다. 현재 구현은 local Alpha다. signed OIDC/JWKS reference는
+있지만 실제 사내 issuer나 remote key rotation이 연결된 운영 OIDC server는 아니다.
+
+## Identity 연결
+
+`identity` optional extra를 설치하면 deployment가 승인한 policy와 key provider를 기존 app factory에
+주입할 수 있다.
+
+```python
+from axcalib.api import create_app
+from axcalib.api.oidc import OidcTokenVerifier
+
+verifier = OidcTokenVerifier(
+    policy=approved_identity_policy,
+    jwk_set_provider=approved_jwk_set_provider,
+)
+app = create_app(runtime, token_verifier=verifier, pipeline_grants=grants)
+```
+
+검증기는 `at+jwt`, asymmetric signature, exact issuer/audience/time/JTI, issuer-bound key와 exact
+role/scope/organization mapping을 검사한다. invalid token은 401, key source/config 장애는 503으로
+닫힌다. 현재 제공되는 static provider는 local fixture용이며 raw token이나 전체 claim을 저장하지
+않는다.
 
 ## Web Review App 예상 화면
 

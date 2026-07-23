@@ -15,7 +15,9 @@
 - 핵심 경계: Agent는 심의 초안을 만들고 승인된 사람이 최종 결정한다.
 - 현재 위치: P7 / WP-06.I3 completed local Alpha / G4 Interfaces
 - 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a/I2b/I2c resource API/read-replay + I3 local Worker
-- 다음 dependency: WP-06.I4 approved OIDC/assignment/immutable upload boundary `blocked_policy`
+- 현재 checkpoint: WP-06.I4.0-1 identity/upload decision packet + local signed OIDC/JWKS reference
+- 다음 quality slice: WP-00.Q1 GOAL alignment, public API/script usability, example self-check matrix
+- 운영 dependency: approved remote identity/assignment/immutable upload boundary `blocked_policy`
 - 문서 전달: WP-00.D2 portable `wiki/` source, PROJECT_STATE mirror와 GitHub/GitLab export contract;
   GitHub Wiki live render와 Node.js 24 automatic publish/annotation 0 완료, 사내 GitLab은 대기
 - 최근 증거: 136 lightweight tests(unit 86/integration 31/contract 19), 10 eval groups,
@@ -31,7 +33,8 @@
 - 데이터 경계: synthetic 또는 승인된 비식별 fixture만 사용
 - API 경계: injected verifier/grant; project/education command는 principal·resource scope·org·revision,
   staged/program hash에 bind하고 project GET은 URI/free-text redacted. queued grant의 202/local Worker는
-  구현됐지만 OIDC/JWKS·실제 교육 배정, immutable upload와 distributed queue/heartbeat는 미구현
+  구현됐고 local signed identity validation도 추가됐지만 actual issuer/remote JWKS rotation·revocation,
+  실제 교육 배정, immutable upload와 distributed queue/heartbeat는 미구현
 - 다음 읽기: `../PROJECT_STATE.md` → `../docs/evaluation/wp06-i3-durable-local-worker-report.md` →
   `../docs/evaluation/wp00-d2-portable-wiki-harness-report.md` → `../docs/HANDOFF.md` → `../CHANGELOG.md`
 

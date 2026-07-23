@@ -1,18 +1,19 @@
-# AXCalib API Alpha Threat Model
+# AXCalib API and Identity Reference Threat Model
 
-- 범위: WP-06.I1 + WP-06.I2a/I2b/I2c resource API + WP-06.I3 durable local Worker의 in-process adapter
-- 상태: local contract verified, operational deployment **NO-GO**
-- 기준일: 2026-07-22
+- 범위: WP-06.I1~I3 resource API/local Worker + WP-06.I4.1 provider-neutral OIDC/JWKS local reference
+- 상태: local identity/resource contract verified, operational deployment **NO-GO**
+- 기준일: 2026-07-24
 
 ## 1. 보호 대상과 신뢰 경계
 
 보호 대상은 프로젝트 dossier와 revision, proposal/sidecar bytes, 교육 program/enrollment와 reviewer
-assignment, 두 project HITL·과정 완료 결정권, audit event, notification/report reference와 bearer
-credential이다. 다음 세 경계를 분리한다.
+assignment, 두 project HITL·과정 완료 결정권, audit event, notification/report reference, bearer
+credential, identity policy와 issuer-bound JWK snapshot이다. 다음 경계를 분리한다.
 
 ```mermaid
 flowchart LR
-    C[HTTP caller] -->|bearer + typed JSON| V[Deployment TokenVerifier]
+    C[HTTP caller] -->|bearer + typed JSON| V[OIDC TokenVerifier]
+    K[Deployment JwkSetProvider] -->|approved issuer + JWKS snapshot| V
     C -->|opaque artifact id + hash| S[Deployment Staging Resolver]
     V -->|verified principal role org scopes| A[AXCalib API Adapter]
     S -->|approved immutable local file| A
@@ -23,15 +24,19 @@ flowchart LR
     L --> D[(Dossier / Audit / Report / Outbox)]
 ```
 
-`TokenVerifier`와 `StagedArtifactResolver`는 deployment 소유 port다. 기본 구현은 모두 거부한다.
-Library는 상태전이와 관리자 HITL을 최종적으로 다시 검사한다.
+`TokenVerifier`, `JwkSetProvider`와 `StagedArtifactResolver`는 deployment 소유 port다. 기본 verifier와
+resolver는 모두 거부한다. 현재 `StaticJwkSetProvider`는 local signed fixture용이며 remote
+discovery/cache/rotation adapter가 아니다. Library는 상태전이와 관리자 HITL을 최종적으로 다시
+검사한다.
 
 ## 2. 위협과 현재 통제
 
 | 위협 | 공격 예 | 현재 통제 | 남은 위험 |
 |---|---|---|---|
-| 신원 가장 | request에 다른 `actor_id` 삽입 | 전용 decision schema에 actor field 없음, generic payload의 authority field 재귀 거부, audit actor는 principal subject | 실제 issuer/claim 검증은 미구현 |
-| 권한 상승 | project owner가 승인 command 호출 | administrator role + explicit project decision scope + organization access를 mutation 전에 모두 확인 | enterprise role mapping/sign-off 필요 |
+| 신원 가장 | request에 다른 `actor_id` 삽입 또는 위조 JWT | actor field/authority field 거부, RFC 9068 type, asymmetric signature, exact issuer/audience/time/JTI 검증, audit actor는 principal subject | 실제 issuer·subject lifecycle·revocation 승인 필요 |
+| token/key confusion | ID token, `none`/HS algorithm, token `jku/x5u` 또는 다른 issuer key 사용 | `at+jwt`, policy-owned RS256/PS256/ES256 allowlist, token-controlled key URL 거부, issuer/JWKS exact snapshot binding | remote discovery redirect/DNS/cache/rotation adapter 미구현 |
+| 권한 상승 | project owner가 승인 command 호출하거나 IdP group을 admin role로 오매핑 | external role/scope exact allowlist와 단일 role, administrator role + explicit resource scope + organization을 mutation 전에 확인 | enterprise mapping/assignment Owner sign-off 필요 |
+| key source 장애 | JWKS source가 stale/중단됐는데 기존 principal로 새 요청 승인 | invalid token 401, provider/config mismatch는 503, principal/token cache 없음 | bounded cache·refresh·rotation·outage drill 미구현 |
 | IDOR/tenant 혼선 | 다른 조직 project ID로 조회·결정 | owner creation audit/admin read-or-decision scope와 dossier organization 또는 explicit organization scope 비교 | ownership transfer와 기존 local dossier migration 필요 |
 | stale/lost update | 오래된 화면에서 승인 | 필수 `expected_revision`, domain service/repository CAS, stale 409와 무변경 회귀 | distributed database transaction 미구현 |
 | 로컬 경로 주입 | `C:\\...` 또는 `../...` 읽기 | request에 path field 없음, opaque ID pattern, resolver만 local path 해석 | resolver 구현 자체의 ACL 검토 필요 |
@@ -68,7 +73,8 @@ machine이 모두 허용해야 한다.
 
 ## 4. 운영 승격 전 필수 항목
 
-- 승인된 OIDC/JWKS issuer, audience, expiry, key rotation과 claim-to-role/scope/org mapping
+- `identity-upload-decision-packet.md`의 승인된 issuer/audience/claim/lifetime/revocation/assignment 값
+- HTTPS discovery/JWKS egress allowlist, bounded cache/refresh/key rotation과 장애 runbook
 - immutable object storage 기반 upload/staging, access classification, malware scan, retention과 deletion
 - reverse proxy body limit, rate limit, request timeout과 audit-safe trace ID
 - database/broker transaction, worker heartbeat/dead-letter/metrics와 idempotency/job retention/commit recovery

@@ -4,9 +4,9 @@ project: AXCalib
 expanded_name: AX Certification Agent Library
 baseline: v0.3-p1
 created_at: 2026-07-12
-updated_at: 2026-07-22
+updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g3_intelligence_reference_baseline_verified
+status: g4_identity_local_reference_quality_pending
 ---
 
 # AXCalib Goal과 구현 Target
@@ -96,8 +96,14 @@ PipelineContext/checkpoint/cancel, Typer CLI/batch, non-destructive maintenance,
 principal-bound project/education command와 URI-redacted project GET/decision replay contract까지 local
 Alpha로 검증했다. WP-06.I3에서는 exact queued grant의 202, hash-bound local job, lease reclaim,
 retryable-only bounded retry와 terminal replay를 같은 executor에 연결했다. 단, report/outbox producer,
-OIDC/JWKS·immutable upload·distributed broker/heartbeat와 운영 품질평가는 남아 있으므로 제품 전체나
-운영 MVP 완료로 기록하지 않는다.
+approved remote identity/JWKS·immutable upload·distributed broker/heartbeat와 운영 품질평가는 남아
+있으므로 제품 전체나 운영 MVP 완료로 기록하지 않는다.
+
+2026-07-24 WP-06.I4.0-1에서는 운영값을 임의로 정하지 않는 identity/upload decision packet과 optional
+provider-neutral RFC 9068 OIDC/JWKS local signed reference를 추가했다. asymmetric signature,
+issuer/audience/type/time/JTI, issuer-bound key와 exact role/scope/organization mapping의 정상·오류
+계약을 검증했지만 실제 issuer, remote discovery/rotation/revocation, 교육 배정 source와 immutable
+upload는 계속 Owner 승인 대기다.
 
 2026-07-23 WP-00.D2에서는 사용자 매뉴얼·실습·코드/프로젝트 설명을 main `wiki/` 단일 원본으로
 두고 `PROJECT_STATE.md` 개발원장을 자동 mirror하는 GitHub/GitLab portable publication contract를
@@ -356,9 +362,9 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 현재 local Alpha evidence: sync/async executor, bounded JSONL batch, Alpha CLI, fail-closed FastAPI
 catalog/run/status/cancel, principal-bound project register/read/registration/completion decision replay, 교육
 program 조회·self enrollment·milestone/reviewer/project sync·completion decision과 generated runtime
-OpenAPI, exact queued grant의 202와 single-host durable queue/one-job Worker. approved OIDC/RBAC·교육
-배정 원장, immutable upload service, distributed broker/heartbeat, SSE와 full workflow parity는 아직 남아
-있다.
+OpenAPI, exact queued grant의 202와 single-host durable queue/one-job Worker, provider-neutral OIDC/JWKS
+local signed reference. approved remote issuer/JWKS/RBAC·교육 배정 원장, immutable upload service,
+distributed broker/heartbeat, SSE와 full workflow parity는 아직 남아 있다.
 
 - sync/async parity
 - bounded concurrency와 cancellation
@@ -635,6 +641,9 @@ P0 이후 다음 결정이 필요하다.
 17. 과정 완료와 공식 credential 발급을 분리하는 권한·유효기간·재인증 정책
 18. 수업 이수, 점수, 면제, 재수강, 기한을 확인할 trusted source system과 역할
 19. GitHub/GitLab Wiki CI runner·deploy credential Owner와 team-owned page 보존 정책
+20. OIDC issuer/audience/claim vocabulary, token lifetime, key rotation/revocation과 identity Owner
+21. 교육 assignment authoritative source와 권한 회수 SLA
+22. immutable upload object version/ACL/malware/DLP/retention Owner와 정책
 
 이 결정이 없어도 WP-01~03 synthetic/offline 작업은 진행할 수 있다. 실제 데이터, 모델 품질
 확정, 운영 알림, 인증 정책, 운영 배포는 해당 결정 전에는 진행하지 않는다.

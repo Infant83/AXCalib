@@ -48,3 +48,13 @@ offline test는 외부 메시지를 보내지 않는 recording adapter만 사용
 - 사람 검토 없이 자동 인증하도록 설정됨
 
 현재 승인 경계와 다음 작업은 [개발 실행 원장](Development-Ledger)을 확인한다.
+
+## 현재 Identity reference의 정확한 범위
+
+local signed fixture에서는 access-token type, asymmetric signature, exact issuer/audience/expiry,
+issuer-bound key, allowlisted role/scope/organization mapping과 401/503 fail-closed를 검증했다.
+이는 실제 사내 SSO 연결이나 운영 승인이 아니다.
+
+운영 전에 메인 저장소의 `docs/security/identity-upload-decision-packet.md`에서 issuer, claim,
+key rotation, revocation, 교육 배정 source와 immutable upload의 승인값·Owner·Exit Evidence를 모두
+확정해야 한다. ID token을 API access token으로 사용하거나 token이 지정한 key URL을 따라가지 않는다.

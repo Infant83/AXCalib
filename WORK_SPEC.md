@@ -5,9 +5,9 @@ expanded_name: AX Certification Agent Library
 project_code: AXCALIB
 workspace: C:/Users/angpa/myProjects/Daily_Work/AXCalib
 created_at: 2026-07-12
-updated_at: 2026-07-22
+updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g3_intelligence_reference_baseline_verified
+status: g4_identity_local_reference_quality_pending
 baseline: v0.3
 harness_status: executable_offline_harness; g3_reference_verified; t1_partial
 git_status: repository_initialized; main_tracks_origin_main
@@ -262,6 +262,8 @@ extensions
 | FR-057 | Project read and decision replay | owner/admin project GET은 URI·자유서술을 redaction하고 두 HITL decision은 principal·resource·stage·revision·payload에 고정된 성공 결과만 idempotent replay | Must |
 | FR-058 | Durable queued execution | exact delivery grant는 inline/queued를 분리하고 queued request를 typed/hash-bound envelope로 보존해 202·authorized poll/cancel·lease reclaim·bounded retry·terminal replay를 같은 Library executor로 제공 | Must |
 | FR-059 | Portable Wiki distribution | 사용자 매뉴얼·실습·코드/프로젝트 설명과 개발 원장을 main `wiki/` 단일 원본으로 관리하고 GitHub/GitLab Wiki에 manifest·검증·opt-in publish로 동일 배포 | Must |
+| FR-060 | Provider-neutral identity validation | optional identity adapter는 RFC 9068 access token의 fixed asymmetric algorithm, exact issuer/audience/type/time, issuer-bound JWK와 allowlisted role/scope/organization mapping을 검증하고 invalid/provider failure를 401/503으로 구분 | Must |
+| FR-061 | Goal-aligned usability self-check | 전체 Target/WP/Gate와 script를 code/test/example/pending에 추적하고 최소 facade, thin adapter, 정상·오류·경계 example matrix와 clean packaging을 반복 검증 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -861,11 +863,13 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 26. 실제 PPT visual provenance와 근거 품질 회귀 | FR-050~051, ADR-015, evidence-quality eval | Restricted image-only fixture baseline implemented; general render/VLM pending |
 | 27. SkillBoss update, HTTP 500 원인복구와 유사 multimodal 비교 | FR-052, ADR-019, WP-05.Q2 recovery report | Qwen/GPT-4o proxy registration verified; exact on-prem/completion/gold pending |
 | 28. project cross-file transaction journal과 crash recovery | FR-053~054, ADR-020/021, WP-01.R1 reports | Project/education/stale maintenance local verified; producer/distributed recovery pending |
-| 29. 원격 project 등록·HITL 권한과 경로 격리 | FR-055, ADR-023, API threat model, WP-06.I2a report | In-process project API contract verified; OIDC/immutable upload/read-replay pending |
+| 29. 원격 project 등록·HITL 권한과 경로 격리 | FR-055, ADR-023, API threat model, WP-06.I2a report | In-process project API contract verified; approved remote identity/immutable upload pending |
 | 30. 교육 가입·진행·평가자·완료결정 권한 바인딩 | FR-056, ADR-024, API threat model, WP-06.I2b report | In-process education API contract verified; approved IdP/assignment source pending |
-| 31. project 안전 조회와 관리자 decision 응답 유실 복구 | FR-057, ADR-025, API threat model, WP-06.I2c report | In-process read/replay contract verified; distributed idempotency/OIDC pending |
-| 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/OIDC pending |
+| 31. project 안전 조회와 관리자 decision 응답 유실 복구 | FR-057, ADR-025, API threat model, WP-06.I2c report | In-process read/replay contract verified; distributed idempotency/approved remote identity pending |
+| 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/remote identity pending |
 | 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | GitHub live push/render verified; GitLab runner/credential/live push pending |
+| 34. 공급자 중립 OIDC/JWKS identity 검증 | FR-060, ADR-028, identity/upload decision packet, WP-06.I4 report | Local signed positive/negative contract verified; actual issuer/remote rotation/revocation pending |
+| 35. GOAL 정렬·단순성·다양한 example 자가점검 | FR-061, Library standardization/example plan | Planned after WP-06.I4 checkpoint; trace matrix와 catalog 미실행 |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 
@@ -912,6 +916,7 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] URI-redacted owner/admin project GET과 registration/completion decision semantic replay 계약
 - [x] exact queued grant의 202, local durable queue/lease/retry/terminal replay와 one-job Worker 계약
 - [x] main `wiki/` 단일 원본, PROJECT_STATE mirror와 GitHub/GitLab target export/publish 하네스
+- [x] provider-neutral OIDC/JWKS local signed validation과 identity/upload decision packet
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
 - [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
@@ -941,3 +946,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-22 | v0.3-p1 project-read-replay-alpha | owner/admin safe project GET, verified authority context와 principal/resource/payload-bound decision replay 추가 |
 | 2026-07-22 | v0.3-p1 durable-worker-alpha | exact inline/queued grant, 202/poll queue status, hash-bound local job, lease reclaim와 bounded retry Worker 추가 |
 | 2026-07-23 | v0.3-p1 portable-wiki | GitHub/GitLab Wiki 공통 원본, 개발원장 mirror, 검증·export와 opt-in CI publication 계약 추가 |
+| 2026-07-24 | v0.3-p1 identity-reference | identity/upload 결정 패킷, optional RFC 9068 OIDC/JWKS verifier, negative security contract와 Library 표준화/example 후속 계획 추가 |

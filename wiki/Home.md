@@ -25,9 +25,10 @@ Dossier에 모으고, 등록심의와 완료평가를 근거 중심으로 지원
 
 ## 현재 공개 범위
 
-현재 저장소는 Library MVP/Alpha와 local API/Worker reference를 제공한다. 실제 OIDC, immutable
-upload, distributed broker, 운영 Web App, 실제 사내 rubric·gold·Vector DB 품질은 완료되지 않았다.
-Wiki의 설명은 운영 인증 완료 선언이 아니라 현재 구현과 검증 경계를 보여 주는 사용 안내다.
+현재 저장소는 Library MVP/Alpha, local API/Worker와 signed OIDC/JWKS validation reference를
+제공한다. 실제 사내 issuer·remote key rotation/revocation·교육 배정, immutable upload, distributed
+broker, 운영 Web App, 실제 사내 rubric·gold·Vector DB 품질은 완료되지 않았다. Wiki의 설명은 운영
+인증 완료 선언이 아니라 현재 구현과 검증 경계를 보여 주는 사용 안내다.
 
 상세 진행상태와 append-only 이력은 자동으로 배포되는 [개발 실행 원장](Development-Ledger)에서
 확인한다.

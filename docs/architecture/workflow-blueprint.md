@@ -277,6 +277,34 @@ result를 replay한다. retryable failure만 bounded backoff로 다시 queued된
 single-host filesystem Alpha이며 plaintext workspace retention, heartbeat, dead-letter, broker/database
 consensus와 실제 OIDC는 운영 adapter 범위다.
 
+### 0.8 WP-06.I4.1 provider-neutral OIDC/JWKS reference boundary
+
+```mermaid
+flowchart LR
+    TOKEN["Bearer JWT"] --> HEADER{"at+jwt + fixed asymmetric alg<br/>kid · no jku/x5u/x5c?"}
+    POLICY["Versioned identity policy<br/>issuer · audience · claim mappings"] --> HEADER
+    HEADER -->|invalid| INVALID["401 invalid token"]
+    HEADER --> KEYS["Issuer-bound JwkSetProvider"]
+    KEYS -->|unavailable / unbound| DOWN["503 auth unavailable"]
+    KEYS --> SIG{"unique kid + signature<br/>iss/aud/exp/iat/jti/client_id?"}
+    SIG -->|invalid| INVALID
+    SIG --> MAP{"exact role/scope mapping<br/>organization present?"}
+    MAP -->|invalid / ambiguous| INVALID
+    MAP --> PRINCIPAL["ApiPrincipal"]
+    PRINCIPAL --> AUTHZ["Existing role + resource scope<br/>organization + revision guards"]
+
+    classDef safe fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
+    classDef stop fill:#F8EDF2,stroke:#A50034,color:#172033;
+    class POLICY,KEYS,PRINCIPAL,AUTHZ safe;
+    class TOKEN,HEADER,SIG,MAP wait;
+    class INVALID,DOWN stop;
+```
+
+token header는 key URL이나 허용 algorithm을 결정하지 않는다. raw token과 전체 claim은 dossier,
+checkpoint, audit와 response에 저장하지 않는다. 현재 key provider는 local static fixture이며 실제
+issuer/discovery/JWKS cache·rotation·revocation과 교육 배정 source는 decision packet 승인 뒤 구현한다.
+
 ## 1. 전체 계층
 
 ```mermaid

@@ -31,13 +31,16 @@
 | [ADR-023](../adr/ADR-023-principal-bound-project-api.md) | verified principal project command와 no-path staged artifact 경계 |
 | [ADR-026](../adr/ADR-026-durable-local-worker-and-202-contract.md) | queued 202, local job envelope, lease/retry/replay와 분산 운영 경계 |
 | [WP-06.I3 Worker 리포트](../evaluation/wp06-i3-durable-local-worker-report.md) | single-host Worker 구현·코드리뷰·검증과 남은 위험 |
-| [API Alpha Threat Model](../security/api-alpha-threat-model.md) | current control, residual risk와 운영 NO-GO |
+| [WP-06.I4 identity/upload 결정 패킷](../security/identity-upload-decision-packet.md) | 운영 전에 Owner가 확정할 issuer/claim/revocation/assignment와 immutable upload 항목 |
+| [Library 표준화·예제 self-check 계획](../readiness/library-standardization-and-example-plan.md) | GOAL 추적, 공개 API 단순성, script 감사와 정상·오류·경계 example matrix |
+| [API/Identity Threat Model](../security/api-alpha-threat-model.md) | current identity/resource control, residual risk와 운영 NO-GO |
 | [ADR-015](../adr/ADR-015-image-only-pptx-offline-evidence.md) | image-only PPTX sidecar와 same-hash final 처리 결정 |
 | [ADR-016](../adr/ADR-016-review-policy-and-openai-compatible-evaluator.md) | hash-bound 심사기준, structured model, OpenAI/on-prem 환경계약 |
 | [ADR-017](../adr/ADR-017-education-program-composition.md) | 교육 program/enrollment와 project 인증 경계, version/roll-up 결정 |
 | [ADR-018](../adr/ADR-018-qwen-capability-and-provider-alias.md) | Qwen provider proxy와 exact deployment identity·structured-output 경계 |
 | [ADR-019](../adr/ADR-019-json-object-contract-and-multimodal-probe.md) | JSON-object provider compatibility와 공통 multimodal probe 경계 |
 | [ADR-020](../adr/ADR-020-local-project-transaction-journal.md) | local project journal, recovery, HITL artifact prerequisite와 남은 범위 |
+| [ADR-028](../adr/ADR-028-provider-neutral-oidc-jwks-reference.md) | provider-neutral access-token/JWKS 검증, exact claim mapping과 remote 운영 경계 |
 
 ## 권장 읽기 순서
 

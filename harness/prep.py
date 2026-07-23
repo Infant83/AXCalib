@@ -78,6 +78,8 @@ REQUIRED_PATHS = (
     "docs/manuals/assets/axcalib-six-panel-tutorial.jpg",
     "docs/manuals/assets/README.md",
     "docs/readiness/development-readiness-audit.md",
+    "docs/readiness/library-standardization-and-example-plan.md",
+    "docs/security/identity-upload-decision-packet.md",
     "docs/evaluation/oled-qc-pptx-demo.md",
     "docs/evaluation/g3-intelligence-development-report.md",
     "docs/evaluation/education-program-wp01-development-report.md",
@@ -86,7 +88,9 @@ REQUIRED_PATHS = (
     "docs/evaluation/wp01-r1-transaction-recovery-report.md",
     "docs/adr/ADR-020-local-project-transaction-journal.md",
     "docs/adr/ADR-027-portable-github-gitlab-wiki-source.md",
+    "docs/adr/ADR-028-provider-neutral-oidc-jwks-reference.md",
     "docs/evaluation/wp00-d2-portable-wiki-harness-report.md",
+    "docs/evaluation/wp06-i4-identity-jwks-reference-report.md",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -749,8 +753,8 @@ def _readiness_contract_errors() -> list[str]:
     path = ROOT / "docs" / "readiness" / "development-readiness-audit.md"
     metadata = _frontmatter(path)
     expected = {
-        "status": "education_and_g3_reference_implemented",
-        "verdict": "EDUCATION_WP01_LOCAL_REFERENCE_VERIFIED",
+        "status": "g4_identity_local_reference_quality_audit_pending",
+        "verdict": "LOCAL_LIBRARY_API_WORKER_IDENTITY_REFERENCE_VERIFIED_OPERATIONAL_NO_GO",
         "owner_signoff": "user_directive_for_g3_and_limited_live_fixture",
     }
     for key, value in expected.items():

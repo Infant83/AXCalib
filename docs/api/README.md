@@ -6,7 +6,8 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 - [전체 제품 목표 계약](openapi.v1alpha1.json): project evaluation/HITL까지 포함하는
   **pre-implementation target**
 - [구현된 runtime 계약](openapi.runtime.v1alpha1.json): WP-06.I1 pipeline runtime, WP-06.I2a/I2b/I2c의
-  principal-bound resource command/read/replay와 WP-06.I3 durable local 202 Worker **implemented local Alpha**
+  principal-bound resource command/read/replay, WP-06.I3 durable local 202 Worker와 WP-06.I4.1
+  OIDC/JWKS signed fixture **implemented local Alpha/reference**
 
 목표 계약에만 존재하는 endpoint를 실행 가능하다고 간주하지 않는다. 구현 artifact는 FastAPI가
 생성한 schema와 contract test에서 byte 의미 수준으로 비교한다.
@@ -16,8 +17,9 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 - OpenAPI 문서는 FastAPI가 안정적으로 생성하는 `3.1.0`을 기준으로 한다.
 - Schema dialect는 JSON Schema Draft 2020-12다.
 - 문서는 JSON으로 보관해 YAML parser 차이를 없앤다.
-- 모든 구현 endpoint는 bearer 인증을 요구한다. 실제 issuer와 claim mapping은 deployment가
-  `TokenVerifier`로 주입하며 verifier가 없으면 fail closed한다.
+- 모든 구현 endpoint는 bearer 인증을 요구한다. verifier가 없으면 fail closed한다. optional
+  `identity` extra는 deployment-owned issuer/JWKS/claim policy를 받는 RFC 9068 local reference를
+  제공하지만 실제 운영값과 remote key refresh를 대신 정하지 않는다.
 - registry 등록은 HTTP 공개를 뜻하지 않는다. exact `ApiPipelineGrant`가 있어야 catalog와 run에
   노출된다.
 - grant의 기본 execution mode는 inline이다. deployment가 exact version을 `queued`로 지정한 경우에만
@@ -58,6 +60,35 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 - final decision actor 권한
 - auto certification
 
+## OIDC/JWKS local reference
+
+설치와 회귀 확인:
+
+~~~powershell
+uv sync --locked --dev --extra api --extra identity
+uv run --no-sync pytest tests/unit/test_oidc_identity.py `
+  tests/contract/test_oidc_api_contract.py -q
+~~~
+
+deployment 조합은 기존 `create_app`의 작은 주입점을 그대로 사용한다.
+
+~~~python
+from axcalib.api import create_app
+from axcalib.api.oidc import OidcTokenVerifier
+
+verifier = OidcTokenVerifier(
+    policy=approved_identity_policy,
+    jwk_set_provider=approved_jwk_set_provider,
+)
+app = create_app(runtime, token_verifier=verifier, pipeline_grants=grants)
+~~~
+
+`approved_identity_policy`와 remote provider는 이 저장소가 자동 생성하지 않는다. 현재 concrete
+`StaticJwkSetProvider`는 local signed fixture용이다. issuer/audience/role/scope/organization,
+key rotation, revocation과 assignment는
+[I4 결정 패킷](../security/identity-upload-decision-packet.md)을 Owner가 채운 뒤 운영 adapter에
+주입한다. Core 설치에는 PyJWT/cryptography가 포함되지 않는다.
+
 ## 예시
 
 - [등록심의 평가 요청](examples/registration-evaluation.request.json)
@@ -92,12 +123,12 @@ API는 Library의 기능을 새로 구현하는 계층이 아니라 versioned pi
 uv run --no-sync python scripts/pipelines/export_runtime_openapi.py
 ~~~
 
-TestClient 계약은 실제 socket이나 외부 인증 endpoint를 열지 않는다. 운영 server, OIDC/JWKS,
-rate limit, immutable upload service, 실제 교육 배정/claim source, project list/report authorization,
-distributed worker/heartbeat와 SSE는 후속 WP-06 범위다. local Worker 경계와 검증은
-[WP-06.I3 리포트](../evaluation/wp06-i3-durable-local-worker-report.md), 운영 NO-GO와 공격면은
-[API Alpha Threat Model](../security/api-alpha-threat-model.md)을
-따른다.
+TestClient 계약은 실제 socket이나 외부 인증 endpoint를 열지 않는다. 운영 server, remote
+discovery/JWKS cache·rotation·revocation, rate limit, immutable upload service, 실제 교육 배정 source,
+project list/report authorization, distributed worker/heartbeat와 SSE는 후속 WP-06 범위다. local Worker
+경계는 [WP-06.I3 리포트](../evaluation/wp06-i3-durable-local-worker-report.md), identity 경계는
+[ADR-028](../adr/ADR-028-provider-neutral-oidc-jwks-reference.md), 운영 NO-GO와 공격면은
+[API/Identity Threat Model](../security/api-alpha-threat-model.md)을 따른다.
 
 현재 decision replay는 단일 workspace의 local filesystem record다. domain commit 뒤 idempotency
 success record write 전 process crash, multi-host serialization, retention과 database transaction은

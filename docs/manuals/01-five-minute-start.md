@@ -2,7 +2,8 @@
 
 > 상태: `two-gate-pptx@v1alpha1`과 G3 policy/Docling/retrieval/structured-model reference는
 > 구현·테스트됐고 fail-closed runtime API도 local Alpha로 존재한다. 추가 live model, on-prem 품질,
-> 운영 알림, full evaluation/HITL API·OIDC/worker와 Web은 아직 승인·구현되지 않았다.
+> 운영 알림, full evaluation/HITL API, approved remote OIDC/JWKS·distributed worker와 Web은 아직
+> 승인·구현되지 않았다. local signed identity reference는 운영 SSO가 아니다.
 
 ## 가장 작은 Python 사용
 
@@ -98,7 +99,8 @@ result = client.run_pptx(request)
 - optional Docling manifest와 opt-in structured model evaluator
 
 local idempotent resume, durable recording outbox와 multi-process filesystem lock은 Alpha 범위에서
-있다. 실제 OCR/VLM, 운영 notification/database, full evaluation API·OIDC/교육 배정·immutable upload/worker와 Web은 다음
+있다. 실제 OCR/VLM, 운영 notification/database, full evaluation API·remote OIDC/교육 배정·immutable
+upload/distributed worker와 Web은 다음
 hardening 범위다.
 
 사업별 심사기준과 OpenAI/on-prem endpoint 설정은
