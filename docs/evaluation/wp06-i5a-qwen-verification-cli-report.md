@@ -100,7 +100,17 @@ help와 canonical env 누락 exit 2를 traceback 없이 확인했다. 첫 clean 
 실제 SkillBoss나 외부 model은 이번 slice에서 호출하지 않았다. SkillBoss 확인은 on-prem 제품경로가
 provider-independent `OPENAI_*`를 유지해야 한다는 routing 판단에만 사용했다.
 
-## 6. 다음 개발 순서
+## 6. 배포 증거
+
+- main implementation commit: `65aeab46af2fe944a15508564a368deb943d1b08`
+- GitHub Actions: run `30067692706`, validate/publish 2개 job success, annotation 0
+- GitHub Wiki remote: `8e76cd81af967d67e32e9cdb3c5f5deddd680963`
+- 공개 페이지: `On-Prem-Qwen-Verification`, HTTP 200과 제목 render 확인
+
+사내 GitLab Wiki는 같은 18-file export contract만 검증했으며 실제 runner/credential/push는
+플랫폼 환경에서 확인해야 한다.
+
+## 7. 다음 개발 순서
 
 1. 사내에서 exact `Qwen3.5-397B-A17B` capability JSON과 테스트 PPTX registration report를 만든다.
 2. completion template이 승인되면 같은 snapshot/policy로 completion report를 만든다.

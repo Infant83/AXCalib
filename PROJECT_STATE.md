@@ -12,7 +12,7 @@ active_slice_status: ready
 next_gate: G3 exact-model evidence; quality baseline still requires Owner gold
 schedule_mode: dependency_only
 updated_at: 2026-07-24
-last_history_id: HIST-2026-07-24-009
+last_history_id: HIST-2026-07-24-010
 ---
 
 # AXCalib Project Execution Ledger
@@ -532,6 +532,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-24 | WP-06.I5a GitHub main + Wiki delivery | main/Wiki remote SHA, Actions run/jobs/annotations, public page GET | main `65aeab4`, run `30067692706` jobs 2/2 success, annotations 0, Wiki `8e76cd8`, Qwen page HTTP 200 | GitHub delivery만 검증; 사내 GitLab runner/credential/live publish와 exact Qwen 미검증 |
 | 2026-07-24 | WP-06.I5a Qwen verification CLI | targeted/full split, clean Rich 15 wheel CLI, eval, Ruff/Pyright, Wiki/ledger validation | targeted 22; full 192(132/39/21), integration 9/24/6, eval 10, clean CLI/help/missing-env exit 2, Ruff, Pyright/validate 0/0 | fake exact endpoint와 local interface만; live exact Qwen/심사 품질 아님 |
 | 2026-07-24 | WP-03.Q2a Owner gold input contract | draft validator, synthetic approved loader/test split, split full tests, offline eval, Ruff/Pyright/schema/validate, SVG render review | 16 targeted; full 189(131/37/21), integration 9/22/6, eval 10, Ruff, Pyright 0/0, validate 0/0 | 입력·metric 계산 local contract; 공식 rubric/gold/exact-model 품질 아님 |
 | 2026-07-24 | Docling/SkillBoss 현재 진단 | `prep.ps1 docling` resource preflight; SkillBoss dynamic catalog와 합성 Qwen3.5 Plus JSON | Docling 1,368MB<2,048MB `BLOCKED_RESOURCE`; Plus live smoke 성공 | 현재 Docling parse와 exact 397B 미실행; provider proxy connectivity만 |
@@ -1440,6 +1441,26 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   Owner gold가 제공될 때까지 계속 `blocked_policy`로 둔다.
 - 관련 근거: [WP-06.I5a report](docs/evaluation/wp06-i5a-qwen-verification-cli-report.md),
   WORK_SPEC FR-063, 5.14/5.15와 [On-prem Wiki guide](wiki/On-Prem-Qwen-Verification.md).
+
+### HIST-2026-07-24-010
+
+- Phase / WP / Gate: P5 / WP-05.Q3 / G3 exact-model evidence
+- 상태: `github_main_and_wiki_deployed`
+- 작업: WP-06.I5a 구현·runbook commit을 `origin/main`에 push하고 canonical `wiki/`를 GitHub Wiki에
+  자동 게시했다. 다음 Active Slice는 WP-05.Q3 ready 상태를 유지한다.
+- 변경 파일: 배포 증거를 `PROJECT_STATE.md`, WP-06.I5a 개발리포트, Wiki 개발 프로세스와
+  memory bank에 추가했다.
+- 검증: main local/remote가 `65aeab46af2fe944a15508564a368deb943d1b08`로 일치했다. GitHub Actions
+  run `30067692706`의 `validate`/`publish-github` 2개 job이 success, annotation 0건이었다. Wiki
+  remote `master`는 `8e76cd81af967d67e32e9cdb3c5f5deddd680963`, 공개 On-prem Qwen page는
+  HTTP 200과 제목 render를 확인했다.
+- 특이사항: 이 증거는 GitHub publication만 확인한다. 사내 GitLab URL/runner/credential과 실제
+  mirror publication은 제공되지 않아 검증하지 않았다.
+- 미검증: exact on-prem Qwen과 실제 등록심의/완료평가, GitLab live Wiki, Owner gold 품질.
+- 다음 작업: 사내에서 `wiki/On-Prem-Qwen-Verification.md`를 따라 WP-05.Q3을 실행하고 secret-free
+  결과를 회수한다. 이후 Owner gold가 준비되면 WP-03.Q2b를 진행한다.
+- 관련 근거: implementation commit `65aeab4`, GitHub Actions run `30067692706`,
+  Wiki remote `8e76cd8`와 5.15 WP-05.Q3 Exit Evidence.
 
 ## 10. 단계 종료 업데이트 템플릿
 

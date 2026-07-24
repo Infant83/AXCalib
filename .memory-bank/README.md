@@ -23,7 +23,8 @@
   test gold 또는 remote identity/upload policy
 - 운영 dependency: approved remote identity/assignment/immutable upload boundary `blocked_policy`
 - 문서 전달: WP-00.D2 portable `wiki/` source, PROJECT_STATE mirror와 GitHub/GitLab export contract;
-  GitHub Wiki live render와 Node.js 24 automatic publish/annotation 0 완료, 사내 GitLab은 대기
+  WP-06.I5a main `65aeab4`, GitHub Wiki `8e76cd8`, Action `30067692706` 2/2 success/annotation 0,
+  사내 GitLab은 대기
 - 최근 증거: WP-06.I5a targeted 22, 전체 192(unit 132/integration 39/contract 21),
   integration shards 9/24/6, 10 eval groups, clean CLI wheel, Ruff, Pyright/validate 0/0
 - 최근 해결: SkillBoss proxy의 `json_object` HTTP 500 원인을 JSON keyword/schema contract로 복구;
