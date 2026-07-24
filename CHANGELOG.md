@@ -57,6 +57,9 @@
   unsupported-claim gold benchmark report
 - gold manifest/case/approval/report Draft 2020-12 JSON Schema와 EX-13 owner-package 예제
 - 공식 approved benchmark에서 숨겨 둔 `test` split만 계산하는 leakage guard
+- canonical `OPENAI_*`와 exact checkpoint를 검증하는 shared `probe_qwen35_from_env()` service
+- 같은 service를 사용하는 `axcalib verify qwen`과 `python -m axcalib.cli` fallback
+- synthetic exact-endpoint EX-14와 GitHub/GitLab 공통 On-prem Qwen 실행 검증 Wiki
 
 ### 변경
 
@@ -99,6 +102,7 @@
   bootstrap하고, 최소 quickstart 출력은 local dossier/report path 대신 `report_id`를 사용한다.
 - Wiki atomic export는 Windows transient file lock을 bounded retry하고 마지막 실패는 그대로
   보고한다.
+- 기존 Qwen working script는 endpoint 조립·검증을 자체 복제하지 않고 shared Library probe를 호출한다.
 
 ### 현재 검증
 

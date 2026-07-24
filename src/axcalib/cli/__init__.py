@@ -13,6 +13,12 @@ from rich.console import Console
 from rich.table import Table
 
 from axcalib import AXCalib
+from axcalib.dossier import atomic_write_text
+from axcalib.models import (
+    DEFAULT_QWEN35_CHECKPOINT,
+    CapabilityProbeScope,
+    probe_qwen35_from_env,
+)
 from axcalib.pipelines import PipelineContext
 from axcalib.runtime import PipelineRunStatus, load_batch_jsonl
 
@@ -25,10 +31,12 @@ pipeline_app = typer.Typer(help="Inspect and execute allowlisted local pipelines
 run_app = typer.Typer(help="Inspect or cooperatively cancel durable pipeline runs.")
 batch_app = typer.Typer(help="Run strict JSONL batches with per-item checkpoints.")
 workspace_app = typer.Typer(help="Inspect or maintain the local AXCalib workspace.")
+verify_app = typer.Typer(help="Run provider-independent deployment verification probes.")
 app.add_typer(pipeline_app, name="pipeline")
 app.add_typer(run_app, name="run")
 app.add_typer(batch_app, name="batch")
 app.add_typer(workspace_app, name="workspace")
+app.add_typer(verify_app, name="verify")
 
 console = Console()
 
@@ -44,9 +52,7 @@ def _json_value(value: BaseModel | dict[str, Any]) -> dict[str, Any]:
 
 
 def _print_json(value: BaseModel | dict[str, Any]) -> None:
-    console.print_json(
-        json.dumps(_json_value(value), ensure_ascii=False, sort_keys=True)
-    )
+    console.print_json(json.dumps(_json_value(value), ensure_ascii=False, sort_keys=True))
 
 
 def _load_json_object(path: Path) -> dict[str, Any]:
@@ -81,11 +87,16 @@ def _exit_for_status(status: PipelineRunStatus) -> None:
         return
     if status is PipelineRunStatus.RETRYABLE_FAILURE:
         raise typer.Exit(3)
-    raise typer.Exit(2 if status in {
-        PipelineRunStatus.BLOCKED,
-        PipelineRunStatus.STALE,
-        PipelineRunStatus.CANCELLED,
-    } else 1)
+    raise typer.Exit(
+        2
+        if status
+        in {
+            PipelineRunStatus.BLOCKED,
+            PipelineRunStatus.STALE,
+            PipelineRunStatus.CANCELLED,
+        }
+        else 1
+    )
 
 
 @pipeline_app.command("list")
@@ -228,6 +239,37 @@ def maintain_workspace(
     )
     _print_json(result)
     _exit_for_status(result.status)
+
+
+@verify_app.command("qwen")
+def verify_qwen(
+    expected_checkpoint: Annotated[
+        str,
+        typer.Option("--expected-checkpoint"),
+    ] = DEFAULT_QWEN35_CHECKPOINT,
+    scope: Annotated[
+        CapabilityProbeScope,
+        typer.Option("--scope"),
+    ] = CapabilityProbeScope.DEPLOYMENT,
+    text_only: Annotated[bool, typer.Option("--text-only")] = False,
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+) -> None:
+    """Verify a Qwen3.5 route with synthetic text and image inputs."""
+
+    try:
+        report = probe_qwen35_from_env(
+            expected_checkpoint=expected_checkpoint,
+            validation_scope=scope,
+            include_vision=not text_only,
+        )
+    except ValueError as error:
+        typer.echo(f"qwen capability probe configuration error: {error}", err=True)
+        raise typer.Exit(2) from error
+    if output is not None:
+        atomic_write_text(output.resolve(), report.model_dump_json(indent=2) + "\n")
+    _print_json(report)
+    if not report.scope_passed:
+        raise typer.Exit(1)
 
 
 def main() -> None:

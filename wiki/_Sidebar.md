@@ -7,6 +7,7 @@
 - [예제와 Recipe](Examples-and-Recipes)
 - [API / Web / App 연동](API-Web-App-Integration)
 - [설정과 On-prem](Configuration-and-On-Prem)
+- [On-prem Qwen 실행 검증](On-Prem-Qwen-Verification)
 - [아키텍처와 프로젝트 구조](Architecture-and-Project)
 - [보안과 HITL](Security-and-HITL)
 

@@ -177,7 +177,7 @@ Evidence가 남아 있다.
 - Agent recommendation, immutable criterion report, human decision/adjustment와 effective assessment를
   분리해 표현하고 기본 출력에서 storage URI·path·상세 사람 메타데이터를 제외
 - actual proposal PPTX와 synthetic completion evidence를 사용한 readable pass lifecycle 예제와
-  EX-01~EX-13 정상/대기/반려/stale/validation/retry/Owner-package catalog
+  EX-01~EX-14 정상/대기/반려/stale/validation/retry/Owner-package/Qwen CLI catalog
 - GOAL/WP/Gate trace, public API·script inventory, usability/code/security defect log를
   `docs/evaluation/wp00-q1-library-standardization-report.md`에 기록
 - 품질 경계: local standardized Alpha다. 공식 rubric/model/retrieval quality, remote authorization,
@@ -340,8 +340,11 @@ Evidence가 남아 있다.
 - 출력: PipelineRun/WorkflowRun의 사용자용 표현
 - 의존성: M00, M10과 target pipeline부터 시작하고 workflow command는 M09 사용
 - 첫 slice: `scripts/pipelines/run_dossier_freeze.py`
+- 현재 operator slice: shared `probe_qwen35_from_env()`를 사용하는
+  `scripts/pipelines/probe_qwen35_capabilities.py`와 `axcalib verify qwen`
 - 검증: script에 domain import/판정 복제 없음, CLI와 구조적 output parity
-- 완료증거: documented PowerShell command와 smoke test
+- 완료증거: documented PowerShell command, fake exact endpoint parity/secret-redaction smoke와
+  GitHub/GitLab 공통 on-prem runbook
 
 ### M12 — API / Worker
 
@@ -485,7 +488,8 @@ G4 Interfaces의 운영 identity/artifact/distributed execution 경계다.
    immutable upload 값을 운영 Owner가 승인한 뒤 remote JWKS/rotation과 staging adapter를 구현한다.
 2. local poll 의미를 유지하는 broker/database queue, heartbeat, dead-letter, metrics와 optional SSE adapter를
    운영 dependency로 설계한다.
-3. M11 Alpha CLI의 generic command를 목표 `dossier/evaluate/batch/verify` UX로 점진 확장한다.
+3. M11 `verify qwen` checkpoint 다음 Alpha CLI의 generic command를 목표
+   `dossier/evaluate/batch/report/verify` UX로 점진 확장한다.
 4. M08 report/outbox producer transaction과 database/distributed lease 계약을 별도 hardening한다.
 5. M09 program publish/retire/rollout/migration 정책과 replayable workflow checkpoint를 고정한다.
 6. M03 Q1 이후 다른 actual template field/locator와 general renderer/OCR/VLM coverage를 추가한다.

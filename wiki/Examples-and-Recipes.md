@@ -25,7 +25,7 @@ uv run --no-sync python examples/case_lifecycle/run_readable_pass.py `
 실제 제안 PPTX와 synthetic 완료 PPTX를 사용하지만 기준은 해당 정보 흐름용 축소
 `offline_reference`다. 공식 AX rubric, 실제 학습자 평가나 운영 인증 결과가 아니다.
 
-`examples/catalog.yaml`에는 EX-01~EX-13의 persona, fixture, 명령, 기대 상태/실패와 cleanup이 있다.
+`examples/catalog.yaml`에는 EX-01~EX-14의 persona, fixture, 명령, 기대 상태/실패와 cleanup이 있다.
 첫 사용자는 Recipe 1/2만 보고, stale·알림·retrieval·model·identity·worker·batch 경계는 필요할 때
 catalog에서 실행한다.
 
@@ -131,7 +131,7 @@ uv run --no-sync pytest tests/unit/test_oidc_identity.py `
 unmapped role/scope/org는 거부되고 key provider/config 장애는 503으로 구분된다. 이 recipe는 실제
 SSO 연결·계정 회수·key rotation 증거가 아니다.
 
-## Recipe 9: Evaluation Owner draft package 검증
+## Recipe 10: Evaluation Owner draft package 검증
 
 ```powershell
 uv run --no-sync python scripts/pipelines/validate_evaluation_owner_package.py `
@@ -142,3 +142,9 @@ uv run --no-sync python scripts/pipelines/validate_evaluation_owner_package.py `
 
 결과의 `official_quality_executable`은 `false`다. Owner가 published rubric, 양 Gate adjudicated
 label과 threshold를 승인한 뒤 `--allow-draft` 없이 검증해야 공식 benchmark runner에 입력할 수 있다.
+
+## Recipe 11: On-prem Qwen capability와 등록심의
+
+exact checkpoint, structured text/vision, 테스트 PPTX 등록심의와 Docling을 한꺼번에 섞지 않고
+단계별로 실행한다. 복사 가능한 PowerShell/Bash 명령, 기대 JSON과 실패 분류는
+[On-prem Qwen 실행 검증](On-Prem-Qwen-Verification)을 따른다.

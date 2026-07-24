@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-library-standardized
+baseline: v0.3-p1-g4-qwen-verification-cli
 phase: P5 Evaluation
 gate: G3 Intelligence
-gate_status: quality_input_contract_verified_benchmark_blocked
-status: wp03_q2a_verified_q2b_blocked_owner_input
-current_work_package: WP-03 rubric and report quality benchmark
-active_slice: WP-03.Q2b owner-approved-gold-execution
-active_slice_status: blocked_policy
-next_gate: G3 Intelligence quality baseline
+gate_status: reference_verified_exact_onprem_ready_quality_pending
+status: wp06_i5a_verified_wp05_q3_ready
+current_work_package: WP-05 model gateway and exact deployment validation
+active_slice: WP-05.Q3 exact-onprem-qwen-execution
+active_slice_status: ready
+next_gate: G3 exact-model evidence; quality baseline still requires Owner gold
 schedule_mode: dependency_only
 updated_at: 2026-07-24
-last_history_id: HIST-2026-07-24-007
+last_history_id: HIST-2026-07-24-009
 ---
 
 # AXCalib Project Execution Ledger
@@ -59,13 +59,13 @@ last_history_id: HIST-2026-07-24-007
 
 | 항목 | 현재 값 |
 |---|---|
-| 현재 Phase | **P5 Evaluation**; P2 local Library MVP/Alpha와 G4 local interface checkpoint 유지 |
-| 현재 Work Package | **WP-03.Q2 rubric/report gold benchmark**; Q2a 입력계약 완료, Q2b Owner 자료 대기 |
-| Active Slice | **WP-03.Q2b** (`blocked_policy`; 공식 rubric/threshold/hidden test gold 필요) |
+| 현재 Phase | **P5 Evaluation**; WP-06.I5a local operator interface는 완료 |
+| 현재 Work Package | **WP-05.Q3 exact on-prem Qwen execution**; 사내 endpoint 실행 증거 수집 |
+| Active Slice | **WP-05.Q3** (`ready`; Wiki 절차에 따라 exact checkpoint capability와 등록심의 실행) |
 | 현재 Gate | **G3 Intelligence reference verified / quality pending**; G4 local interface checkpoint도 유지 |
-| 다음 Gate | **G3 Intelligence quality baseline**; 공식 rubric/gold 필요. G4 운영 branch는 remote identity/upload/distributed evidence 대기 |
+| 다음 Gate | **G3 exact-model evidence**; quality baseline은 별도 WP-03.Q2b Owner gold가 필요 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 189 tests(131/37/21; integration 9/22/6 shards), EX catalog 13, 10 eval groups, Owner package 16 targeted, Ruff, Pyright 0/0 |
+| 최근 회귀 | 192 tests(132/39/21; integration 9/24/6 shards), EX catalog 14, 10 eval groups, clean CLI wheel, Ruff, Pyright/validate 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API·remote identity/upload/distributed worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -104,6 +104,7 @@ gantt
     WP-02.Q1 Actual-PPT evidence quality :done, wp02q1, 2026-07-21, 1d
     WP-05.Q1 Qwen proxy capability      :done, wp05q1, after wp02q1, 2d
     WP-05.Q2 Provider compatibility     :done, wp05q2, after wp05q1, 2d
+    WP-05.Q3 Exact on-prem execution    :crit, wp05q3, after wp05q2, 2d
     WP-01.R Recovery hardening          :done, wp01r, after wp05q2, 6d
     WP-03 Gold rubric evaluation        :crit, wp03, after wp02q1, 8d
     WP-04 Retrieval benchmark           :wp04, after wp03, 10d
@@ -113,6 +114,7 @@ gantt
     section P7-P9 Delivery
     Typer CLI and local batch Alpha     :done, wpcli, after wp01r, 6d
     WP-06 API parity and worker         :active,crit, wp06, after wpcli, 10d
+    WP-06.I5a Qwen verification CLI     :done, wp06i5a, 2026-07-24, 1d
     G4 Interfaces                       :milestone, g4, after wp06, 0d
     P8 Human Review Web                 :wpweb, after wp06, 12d
     G5 Web Review                       :milestone, g5, after wpweb, 0d
@@ -458,6 +460,46 @@ Q2b Unblock Input:
 - [ ] 업무 위험에 따라 Owner가 승인한 metric threshold
 - [ ] exact on-prem Qwen 및 비교 model의 같은 snapshot/policy 기반 EvaluationReport
 
+### 5.14 Completed Slice — WP-06.I5a On-prem Qwen Verification CLI
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `verified_local_interface`; 2026-07-24 착수·완료 |
+| 목적 | 기존 provider-independent capability probe를 사내 운영자가 짧고 일관된 CLI로 실행 |
+| 대상 Module | M05 model capability, M11 CLI, Wiki/운영 runbook |
+| 입력 | canonical `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`과 합성 text/image |
+| 출력 | `axcalib verify qwen`, secret-free JSON report, 명시적 exit code와 on-prem 실행 절차 |
+| 안전 경계 | 실제 사내 문서·SkillBoss·자동 fallback 없음; 정확한 모델·품질 주장은 live 결과 전 금지 |
+| 목표 Gate | G4 local command parity와 WP-05 exact on-prem 실행 준비 |
+
+Exit Evidence:
+
+- [x] script와 CLI가 같은 Library capability service를 사용하고 transport/domain 규칙을 복제하지 않는다.
+- [x] exact checkpoint, provider alias, text-only와 실패 exit code 의미가 기존 probe와 같다.
+- [x] API key, raw prompt/image/output와 hidden reasoning이 CLI/report에 남지 않는다.
+- [x] GitHub/GitLab 공통 Wiki에 설치, 환경변수, capability, 등록심의, Docling 분리 실행법을 제공한다.
+- [x] targeted/full split test, eval, static, Wiki/ledger validation을 통과한다.
+
+### 5.15 Next Slice — WP-05.Q3 Exact On-prem Qwen Execution
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `ready`; 사내 exact endpoint와 사용자 실행 필요 |
+| 목적 | 실제 `Qwen3.5-397B-A17B` 배포의 structured text·synthetic vision capability와 등록심의 연결을 검증 |
+| 입력 | 사내 endpoint, canonical `OPENAI_*`, 비식별 합성 probe와 승인된 테스트 PPTX |
+| 출력 | secret-free capability JSON, registration summary/report와 notification count |
+| 실행 안내 | `wiki/On-Prem-Qwen-Verification.md`의 설치→capability→등록심의→선택 Docling 순서 |
+| 안전 경계 | 실제 임직원 원문 반입 금지; alias 결과를 exact 증거로 기록하지 않음; transport 성공을 품질 통과로 해석하지 않음 |
+| 목표 Gate | G3 exact-model evidence; G3 quality baseline은 WP-03.Q2b Owner gold 뒤 별도 판정 |
+
+Exit Evidence:
+
+- [ ] `reported_model == OPENAI_MODEL == Qwen3.5-397B-A17B`와 `exact_model_identity=true`를 기록한다.
+- [ ] structured text와 synthetic vision이 통과해 `deployment_ready=true`가 된다.
+- [ ] 승인된 테스트 PPTX 등록심의가 `registration_hitl_pending`이며 approval notification 1건을 기록한다.
+- [ ] completion은 승인된 completion template/evidence가 있을 때만 실행하고 등록 당시 목표·KPI와 연결한다.
+- [ ] 보고서·명령 출력·공유 자료에 API key, 원문 전체, hidden reasoning이 없음을 확인한다.
+
 ## 6. 일정·작업 Queue
 
 calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 고정한다. 그 전에는 아래 dependency
@@ -483,11 +525,14 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `github_live_verified_gitlab_pending` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
 | 17 | P0/P7 / WP-00.Q1 | Case read facade, GOAL alignment, Library/script usability와 EX-01~12 self-check | `completed_standardized_local_alpha` | I4 local checkpoint, current docs/tests | 2026-07-24 | 2026-07-24 | G2/G4 local standardization |
 | 18 | P5 / WP-03.Q2b | Owner-approved rubric/report gold benchmark | `blocked_policy` | published rubric, threshold, hidden test gold와 exact-model reports | TBD | TBD | G3 quality |
+| 19 | P7 / WP-06.I5a | On-prem Qwen verification CLI and runbook | `verified_local_interface` | existing Qwen capability service와 local CLI Alpha | 2026-07-24 | 2026-07-24 | G4 command parity |
+| 20 | P5 / WP-05.Q3 | Exact on-prem Qwen execution | `ready` | exact endpoint, canonical env와 승인된 테스트 PPTX | TBD | TBD | G3 exact-model evidence |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-24 | WP-06.I5a Qwen verification CLI | targeted/full split, clean Rich 15 wheel CLI, eval, Ruff/Pyright, Wiki/ledger validation | targeted 22; full 192(132/39/21), integration 9/24/6, eval 10, clean CLI/help/missing-env exit 2, Ruff, Pyright/validate 0/0 | fake exact endpoint와 local interface만; live exact Qwen/심사 품질 아님 |
 | 2026-07-24 | WP-03.Q2a Owner gold input contract | draft validator, synthetic approved loader/test split, split full tests, offline eval, Ruff/Pyright/schema/validate, SVG render review | 16 targeted; full 189(131/37/21), integration 9/22/6, eval 10, Ruff, Pyright 0/0, validate 0/0 | 입력·metric 계산 local contract; 공식 rubric/gold/exact-model 품질 아님 |
 | 2026-07-24 | Docling/SkillBoss 현재 진단 | `prep.ps1 docling` resource preflight; SkillBoss dynamic catalog와 합성 Qwen3.5 Plus JSON | Docling 1,368MB<2,048MB `BLOCKED_RESOURCE`; Plus live smoke 성공 | 현재 Docling parse와 exact 397B 미실행; provider proxy connectivity만 |
 | 2026-07-24 | WP-00.Q1 Library standardization closeout | Case/examples/catalog, split test/eval, clean wheel, Ruff/Pyright/schema/Wiki/validate | 173 tests(118/34/21), integration shards 9/19/6, EX node 16, eval 10, Pyright 0/0, validate 0/0 | local standardized Alpha; Docling parser/live model/official rubric·retrieval·운영 품질 미실행 |
@@ -595,6 +640,11 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 20. Q2a는 hidden test split guard까지 local contract로 종료했다. 실제 threshold와 정답은 구현자가
     만들지 않으므로 Q2b/G3 quality는 Evaluation Owner 승인자료와 exact-model report 전까지
     `blocked_policy`다.
+21. WP-06.I5a 검증 중 기존 `.venv`의 120개 read-only `dist-info`, 일부 누락된 `RECORD`와 package
+    directory 때문에 `uv sync`가 access denied로 실패했다. 사용자 환경을 광범위하게 다시 쓰지 않고
+    새 clean venv와 wheel에서 CLI를 검증했다. 첫 clean run은 Rich 15의 `Console.print(stderr=...)`
+    비호환으로 설정 오류가 exit 1 traceback을 냈고, `typer.echo(..., err=True)`로 교정해 exit 2와
+    무-traceback 계약을 확인했다. 제품 데이터와 실제 원문은 사용하지 않았다.
 
 ## 9. 작업 이력
 
@@ -1348,6 +1398,48 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   pass/fail을 만들지 않는다.
 - 관련 근거: [WP-03.Q2a report](docs/evaluation/wp03-q2a-evaluation-owner-input-contract-report.md),
   [ADR-030](docs/adr/ADR-030-evaluation-owner-gold-benchmark-package.md), D-043, R-048/R-049.
+
+### HIST-2026-07-24-008
+
+- Phase / WP / Gate: P7 / WP-06.I5a / G4 Interfaces
+- 작업: exact on-prem Qwen 검증 안내를 portable Wiki에 배포하고 기존 capability probe를 직관적인
+  `axcalib verify qwen` 명령으로 노출하는 최소 interface slice를 착수했다.
+- 변경 파일: 착수 시점에는 `PROJECT_STATE.md`의 Active Slice, dependency Gantt, queue와 Exit
+  Evidence만 갱신했다.
+- 검증: README/WORK_SPEC/GOAL/DESIGN, 기존 model capability/script/CLI contract와 Wiki publication
+  manifest를 대조하고 `prep status/next`로 Q2b Owner-input blocker를 확인했다.
+- 특이사항: 공식 `WP-03.Q2b`는 Owner rubric/threshold/hidden gold가 없어 계속 `blocked_policy`다.
+  이번 slice는 품질 Gate를 우회하지 않고 기존 합성 capability 계약과 on-prem 실행 준비만 단순화한다.
+- 미검증: 구현, test/eval/static/Wiki validation, exact on-prem live endpoint와 실제 심사 품질.
+- 다음 작업: shared Library service, CLI command, Wiki runbook과 회귀를 구현하고 별도 closeout 이력으로
+  결과와 다음 개발 순서를 기록한다.
+- 관련 근거: 5.14 WP-06.I5a Exit Evidence, GOAL WP-05/WP-06과 기존 Qwen capability report.
+
+### HIST-2026-07-24-009
+
+- Phase / WP / Gate: P7 / WP-06.I5a → P5 / WP-05.Q3 / G4 local command parity → G3 exact-model evidence
+- 상태: `wp06_i5a_verified_wp05_q3_ready`
+- 작업: 기존 provider-independent Qwen capability를 단일 Library service로 올리고 script와
+  `axcalib verify qwen` CLI가 같은 계약을 사용하게 했다. canonical `OPENAI_*` 누락, non-Qwen
+  model, exact checkpoint, text-only와 secret-free report/exit code를 명시했으며 GitHub/GitLab 공통
+  Wiki에 사내 설치·capability·등록심의·선택 Docling 절차를 추가했다.
+- 변경 파일: `src/axcalib/models/capability.py`, `src/axcalib/cli/`, capability script와 test,
+  EX-14 catalog, `wiki/On-Prem-Qwen-Verification.md`, 기준문서·workflow diagram·module board,
+  개발리포트와 handoff/memory bank.
+- 검증: targeted 22 통과. 분할 전체 test 192(unit 132, integration 39=9/24/6, contract 21),
+  offline eval 10 groups, Ruff lint와 변경 Python format, Pyright 0 errors/0 warnings, Wiki validate/export
+  18/18과 CI contract, workspace validate 0/0을 통과했다. clean Rich 15 wheel 환경에서 console/module
+  help와 canonical env 누락 exit 2를 traceback 없이 재검증했다.
+- 특이사항: 기존 `.venv` metadata/package의 read-only·누락 상태로 `uv sync`가 실패해 clean
+  wheel/venv를 별도로 사용했다. 이 과정에서 Rich 15 stderr 비호환을 찾아 수정했다. fake exact
+  endpoint만 사용했고 SkillBoss 또는 외부 live 모델, 실제 사내 데이터는 호출하지 않았다.
+- 미검증: exact on-prem `Qwen3.5-397B-A17B` capability/registration/completion, 현재-run Docling,
+  Evaluation Owner 공식 rubric/threshold/hidden gold, Qdrant/calibration/remote operation/Web.
+- 다음 작업: Active Slice를 `WP-05.Q3 exact-onprem-qwen-execution`으로 전환한다. 사용자는 Wiki
+  절차를 사내 endpoint에서 실행해 secret-free JSON과 등록심의 summary를 회수하고, WP-03.Q2b는
+  Owner gold가 제공될 때까지 계속 `blocked_policy`로 둔다.
+- 관련 근거: [WP-06.I5a report](docs/evaluation/wp06-i5a-qwen-verification-cli-report.md),
+  WORK_SPEC FR-063, 5.14/5.15와 [On-prem Wiki guide](wiki/On-Prem-Qwen-Verification.md).
 
 ## 10. 단계 종료 업데이트 템플릿
 

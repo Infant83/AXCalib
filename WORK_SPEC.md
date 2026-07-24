@@ -7,7 +7,7 @@ workspace: C:/Users/angpa/myProjects/Daily_Work/AXCalib
 created_at: 2026-07-12
 updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g4_library_standardized_quality_operational_pending
+status: g4_qwen_verification_cli_quality_operational_pending
 baseline: v0.3
 harness_status: executable_offline_harness; g3_reference_verified; t1_partial
 git_status: repository_initialized; main_tracks_origin_main
@@ -265,6 +265,7 @@ extensions
 | FR-060 | Owner-approved semantic gold | 승인 Markdown, published rubric YAML, adjudicated project-stage JSONL과 manifest hash를 분리하고 threshold 부재·criterion drift·single-review label·hidden test split 부재를 공식 benchmark에서 fail-closed; agreement·locator·위험한 긍정·unsupported claim을 측정 | Must |
 | FR-061 | Provider-neutral identity validation | optional identity adapter는 RFC 9068 access token의 fixed asymmetric algorithm, exact issuer/audience/type/time, issuer-bound JWK와 allowlisted role/scope/organization mapping을 검증하고 invalid/provider failure를 401/503으로 구분 | Must |
 | FR-062 | Goal-aligned usability self-check | 전체 Target/WP/Gate와 script를 code/test/example/pending에 추적하고 최소 facade, thin adapter, 정상·오류·경계 example matrix와 clean packaging을 반복 검증 | Must |
+| FR-063 | On-prem model verification CLI | canonical `OPENAI_*`와 exact checkpoint를 검증하는 shared Library probe를 script/CLI가 함께 호출하고 synthetic text/vision, secret-free report와 명시적 exit code를 제공 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -871,7 +872,8 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | GitHub live push/render verified; GitLab runner/credential/live push pending |
 | 34. Evaluation Owner rubric·gold 입력과 공식 품질평가 | FR-060, ADR-030, WP-03.Q2a report, owner package schema | Draft template/validator/metric contract implemented; official labels·threshold와 exact-model report pending |
 | 35. 공급자 중립 OIDC/JWKS identity 검증 | FR-061, ADR-028, identity/upload decision packet, WP-06.I4 report | Local signed positive/negative contract verified; actual issuer/remote rotation/revocation pending |
-| 36. GOAL 정렬·단순성·다양한 example 자가점검 | FR-062, Case read facade, WP-00.Q1 report, EX-01~13 catalog | Local standardized Alpha evidence implemented; 공식 rubric/model/retrieval/운영 품질은 pending |
+| 36. GOAL 정렬·단순성·다양한 example 자가점검 | FR-062, Case read facade, WP-00.Q1 report, EX-01~14 catalog | Local standardized Alpha evidence implemented; 공식 rubric/model/retrieval/운영 품질은 pending |
+| 37. 사내 Qwen을 짧고 재현 가능하게 검증 | FR-063, WP-06.I5a report, `axcalib verify qwen`, On-prem Wiki runbook | Shared Library/CLI local contract implemented; exact endpoint 결과와 심사 품질은 pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 
@@ -919,6 +921,7 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 - [x] exact queued grant의 202, local durable queue/lease/retry/terminal replay와 one-job Worker 계약
 - [x] main `wiki/` 단일 원본, PROJECT_STATE mirror와 GitHub/GitLab target export/publish 하네스
 - [x] provider-neutral OIDC/JWKS local signed validation과 identity/upload decision packet
+- [x] script와 같은 Library service를 쓰는 `axcalib verify qwen`과 portable on-prem runbook
 - [ ] Product/Evaluation Owner의 rubric·수치·운영 baseline 정식 sign-off
 - [ ] report/outbox producer 자체와 database/distributed worker transaction recovery
 - [ ] 일반 PPTX renderer/VLM, Vector DB, on-prem Qwen과 승인된 labeled model/retrieval 품질 spike
@@ -949,3 +952,4 @@ Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정
 | 2026-07-22 | v0.3-p1 durable-worker-alpha | exact inline/queued grant, 202/poll queue status, hash-bound local job, lease reclaim와 bounded retry Worker 추가 |
 | 2026-07-23 | v0.3-p1 portable-wiki | GitHub/GitLab Wiki 공통 원본, 개발원장 mirror, 검증·export와 opt-in CI publication 계약 추가 |
 | 2026-07-24 | v0.3-p1 identity-reference | identity/upload 결정 패킷, optional RFC 9068 OIDC/JWKS verifier, negative security contract와 Library 표준화/example 후속 계획 추가 |
+| 2026-07-24 | v0.3-p1 qwen-verify-cli | shared Qwen environment/capability service, `axcalib verify qwen`, EX-14와 portable on-prem 실행 안내 추가 |

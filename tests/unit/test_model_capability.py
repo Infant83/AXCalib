@@ -1,6 +1,8 @@
 import json
 from typing import Any
 
+import pytest
+
 from axcalib.models import (
     CapabilityProbeScope,
     CapabilityProbeStatus,
@@ -10,6 +12,7 @@ from axcalib.models import (
     MultimodalCapabilityProbe,
     Qwen35CapabilityProbe,
     model_identifiers_match,
+    probe_qwen35_from_env,
     synthetic_two_panel_png_data_url,
 )
 
@@ -171,7 +174,23 @@ def test_synthetic_vision_fixture_is_deterministic_png() -> None:
 
     assert first == second
     assert first.startswith("data:image/png;base64,iVBORw0KGgo")
-    assert model_identifiers_match(
-        "Qwen/Qwen3.5-397B-A17B", "qwen3.5-397b-a17b"
-    )
+    assert model_identifiers_match("Qwen/Qwen3.5-397B-A17B", "qwen3.5-397b-a17b")
     assert not model_identifiers_match("qwen3.5-plus", "Qwen3.5-397B-A17B")
+
+
+def test_qwen_environment_service_requires_canonical_explicit_values() -> None:
+    with pytest.raises(
+        ValueError,
+        match="OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL",
+    ):
+        probe_qwen35_from_env({})
+
+    with pytest.raises(ValueError, match="must explicitly identify a Qwen3.5 route"):
+        probe_qwen35_from_env(
+            {
+                "OPENAI_API_KEY": "dummy",
+                "OPENAI_BASE_URL": "http://model.internal.invalid/v1",
+                "OPENAI_MODEL": "not-qwen",
+            },
+            include_vision=False,
+        )

@@ -1,4 +1,4 @@
-"""Machine-check the offline EX-01..EX-13 usage and negative-case catalog."""
+"""Machine-check the offline EX-01..EX-14 usage and negative-case catalog."""
 
 from pathlib import Path
 
@@ -15,7 +15,7 @@ def test_example_catalog_is_complete_offline_and_points_to_executable_evidence()
     assert raw["schema_version"] == "axcalib.example-catalog/v1alpha1"
     assert raw["default_mode"] == "synthetic_offline"
     examples = raw["examples"]
-    assert [item["id"] for item in examples] == [f"EX-{index:02d}" for index in range(1, 14)]
+    assert [item["id"] for item in examples] == [f"EX-{index:02d}" for index in range(1, 15)]
     for item in examples:
         for key in (
             "title",

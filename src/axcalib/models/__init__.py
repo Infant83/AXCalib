@@ -1,6 +1,8 @@
 """Provider-independent evaluator model gateways."""
 
 from axcalib.models.capability import (
+    DEFAULT_QWEN35_CHECKPOINT,
+    QWEN35_REQUIRED_ENVIRONMENT,
     CapabilityProbeCheck,
     CapabilityProbeScope,
     CapabilityProbeStatus,
@@ -9,6 +11,7 @@ from axcalib.models.capability import (
     Qwen35CapabilityProbe,
     model_identifiers_match,
     normalize_model_identifier,
+    probe_qwen35_from_env,
     synthetic_two_panel_png_data_url,
 )
 from axcalib.models.openai_compatible import (
@@ -28,6 +31,7 @@ __all__ = [
     "CapabilityProbeStatus",
     "DEFAULT_OPENAI_BASE_URL",
     "DEFAULT_OPENAI_MODEL",
+    "DEFAULT_QWEN35_CHECKPOINT",
     "ModelCapabilityProbeReport",
     "MultimodalCapabilityProbe",
     "ModelApiMode",
@@ -35,9 +39,11 @@ __all__ = [
     "ModelGatewayError",
     "ModelGatewayResult",
     "OpenAICompatibleClient",
+    "QWEN35_REQUIRED_ENVIRONMENT",
     "Qwen35CapabilityProbe",
     "StructuredOutputMode",
     "model_identifiers_match",
     "normalize_model_identifier",
+    "probe_qwen35_from_env",
     "synthetic_two_panel_png_data_url",
 ]

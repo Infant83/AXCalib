@@ -6,8 +6,10 @@ import base64
 import binascii
 import hashlib
 import json
+import os
 import struct
 import zlib
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any, Literal, Protocol
 
@@ -17,8 +19,12 @@ from axcalib.models.openai_compatible import (
     ModelEndpointConfig,
     ModelGatewayError,
     ModelGatewayResult,
+    OpenAICompatibleClient,
 )
 from axcalib.schemas import FrozenModel
+
+DEFAULT_QWEN35_CHECKPOINT = "Qwen3.5-397B-A17B"
+QWEN35_REQUIRED_ENVIRONMENT = ("OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL")
 
 
 class CapabilityProbeScope(StrEnum):
@@ -198,10 +204,14 @@ class MultimodalCapabilityProbe:
             and include_vision
             and checkpoint_identity_confirmed
         )
-        scope_passed = capabilities_passed and route_identity_confirmed and (
-            checkpoint_identity_confirmed
-            if self.validation_scope is CapabilityProbeScope.DEPLOYMENT
-            else True
+        scope_passed = (
+            capabilities_passed
+            and route_identity_confirmed
+            and (
+                checkpoint_identity_confirmed
+                if self.validation_scope is CapabilityProbeScope.DEPLOYMENT
+                else True
+            )
         )
         limitations = [
             (
@@ -236,9 +246,12 @@ class MultimodalCapabilityProbe:
                 for item in checks
             ],
         }
-        probe_id = "mcp-" + hashlib.sha256(
-            json.dumps(probe_seed, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        ).hexdigest()[:20]
+        probe_id = (
+            "mcp-"
+            + hashlib.sha256(
+                json.dumps(probe_seed, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:20]
+        )
         endpoint_sha256 = hashlib.sha256(
             self.gateway.config.base_url.rstrip("/").encode("utf-8")
         ).hexdigest()
@@ -350,15 +363,43 @@ class Qwen35CapabilityProbe(MultimodalCapabilityProbe):
     """Compatibility name for the Qwen3.5 deployment-specific probe entrypoint."""
 
 
+def probe_qwen35_from_env(
+    environ: Mapping[str, str] | None = None,
+    *,
+    expected_checkpoint: str = DEFAULT_QWEN35_CHECKPOINT,
+    validation_scope: CapabilityProbeScope = CapabilityProbeScope.DEPLOYMENT,
+    include_vision: bool = True,
+) -> ModelCapabilityProbeReport:
+    """Run the canonical Qwen3.5 probe without exposing provider or secret details."""
+
+    values = os.environ if environ is None else environ
+    missing = [name for name in QWEN35_REQUIRED_ENVIRONMENT if not values.get(name)]
+    if missing:
+        names = ", ".join(missing)
+        raise ValueError(f"live Qwen probe requires explicit environment variables: {names}")
+    if "qwen3.5" not in normalize_model_identifier(values["OPENAI_MODEL"]):
+        raise ValueError("OPENAI_MODEL must explicitly identify a Qwen3.5 route")
+    config = ModelEndpointConfig.from_env(values, live=True)
+    client = OpenAICompatibleClient(config, api_key=values["OPENAI_API_KEY"])
+    return Qwen35CapabilityProbe(
+        client,
+        expected_checkpoint=expected_checkpoint,
+        validation_scope=validation_scope,
+    ).run(include_vision=include_vision)
+
+
 __all__ = [
     "CapabilityProbeCheck",
     "CapabilityProbeScope",
     "CapabilityProbeStatus",
+    "DEFAULT_QWEN35_CHECKPOINT",
     "ModelCapabilityProbeReport",
     "MultimodalCapabilityProbe",
+    "QWEN35_REQUIRED_ENVIRONMENT",
     "Qwen35CapabilityProbe",
     "StructuredGenerationGateway",
     "model_identifiers_match",
     "normalize_model_identifier",
+    "probe_qwen35_from_env",
     "synthetic_two_panel_png_data_url",
 ]

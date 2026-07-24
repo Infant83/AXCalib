@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
   <title id="title">AXCalib 교육 프로그램과 프로젝트 인증 모듈형 워크플로 구조도</title>
-  <desc id="desc">교육 프로그램, 학습자 가입 목표, 프로젝트 두 단계 인증, project와 education transaction recovery, local pipeline checkpoint와 JSONL batch, principal-bound project와 education API, durable local 202 Worker, provider-neutral OIDC/JWKS local reference, staged artifact hash, 제한형 PPT 렌더와 Qwen exact checkpoint 경계, 전달 인터페이스와 사람 승인 불변조건을 보여주는 인포그래픽</desc>
+  <desc id="desc">교육 프로그램, 학습자 가입 목표, 프로젝트 두 단계 인증, project와 education transaction recovery, local pipeline checkpoint와 JSONL batch, principal-bound project와 education API, durable local 202 Worker, provider-neutral OIDC/JWKS local reference, axcalib verify qwen, staged artifact hash, 제한형 PPT 렌더와 Qwen exact checkpoint 경계, 전달 인터페이스와 사람 승인 불변조건을 보여주는 인포그래픽</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#172033" flood-opacity="0.12"/>
@@ -38,7 +38,8 @@
     <text x="317" y="166" class="box-title">Python Script</text>
     <text x="317" y="186" class="box-note">working entrypoint</text>
     <rect x="405" y="140" width="145" height="60" rx="12" fill="#EAF8F4" stroke="#1E8A75"/>
-    <text x="477" y="176" class="box-title">CLI</text>
+    <text x="477" y="166" class="box-title">CLI</text>
+    <text x="477" y="186" class="box-note">verify qwen</text>
     <rect x="565" y="140" width="145" height="60" rx="12" fill="#EAF8F4" stroke="#1E8A75"/>
     <text x="637" y="166" class="box-title">FastAPI</text>
     <text x="637" y="186" class="box-note">resource API α</text>
@@ -140,7 +141,7 @@
     <text x="675" y="771" class="box-note">Lexical · Qdrant</text>
     <rect x="770" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
     <text x="850" y="751" class="box-title">Model</text>
-    <text x="850" y="771" class="box-note">Qwen · alternate probe</text>
+    <text x="850" y="771" class="box-note">shared Qwen · alternate probe</text>
     <rect x="945" y="726" width="160" height="58" rx="12" fill="#FFFFFF" stroke="#A50034"/>
     <text x="1025" y="751" class="box-title">Notification</text>
     <text x="1025" y="771" class="box-note">Recording · MR · Email</text>
@@ -173,7 +174,7 @@
   </g>
   <rect x="1215" y="687" width="290" height="78" rx="12" fill="#252F45" stroke="#465066"/>
   <text x="1360" y="716" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">현재 구현 상태</text>
-  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Lib + API/Worker + OIDC + Gold input contract</text>
+  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Lib + Verify CLI + API/Worker + OIDC + Gold input</text>
   <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Owner labels · exact model · remote ops pending</text>
 
   <!-- Delivery waves -->
@@ -199,8 +200,8 @@
     <path class="arrow" d="M 960 930 L 982 930"/>
     <rect x="990" y="870" width="250" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="1115" y="906" class="wave-title">Wave 4 · WP-06</text>
-    <text x="1115" y="931" class="wave-note">Resource API + Worker + Identity Ref</text>
-    <text x="1115" y="956" class="wave-note">local OIDC verified · remote/upload next</text>
+    <text x="1115" y="931" class="wave-note">API + Worker + Identity + Verify CLI</text>
+    <text x="1115" y="956" class="wave-note">local command ready · remote/upload next</text>
 
     <path class="arrow" d="M 1240 930 L 1262 930"/>
     <rect x="1270" y="870" width="270" height="120" rx="16" fill="#F2F3F5" stroke="#7A8495" filter="url(#shadow)"/>

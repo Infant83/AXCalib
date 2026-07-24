@@ -24,6 +24,10 @@ $env:OPENAI_MODEL = "Qwen3.5-397B-A17B"
 `OPENAI_MODEL`로 주입한다. endpoint capability는 모델 이름으로 추정하지 않고 `/models`, 최소 text,
 structured output, multimodal probe를 승인된 비식별 fixture로 확인한다.
 
+clone부터 exact-model capability, 테스트 PPTX 등록심의와 Docling 분리 실행까지의 복사 가능한
+명령은 [On-prem Qwen 실행 검증](On-Prem-Qwen-Verification)에 정리했다. 권장 진입점은 기존
+Library probe를 직접 호출하는 `axcalib verify qwen`이다.
+
 ## Live model opt-in
 
 ```python

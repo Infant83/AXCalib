@@ -9,6 +9,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from typer.testing import CliRunner
+
+from axcalib.cli import app
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "pipelines" / "probe_qwen35_capabilities.py"
 GENERIC_SCRIPT = ROOT / "scripts" / "pipelines" / "probe_multimodal_capabilities.py"
@@ -116,6 +120,57 @@ def test_script_uses_canonical_openai_environment_and_confirms_exact_model() -> 
     assert "dummy-onprem-secret" not in json.dumps([item["body"] for item in captured])
     assert "PRIVATE_REASONING_MUST_NOT_PERSIST" not in result.stdout
     assert "response_format" in serialized
+
+
+def test_cli_exposes_the_same_exact_qwen_probe(
+    monkeypatch: Any,
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "qwen-capability.json"
+    with _exact_qwen_server() as (base_url, captured):
+        monkeypatch.setenv("OPENAI_API_KEY", "dummy-cli-secret")
+        monkeypatch.setenv("OPENAI_BASE_URL", base_url)
+        monkeypatch.setenv("OPENAI_MODEL", "Qwen3.5-397B-A17B")
+        monkeypatch.setenv("OPENAI_API_MODE", "chat_completions")
+        result = CliRunner().invoke(
+            app,
+            [
+                "verify",
+                "qwen",
+                "--expected-checkpoint",
+                "Qwen3.5-397B-A17B",
+                "--scope",
+                "deployment",
+                "--output",
+                str(output),
+            ],
+        )
+
+    assert result.exit_code == 0, result.output
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["deployment_ready"] is True
+    assert report["structured_text_passed"] is True
+    assert report["structured_vision_passed"] is True
+    assert len(captured) == 2
+    assert "dummy-cli-secret" not in output.read_text(encoding="utf-8")
+    assert "PRIVATE_REASONING_MUST_NOT_PERSIST" not in result.output
+
+
+def test_cli_fails_closed_without_canonical_environment(monkeypatch: Any) -> None:
+    for name in (
+        "OPENAI_API_KEY",
+        "OPENAI_BASE_URL",
+        "OPENAI_MODEL",
+        "OPENAPI_API_KEY",
+        "OPENAPI_BASE_URL",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    result = CliRunner().invoke(app, ["verify", "qwen", "--text-only"])
+
+    assert result.exit_code == 2
+    assert "OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL" in result.output
+    assert "Traceback" not in result.output
 
 
 def test_generic_script_checks_an_alternate_proxy_without_claiming_deployment() -> None:

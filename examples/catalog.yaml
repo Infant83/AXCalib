@@ -134,3 +134,13 @@ examples:
     expected: valid draft; official_quality_executable=false이고 공식 품질 pass/fail 없음
     evidence: tests/integration/test_evaluation_owner_package.py
     cleanup: read-only validation이라 생성 상태 없음
+  - id: EX-14
+    title: On-prem Qwen verification CLI의 exact identity와 synthetic vision
+    persona: model_deployment_operator
+    fixture: local fake Qwen3.5-397B-A17B OpenAI-compatible endpoint
+    command: >-
+      uv run --no-sync pytest
+      tests/integration/test_qwen_capability_script.py::test_cli_exposes_the_same_exact_qwen_probe -q
+    expected: deployment_ready=true; text/vision 통과와 secret/raw reasoning 비보존
+    evidence: tests/integration/test_qwen_capability_script.py::test_cli_exposes_the_same_exact_qwen_probe
+    cleanup: localhost fake endpoint와 pytest tmp_path가 자동 격리

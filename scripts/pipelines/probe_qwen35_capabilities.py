@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,27 +13,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from axcalib.dossier import atomic_write_text  # noqa: E402
 from axcalib.models import (  # noqa: E402
+    DEFAULT_QWEN35_CHECKPOINT,
     CapabilityProbeScope,
-    ModelEndpointConfig,
-    OpenAICompatibleClient,
-    Qwen35CapabilityProbe,
-    normalize_model_identifier,
+    probe_qwen35_from_env,
 )
-
-REQUIRED_ENVIRONMENT = ("OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL")
-DEFAULT_EXPECTED_CHECKPOINT = "Qwen3.5-397B-A17B"
-
-
-def _build_client(environ: Mapping[str, str]) -> OpenAICompatibleClient:
-    missing = [name for name in REQUIRED_ENVIRONMENT if not environ.get(name)]
-    if missing:
-        names = ", ".join(missing)
-        raise ValueError(f"live Qwen probe requires explicit environment variables: {names}")
-    model = normalize_model_identifier(environ["OPENAI_MODEL"])
-    if "qwen3.5" not in model:
-        raise ValueError("OPENAI_MODEL must explicitly identify a Qwen3.5 route")
-    config = ModelEndpointConfig.from_env(environ, live=True)
-    return OpenAICompatibleClient(config, api_key=environ["OPENAI_API_KEY"])
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--expected-checkpoint",
-        default=DEFAULT_EXPECTED_CHECKPOINT,
+        default=DEFAULT_QWEN35_CHECKPOINT,
         help="Exact deployment checkpoint expected in endpoint model metadata.",
     )
     parser.add_argument(
@@ -70,13 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        client = _build_client(os.environ)
-        probe = Qwen35CapabilityProbe(
-            client,
+        report = probe_qwen35_from_env(
+            os.environ,
             expected_checkpoint=args.expected_checkpoint,
             validation_scope=CapabilityProbeScope(args.scope),
+            include_vision=not args.text_only,
         )
-        report = probe.run(include_vision=not args.text_only)
     except ValueError as error:
         print(f"qwen capability probe configuration error: {error}", file=sys.stderr)
         return 2

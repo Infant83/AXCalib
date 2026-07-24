@@ -120,7 +120,10 @@ unverified administrator command이며 공식 credential이 아니다.
 
 ```mermaid
 flowchart LR
-    ENV["OPENAI_API_KEY<br/>OPENAI_BASE_URL<br/>OPENAI_MODEL"] --> CLIENT["OpenAI-compatible client<br/>no SkillBoss dependency"]
+    CLI["axcalib verify qwen"] --> SERVICE["probe_qwen35_from_env()<br/>shared Library service"]
+    SCRIPT["probe_qwen35_capabilities.py"] --> SERVICE
+    ENV["OPENAI_API_KEY<br/>OPENAI_BASE_URL<br/>OPENAI_MODEL"] --> SERVICE
+    SERVICE --> CLIENT["OpenAI-compatible client<br/>no SkillBoss dependency"]
     CLIENT --> DIALECT["explicit dialect<br/>JSON-object schema contract"]
     DIALECT --> TEXT["structured text probe"]
     DIALECT --> VISION["synthetic vision probe"]
@@ -135,7 +138,7 @@ flowchart LR
     classDef pass fill:#EAF8F4,stroke:#1E8A75,color:#172033;
     classDef wait fill:#FFF3E4,stroke:#B36B00,color:#172033;
     classDef block fill:#F8EDF2,stroke:#A50034,color:#172033;
-    class ENV,CLIENT,DIALECT,TEXT,VISION,VALID pass;
+    class CLI,SCRIPT,SERVICE,ENV,CLIENT,DIALECT,TEXT,VISION,VALID pass;
     class SCOPE,ID,PROXY wait;
     class READY pass;
     class BLOCK block;
@@ -144,7 +147,8 @@ flowchart LR
 SkillBoss는 개인환경의 `provider_proxy` route로만 사용한다. 현재 `qwen3.5-plus` text/vision과
 supplied-fixture registration, GPT-4o text/vision 대조는 통과했다. GLM 4.5V vision은 실패했고 exact
 `Qwen3.5-397B-A17B` identity와 completion/gold 품질은 통과하지 않았으므로 READY node의 deployment
-의미로 승격하지 않는다. raw output와 `reasoning_content`는 저장하지 않는다.
+의미로 승격하지 않는다. raw output와 `reasoning_content`는 저장하지 않는다. WP-06.I5a의 CLI와
+working script는 environment/client 조립을 복제하지 않고 같은 Library service와 report를 사용한다.
 
 ### 0.4 WP-06.I1 authenticated runtime API boundary
 

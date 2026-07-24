@@ -30,6 +30,10 @@
       "destination": "Configuration-and-On-Prem.md"
     },
     {
+      "source": "On-Prem-Qwen-Verification.md",
+      "destination": "On-Prem-Qwen-Verification.md"
+    },
+    {
       "source": "Architecture-and-Project.md",
       "destination": "Architecture-and-Project.md"
     },
