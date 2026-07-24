@@ -49,6 +49,14 @@
 - persona·fixture·명령·기대 상태·cleanup을 가진 EX-01~EX-12 machine-readable catalog
 - Case status/summary Draft 2020-12 JSON Schema artifact와 drift validation
 - 60초 제한 환경을 위한 `integration-core`, `integration-eval`, `integration-ops` restartable shard
+- Evaluation Owner 승인 Markdown, review-policy YAML, gold-label JSONL과 hash manifest의 복사용
+  WP-03.Q2 패키지
+- draft/approved lifecycle, criterion 완전성, 두 reviewer adjudication과 threshold를 fail-closed하는
+  gold package validator
+- assessment/recommendation, locator, insufficient/risk flag, reviewer agreement, dangerous-positive와
+  unsupported-claim gold benchmark report
+- gold manifest/case/approval/report Draft 2020-12 JSON Schema와 EX-13 owner-package 예제
+- 공식 approved benchmark에서 숨겨 둔 `test` split만 계산하는 leakage guard
 
 ### 변경
 
@@ -56,6 +64,8 @@
 - audit event append를 event ID 기준 idempotent operation으로 강화했다.
 - Windows PID 확인은 `os.kill(pid, 0)` 대신 비파괴 Win32 process query를 사용한다.
 - 기본 `prep test`에서 optional Docling contract를 분리하고 `prep.ps1 docling`으로 명시 실행한다.
+- Docling 별도 명령에 기본 2,048MB 가용 메모리 preflight와 300초 watchdog을 추가해 저메모리
+  환경에서 세션 고갈 대신 `BLOCKED_RESOURCE`로 fail-fast한다.
 - terminal/cancelled pipeline run은 재실행하지 않고, retryable failure만 같은 run ID에서 재시도한다.
 - persisted pipeline result path/SHA-256과 batch manifest SHA-256이 바뀌면 fail-closed한다.
 - Library registry 등록과 HTTP 공개 grant를 분리하고 generic actor/admin decision payload를 거부한다.

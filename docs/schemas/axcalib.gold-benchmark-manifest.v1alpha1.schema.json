@@ -1,0 +1,271 @@
+{
+  "$defs": {
+    "BenchmarkApprovalFile": {
+      "additionalProperties": false,
+      "description": "Hash-bound human-readable approval record.",
+      "properties": {
+        "path": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "title": "BenchmarkApprovalFile",
+      "type": "object"
+    },
+    "BenchmarkLabelsFile": {
+      "additionalProperties": false,
+      "description": "Hash-bound JSONL label file metadata.",
+      "properties": {
+        "path": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "record_count": {
+          "minimum": 1,
+          "title": "Record Count",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "record_count"
+      ],
+      "title": "BenchmarkLabelsFile",
+      "type": "object"
+    },
+    "BenchmarkPolicyFile": {
+      "additionalProperties": false,
+      "description": "Review policy file and canonical policy identity.",
+      "properties": {
+        "canonical_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Canonical Sha256",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "policy_id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "policy_id",
+        "version",
+        "canonical_sha256"
+      ],
+      "title": "BenchmarkPolicyFile",
+      "type": "object"
+    },
+    "BenchmarkSplit": {
+      "description": "Data split controlled by the Evaluation Owner.",
+      "enum": [
+        "development",
+        "validation",
+        "test"
+      ],
+      "title": "BenchmarkSplit",
+      "type": "string"
+    },
+    "BenchmarkStatus": {
+      "description": "Lifecycle of a semantic benchmark package.",
+      "enum": [
+        "draft",
+        "offline_reference",
+        "approved",
+        "retired"
+      ],
+      "title": "BenchmarkStatus",
+      "type": "string"
+    },
+    "BenchmarkThresholds": {
+      "additionalProperties": false,
+      "description": "Owner-selected acceptance thresholds; code does not invent their values.",
+      "properties": {
+        "criterion_assessment_accuracy_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Criterion Assessment Accuracy Min",
+          "type": "number"
+        },
+        "dangerous_positive_rate_max": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Dangerous Positive Rate Max",
+          "type": "number"
+        },
+        "evidence_locator_precision_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Evidence Locator Precision Min",
+          "type": "number"
+        },
+        "evidence_locator_recall_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Evidence Locator Recall Min",
+          "type": "number"
+        },
+        "human_pre_adjudication_agreement_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Human Pre Adjudication Agreement Min",
+          "type": "number"
+        },
+        "insufficient_evidence_recall_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Insufficient Evidence Recall Min",
+          "type": "number"
+        },
+        "recommendation_accuracy_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Recommendation Accuracy Min",
+          "type": "number"
+        },
+        "required_risk_flag_recall_min": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Required Risk Flag Recall Min",
+          "type": "number"
+        },
+        "unsupported_claim_rate_max": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Unsupported Claim Rate Max",
+          "type": "number"
+        }
+      },
+      "required": [
+        "criterion_assessment_accuracy_min",
+        "recommendation_accuracy_min",
+        "evidence_locator_precision_min",
+        "evidence_locator_recall_min",
+        "insufficient_evidence_recall_min",
+        "required_risk_flag_recall_min",
+        "human_pre_adjudication_agreement_min",
+        "dangerous_positive_rate_max",
+        "unsupported_claim_rate_max"
+      ],
+      "title": "BenchmarkThresholds",
+      "type": "object"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/gold-benchmark-manifest/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Manifest binding policy, labels, approval record, and thresholds.",
+  "properties": {
+    "approval": {
+      "$ref": "#/$defs/BenchmarkApprovalFile"
+    },
+    "approval_ref": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approval Ref"
+    },
+    "benchmark_id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+      "title": "Benchmark Id",
+      "type": "string"
+    },
+    "description": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "evaluation_split": {
+      "$ref": "#/$defs/BenchmarkSplit"
+    },
+    "labels": {
+      "$ref": "#/$defs/BenchmarkLabelsFile"
+    },
+    "owner_ref": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Owner Ref",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/BenchmarkPolicyFile"
+    },
+    "schema_version": {
+      "const": "axcalib.gold-benchmark-manifest/v1alpha1",
+      "default": "axcalib.gold-benchmark-manifest/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/BenchmarkStatus"
+    },
+    "thresholds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BenchmarkThresholds"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "benchmark_id",
+    "version",
+    "status",
+    "owner_ref",
+    "description",
+    "evaluation_split",
+    "policy",
+    "labels",
+    "approval"
+  ],
+  "title": "GoldBenchmarkManifest",
+  "type": "object"
+}

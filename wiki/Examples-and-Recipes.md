@@ -25,7 +25,7 @@ uv run --no-sync python examples/case_lifecycle/run_readable_pass.py `
 실제 제안 PPTX와 synthetic 완료 PPTX를 사용하지만 기준은 해당 정보 흐름용 축소
 `offline_reference`다. 공식 AX rubric, 실제 학습자 평가나 운영 인증 결과가 아니다.
 
-`examples/catalog.yaml`에는 EX-01~EX-12의 persona, fixture, 명령, 기대 상태/실패와 cleanup이 있다.
+`examples/catalog.yaml`에는 EX-01~EX-13의 persona, fixture, 명령, 기대 상태/실패와 cleanup이 있다.
 첫 사용자는 Recipe 1/2만 보고, stale·알림·retrieval·model·identity·worker·batch 경계는 필요할 때
 catalog에서 실행한다.
 
@@ -85,7 +85,8 @@ uv run --no-sync python scripts/pipelines/run_local_worker_once.py --help
 ```
 
 중간에 프로세스가 종료되면 실패한 그룹만 다시 실행한다. memory-heavy Docling은 `.\prep.ps1 docling`로
-분리한다.
+분리하며, 기본 2,048MB 가용 메모리 preflight와 300초 watchdog을 통과하지 못하면 즉시
+`BLOCKED_RESOURCE`로 종료한다.
 
 ## Recipe 7: Wiki를 두 플랫폼 형식으로 미리보기
 
@@ -100,7 +101,22 @@ uv run --no-sync python scripts/wiki/sync_wiki.py export `
 원격 전송은 일어나지 않는다. 실제 publication 규칙은 [문서 운영 규칙](Documentation-Governance)을
 따른다.
 
-## Recipe 8: OIDC/JWKS local signed contract
+## Recipe 8: Evaluation Owner gold package 확인
+
+공식 품질평가는 Markdown 한 장이 아니라 승인 Markdown, 실행형 review-policy YAML, gold JSONL과
+hash manifest를 함께 사용한다. 먼저 복사용 draft가 fail-closed 계약을 지키는지 확인한다.
+
+```powershell
+uv run --no-sync python scripts/pipelines/validate_evaluation_owner_package.py `
+  --package docs/evaluation/templates/evaluation-owner-package `
+  --allow-draft `
+  --print-hashes
+```
+
+공식 package는 두 평가자의 adjudication, Owner threshold와 숨겨 둔 `test` split의 등록·완료 label을
+모두 가져야 한다. 승인 전 draft 검증은 공식 모델 품질 통과가 아니다.
+
+## Recipe 9: OIDC/JWKS local signed contract
 
 실제 사내 IdP를 호출하지 않고 ephemeral RSA/EC key와 synthetic claim으로 valid/invalid 경계를
 검증한다.
@@ -114,3 +130,15 @@ uv run --no-sync pytest tests/unit/test_oidc_identity.py `
 정상 token만 `ApiPrincipal`로 매핑된다. signature 변조, 만료, 다른 issuer/audience/type/key,
 unmapped role/scope/org는 거부되고 key provider/config 장애는 503으로 구분된다. 이 recipe는 실제
 SSO 연결·계정 회수·key rotation 증거가 아니다.
+
+## Recipe 9: Evaluation Owner draft package 검증
+
+```powershell
+uv run --no-sync python scripts/pipelines/validate_evaluation_owner_package.py `
+  --package docs/evaluation/templates/evaluation-owner-package `
+  --allow-draft `
+  --print-hashes
+```
+
+결과의 `official_quality_executable`은 `false`다. Owner가 published rubric, 양 Gate adjudicated
+label과 threshold를 승인한 뒤 `--allow-draft` 없이 검증해야 공식 benchmark runner에 입력할 수 있다.

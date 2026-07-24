@@ -124,3 +124,13 @@ examples:
     expected: 항목별 terminal/retryable/succeeded 유지; 성공 항목 재실행 없음
     evidence: tests/unit/test_pipeline_execution.py::test_batch_keeps_partial_failure_and_replays_completed_items
     cleanup: pytest tmp_path가 자동 격리
+  - id: EX-13
+    title: Evaluation Owner rubric·gold draft 패키지 검증
+    persona: evaluation_owner
+    fixture: docs/evaluation/templates/evaluation-owner-package
+    command: >-
+      uv run --no-sync python scripts/pipelines/validate_evaluation_owner_package.py
+      --package docs/evaluation/templates/evaluation-owner-package --allow-draft --print-hashes
+    expected: valid draft; official_quality_executable=false이고 공식 품질 pass/fail 없음
+    evidence: tests/integration/test_evaluation_owner_package.py
+    cleanup: read-only validation이라 생성 상태 없음

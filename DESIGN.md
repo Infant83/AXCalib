@@ -595,6 +595,30 @@ confidence를 모델의 막연한 자기확신 숫자로 사용하지 않는다.
 
 최종 confidence 또는 review_priority는 위 신호에서 계산하며 공식 계산식은 calibration dataset으로 검증한다.
 
+### 10.1 Evaluation Owner gold benchmark package
+
+공식 semantic 품질평가는 한 파일에 사람 설명과 실행 데이터를 섞지 않는다.
+
+```text
+OWNER_APPROVAL.md        사람의 범위·데이터·threshold 승인과 YAML frontmatter
+review-policy.yaml       published 두 Gate criterion/recommendation
+gold-labels.jsonl        project-stage별 정답, stable locator, reviewer vote와 adjudication
+benchmark-manifest.yaml  policy canonical hash, labels/approval byte hash와 threshold
+```
+
+loader는 package root 밖 경로, size 초과, id/version/hash drift, stage별 criterion 누락, recommendation
+vocabulary 위반을 거부한다. 공식 `approved` package는 숨겨 둔 `test` evaluation split의 두 Gate,
+두 reviewer 이상의 vote,
+`adjudication_ref`, published policy, approval reference와 Owner threshold를 모두 요구한다. draft는
+구조검증만 가능하고 quality pass/fail을 만들 수 없다.
+
+benchmark report는 criterion/recommendation agreement, stable evidence locator precision/recall,
+insufficient-evidence와 required-risk-flag recall, adjudication 이전 reviewer agreement, 위험한
+`pass`/`accept`와 unsupported-claim rate를 계산한다. 이 결과는 Agent 초안 품질이며 관리자 최종
+인증결정과 분리된다. 각 metric의 분모를 함께 기록하며, approved benchmark에서 insufficient,
+required-risk 또는 비긍정 case 분모가 0이면 해당 threshold check를 통과시키지 않는다. source
+report가 live model인지와 model ID는 secret-free manifest로 남긴다.
+
 ## 11. Historical Case와 Vector DB
 
 ### 11.1 Corpus 분리

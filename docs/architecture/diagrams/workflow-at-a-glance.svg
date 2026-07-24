@@ -27,7 +27,7 @@
   <text x="60" y="56" class="title">AXCalib — Composable Workflow Architecture</text>
   <text x="60" y="86" class="subtitle">Versioned Program → Enrollment Goals → Project Two Gates → Authorized Completion</text>
   <rect x="1330" y="42" width="210" height="36" rx="18" fill="#172033"/>
-  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">v0.3-p1 · G4 IDENTITY REF</text>
+  <text x="1435" y="66" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">G3 INPUT · G4 REF</text>
 
   <!-- Delivery lane -->
   <rect x="60" y="120" width="1080" height="100" rx="18" fill="#EEF4FF" stroke="#BFD2FF" filter="url(#shadow)"/>
@@ -71,7 +71,7 @@
     <text x="850" y="323" class="box-note">draft only</text>
     <rect x="945" y="273" width="160" height="70" rx="12" fill="#FFFFFF" stroke="#B36B00"/>
     <text x="1025" y="301" class="box-title">Benchmark</text>
-    <text x="1025" y="323" class="box-note">retrieval</text>
+    <text x="1025" y="323" class="box-note">gold · retrieval</text>
   </g>
 
   <path class="arrow" d="M 600 365 L 600 391"/>
@@ -173,8 +173,8 @@
   </g>
   <rect x="1215" y="687" width="290" height="78" rx="12" fill="#252F45" stroke="#465066"/>
   <text x="1360" y="716" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">현재 구현 상태</text>
-  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Lib + CLI + API/Worker + local OIDC reference</text>
-  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">remote JWKS · upload · queue pending</text>
+  <text x="1360" y="740" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="13" fill="#D7DBE2" text-anchor="middle">Lib + API/Worker + OIDC + Gold input contract</text>
+  <text x="1360" y="759" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="12" fill="#AEB6C3" text-anchor="middle">Owner labels · exact model · remote ops pending</text>
 
   <!-- Delivery waves -->
   <text x="60" y="848" class="lane-title">Delivery Waves — 날짜가 아니라 dependency Gate</text>
@@ -194,7 +194,7 @@
     <rect x="680" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>
     <text x="820" y="906" class="wave-title">Wave 2/3 · WP-02~05</text>
     <text x="820" y="931" class="wave-note">Render · Gold · Policy · Model</text>
-    <text x="820" y="956" class="wave-note">proxy 통과 · exact/full rubric 남음</text>
+    <text x="820" y="956" class="wave-note">input contract ready · Owner labels pending</text>
 
     <path class="arrow" d="M 960 930 L 982 930"/>
     <rect x="990" y="870" width="250" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>

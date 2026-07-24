@@ -1,0 +1,96 @@
+schema_version: axcalib.review-policy-pack/v1alpha1
+policy_id: replace.ax-project.review
+version: 0.1.0
+status: draft
+owner: replace:evaluation-owner
+description: Draft template for an Evaluation Owner controlled two-gate AX project review.
+registration:
+  stage: registration
+  rubric_id: replace.ax-project.registration
+  rubric_version: 0.1.0
+  checklist_refs:
+    - docs/rubrics/registration_checklist.md
+  references:
+    - reference_id: registration-guidance
+      title: Registration review guidance
+      authority: guidance
+      uri: docs/rubrics/registration_checklist.md
+      version: 0.1.0-draft
+      sha256: 3661a7ce6140ac70f1efe51f9eaae1c5885fae238894771277b701340813ec5a
+  criteria:
+    - criterion_id: REG-PROBLEM-GOAL
+      title: 문제와 AX 목표
+      required_tags: [problem, goal]
+      follow_up: 해결하려는 문제와 목표를 명시해 주십시오.
+      critical: true
+      blocking_recommendation: reject
+    - criterion_id: REG-SCOPE-METHOD
+      title: 범위와 접근방법
+      required_tags: [scope, method]
+      follow_up: 포함·제외 범위와 핵심 방법을 구분해 주십시오.
+    - criterion_id: REG-PLAN-VALIDATION
+      title: 로드맵과 검증계획
+      required_tags: [roadmap, validation_plan]
+      follow_up: 단계별 종료조건과 검증 책임자를 추가해 주십시오.
+    - criterion_id: REG-KPI
+      title: 정량 KPI와 측정방법
+      required_tags: [kpi_plan, quantitative_target]
+      follow_up: KPI별 baseline, target, unit, period와 측정방법을 제시해 주십시오.
+      critical: true
+    - criterion_id: REG-RISK
+      title: 위험과 한계
+      required_tags: [risk, limitation]
+      follow_up: 위험별 대응책과 중단조건을 연결해 주십시오.
+    - criterion_id: REG-DATA-GOVERNANCE
+      title: 데이터·보안·윤리
+      required_tags: [data, security]
+      follow_up: 데이터 출처, 접근등급, 개인정보와 외부전송 정책을 명시해 주십시오.
+      critical: true
+    - criterion_id: REG-ROLE-RESOURCE
+      title: 역할과 자원
+      required_tags: [role, resource]
+      follow_up: 과제 owner, 평가자와 필요한 자원을 명시해 주십시오.
+  all_met_recommendation: pass
+  gap_recommendation: needs_changes
+completion:
+  stage: completion
+  rubric_id: replace.ax-project.completion
+  rubric_version: 0.1.0
+  checklist_refs:
+    - docs/rubrics/completion_checklist.md
+  references:
+    - reference_id: completion-guidance
+      title: Completion review guidance
+      authority: guidance
+      uri: docs/rubrics/completion_checklist.md
+      version: 0.1.0-draft
+      sha256: 260f4fdfedddae2cd8cc22f98afd1d8ea9586384d1126d809e2966d298354649
+  criteria:
+    - criterion_id: COM-DELIVERABLE
+      title: 완료 산출물과 작동 증거
+      required_tags: [deliverable, result]
+      follow_up: 실제 산출물 hash, 실행 로그와 검증 결과를 제출해 주십시오.
+      critical: true
+      blocking_recommendation: not_accept
+    - criterion_id: COM-KPI
+      title: KPI 관측값과 달성도
+      required_tags: [result, quantitative_target]
+      follow_up: 관측값, 단위, 기간, 측정방법과 원문 locator를 제출해 주십시오.
+      critical: true
+      blocking_recommendation: not_accept
+    - criterion_id: COM-EXECUTION
+      title: 수행·재현 증거
+      required_tags: [result, reproducibility]
+      follow_up: 버전, 환경, 테스트 및 재실행 절차를 제출해 주십시오.
+      critical: true
+      blocking_recommendation: not_accept
+    - criterion_id: COM-CHANGE
+      title: 등록안 대비 변경
+      required_tags: [change]
+      follow_up: 등록 baseline 대비 변경과 승인 여부를 명시해 주십시오.
+    - criterion_id: COM-RISK-FOLLOWUP
+      title: 완료 시점 위험과 후속계획
+      required_tags: [risk, limitation]
+      follow_up: 남은 위험, 운영 한계와 후속 책임자를 명시해 주십시오.
+  all_met_recommendation: accept
+  gap_recommendation: needs_changes

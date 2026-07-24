@@ -1,0 +1,32 @@
+schema_version: axcalib.gold-benchmark-manifest/v1alpha1
+benchmark_id: replace.ax-project.semantic-gold
+version: 0.1.0
+status: draft
+owner_ref: replace:evaluation-owner
+approval_ref:
+description: Draft copyable package; not an approved AXCalib quality baseline.
+evaluation_split: development
+policy:
+  path: review-policy.yaml
+  policy_id: replace.ax-project.review
+  version: 0.1.0
+  canonical_sha256: da528d736c27017c6221172a33aef567f561e534fdc636bb9d3f55d7b5678f53
+labels:
+  path: gold-labels.jsonl
+  sha256: 54f299b4de5af992dc4cecc0fc1198063377fc53316cf404acccde13bcc373ab
+  record_count: 2
+approval:
+  path: OWNER_APPROVAL.md
+  sha256: 2414ac740c7e684956d704b68453e76c32159bcd8a956b825dabf88639f15bc4
+thresholds: null
+# Replace null with an Evaluation Owner approved mapping:
+#   criterion_assessment_accuracy_min: 0.0
+#   recommendation_accuracy_min: 0.0
+#   evidence_locator_precision_min: 0.0
+#   evidence_locator_recall_min: 0.0
+#   insufficient_evidence_recall_min: 0.0
+#   required_risk_flag_recall_min: 0.0
+#   human_pre_adjudication_agreement_min: 0.0
+#   dangerous_positive_rate_max: 1.0
+#   unsupported_claim_rate_max: 1.0
+# The numbers above demonstrate valid ranges only; they are not recommended thresholds.

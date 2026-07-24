@@ -49,8 +49,14 @@ uv sync --frozen --extra docling
 ```
 
 메모리 부족이나 parser 장애가 전체 Library를 중단시키지 않도록 별도 process contract로 검증한다.
-필요하면 OOXML 기반 제한형 parser와 sidecar evidence를 offline fallback으로 사용하되 OCR/VLM 품질을
-주장하지 않는다.
+기본 가용 메모리 기준은 2,048MB, timeout은 300초이며 harness 전용
+`AXCALIB_DOCLING_MIN_AVAILABLE_MB`, `AXCALIB_DOCLING_TIMEOUT_SECONDS`로 조정할 수 있다. 기준 미달은
+설치 실패가 아니라 `BLOCKED_RESOURCE`다. 필요하면 OOXML 기반 제한형 parser와 sidecar evidence를
+offline fallback으로 사용하되 OCR/VLM 품질을 주장하지 않는다.
+
+개인환경 SkillBoss는 현재 `bailian/qwen3.5-plus/flash` provider alias를 제공한다. 이는 exact on-prem
+`Qwen3.5-397B-A17B`가 아니며 CLI account/update metadata 결함이 제품 설정으로 전파되지 않게 한다.
+온프렘에서는 계속 `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`만 바꿔 같은 adapter를 사용한다.
 
 ## OIDC/JWKS identity
 

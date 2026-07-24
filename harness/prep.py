@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -61,6 +62,10 @@ REQUIRED_PATHS = (
     "docs/schemas/axcalib.education-enrollment.v1alpha1.schema.json",
     "docs/schemas/axcalib.case-status.v1alpha1.schema.json",
     "docs/schemas/axcalib.case-summary.v1alpha1.schema.json",
+    "docs/schemas/axcalib.gold-benchmark-manifest.v1alpha1.schema.json",
+    "docs/schemas/axcalib.gold-case-label.v1alpha1.schema.json",
+    "docs/schemas/axcalib.evaluation-owner-approval.v1alpha1.schema.json",
+    "docs/schemas/axcalib.gold-benchmark-report.v1alpha1.schema.json",
     "docs/api/README.md",
     "docs/api/openapi.v1alpha1.json",
     "docs/api/examples/registration-evaluation.request.json",
@@ -95,6 +100,13 @@ REQUIRED_PATHS = (
     "docs/evaluation/wp00-d2-portable-wiki-harness-report.md",
     "docs/evaluation/wp06-i4-identity-jwks-reference-report.md",
     "docs/evaluation/wp00-q1-library-standardization-report.md",
+    "docs/evaluation/wp03-q2a-evaluation-owner-input-contract-report.md",
+    "docs/adr/ADR-030-evaluation-owner-gold-benchmark-package.md",
+    "docs/evaluation/templates/evaluation-owner-package/README.md",
+    "docs/evaluation/templates/evaluation-owner-package/OWNER_APPROVAL.md",
+    "docs/evaluation/templates/evaluation-owner-package/review-policy.yaml",
+    "docs/evaluation/templates/evaluation-owner-package/gold-labels.jsonl",
+    "docs/evaluation/templates/evaluation-owner-package/benchmark-manifest.yaml",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -132,6 +144,7 @@ REQUIRED_PATHS = (
     "src/axcalib/evaluation/offline.py",
     "src/axcalib/evaluation/evidence_quality.py",
     "src/axcalib/evaluation/model.py",
+    "src/axcalib/calibration/gold_benchmark.py",
     "src/axcalib/models/openai_compatible.py",
     "src/axcalib/models/capability.py",
     "src/axcalib/runtime/transactions.py",
@@ -142,6 +155,8 @@ REQUIRED_PATHS = (
     "scripts/pipelines/run_dossier_freeze.py",
     "scripts/pipelines/run_transaction_reconciliation.py",
     "scripts/pipelines/probe_qwen35_capabilities.py",
+    "scripts/pipelines/validate_evaluation_owner_package.py",
+    "scripts/pipelines/run_gold_benchmark.py",
     "examples/education_project_lifecycle/README.md",
     "examples/education_project_lifecycle/run_full_lifecycle.py",
     "examples/case_lifecycle/run_readable_pass.py",
@@ -814,12 +829,20 @@ def validate_workspace() -> tuple[list[str], list[str]]:
     if errors:
         return errors, warnings
 
+    from axcalib.calibration import GoldBenchmarkError, load_gold_benchmark_package
     from axcalib.schemas.export import export_schema_artifacts
     from axcalib.workflows.two_gate import approval_transition_errors
     from harness.wiki import validate_wiki
 
     errors.extend(approval_transition_errors())
     errors.extend(export_schema_artifacts(ROOT / "docs" / "schemas", check=True))
+    try:
+        load_gold_benchmark_package(
+            ROOT / "docs" / "evaluation" / "templates" / "evaluation-owner-package",
+            allow_draft=True,
+        )
+    except GoldBenchmarkError as error:
+        errors.append(f"evaluation owner package template: {error}")
 
     for relative, expected_stage in CHECKLISTS:
         metadata = _frontmatter(ROOT / relative)
@@ -898,11 +921,25 @@ def run_validate() -> int:
     return 0
 
 
-def _run(command: list[str]) -> int:
+def _run(command: list[str], *, timeout_seconds: int | None = None) -> int:
     env = os.environ.copy()
     env["PYTHONPATH"] = os.pathsep.join([str(SRC), str(ROOT), env.get("PYTHONPATH", "")])
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    return subprocess.run(command, cwd=ROOT, env=env, check=False).returncode
+    try:
+        return subprocess.run(
+            command,
+            cwd=ROOT,
+            env=env,
+            check=False,
+            timeout=timeout_seconds,
+        ).returncode
+    except subprocess.TimeoutExpired:
+        print(
+            f"process timed out after {timeout_seconds} seconds: {command[0]}",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 124
 
 
 TEST_GROUPS: dict[str, list[str]] = {
@@ -915,6 +952,7 @@ TEST_GROUPS: dict[str, list[str]] = {
         "tests/integration/test_harness_contract.py",
     ],
     "integration-eval": [
+        "tests/integration/test_evaluation_owner_package.py",
         "tests/integration/test_model_gateway.py",
         "tests/integration/test_pptx_two_gate_pipeline.py",
         "tests/integration/test_qwen_capability_script.py",
@@ -969,6 +1007,26 @@ def run_tests(group: str = "all") -> int:
 def run_docling_contract() -> int:
     """Run the memory-heavy optional Docling contract in an isolated process."""
 
+    try:
+        minimum_mb = int(os.environ.get("AXCALIB_DOCLING_MIN_AVAILABLE_MB", "2048"))
+        timeout_seconds = int(os.environ.get("AXCALIB_DOCLING_TIMEOUT_SECONDS", "300"))
+    except ValueError:
+        print("docling: invalid integer resource-guard configuration", file=sys.stderr, flush=True)
+        return 2
+    if minimum_mb <= 0 or timeout_seconds <= 0:
+        print("docling: resource-guard values must be positive", file=sys.stderr, flush=True)
+        return 2
+    available = _available_memory_bytes()
+    if available is not None and available < minimum_mb * 1024 * 1024:
+        available_mb = available // (1024 * 1024)
+        print(
+            "docling: BLOCKED_RESOURCE "
+            f"(available_memory_mb={available_mb}, required_memory_mb={minimum_mb}); "
+            "close memory-heavy applications and retry the isolated command",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 3
     base_temp = ROOT / "output" / "pytest-runs" / f"docling-{os.getpid()}"
     base_temp.parent.mkdir(parents=True, exist_ok=True)
     return _run(
@@ -980,8 +1038,41 @@ def run_docling_contract() -> int:
             "-q",
             "--basetemp",
             str(base_temp),
-        ]
+        ],
+        timeout_seconds=timeout_seconds,
     )
+
+
+def _available_memory_bytes() -> int | None:
+    """Return available physical memory without adding a runtime dependency."""
+
+    if sys.platform == "win32":
+
+        class MemoryStatusEx(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        status = MemoryStatusEx()
+        status.dwLength = ctypes.sizeof(status)
+        windll = getattr(ctypes, "windll", None)
+        if windll is None or not windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            return None
+        return int(status.ullAvailPhys)
+    try:
+        pages = os.sysconf("SC_AVPHYS_PAGES")
+        page_size = os.sysconf("SC_PAGE_SIZE")
+    except (AttributeError, OSError, ValueError):
+        return None
+    return int(pages * page_size)
 
 
 def run_eval() -> int:

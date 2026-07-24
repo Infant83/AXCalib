@@ -1,0 +1,229 @@
+{
+  "$defs": {
+    "AgentRecommendation": {
+      "description": "Non-binding evaluator recommendation.",
+      "enum": [
+        "pass",
+        "needs_changes",
+        "reject",
+        "accept",
+        "not_accept"
+      ],
+      "title": "AgentRecommendation",
+      "type": "string"
+    },
+    "Assessment": {
+      "description": "One criterion assessment without a final certification decision.",
+      "enum": [
+        "met",
+        "partially_met",
+        "not_met",
+        "insufficient_evidence",
+        "not_applicable"
+      ],
+      "title": "Assessment",
+      "type": "string"
+    },
+    "BenchmarkSplit": {
+      "description": "Data split controlled by the Evaluation Owner.",
+      "enum": [
+        "development",
+        "validation",
+        "test"
+      ],
+      "title": "BenchmarkSplit",
+      "type": "string"
+    },
+    "GoldCriterionLabel": {
+      "additionalProperties": false,
+      "description": "One adjudicated expected criterion finding.",
+      "properties": {
+        "acceptable_evidence_locators": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptable Evidence Locators",
+          "type": "array"
+        },
+        "criterion_id": {
+          "pattern": "^[A-Z][A-Z0-9_-]{2,127}$",
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "expected_assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "rationale": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "required_risk_flags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Risk Flags",
+          "type": "array"
+        },
+        "reviewer_votes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/GoldReviewerVote"
+          },
+          "title": "Reviewer Votes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "criterion_id",
+        "expected_assessment",
+        "rationale"
+      ],
+      "title": "GoldCriterionLabel",
+      "type": "object"
+    },
+    "GoldLabelStatus": {
+      "description": "Human review maturity of one gold label.",
+      "enum": [
+        "single_review",
+        "double_review",
+        "adjudicated"
+      ],
+      "title": "GoldLabelStatus",
+      "type": "string"
+    },
+    "GoldReviewerVote": {
+      "additionalProperties": false,
+      "description": "One pseudonymous pre-adjudication assessment.",
+      "properties": {
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "reviewer_ref": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reviewer Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviewer_ref",
+        "assessment"
+      ],
+      "title": "GoldReviewerVote",
+      "type": "object"
+    },
+    "ReviewStage": {
+      "description": "The two evaluation gates.",
+      "enum": [
+        "registration",
+        "completion"
+      ],
+      "title": "ReviewStage",
+      "type": "string"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/gold-case-label/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One project-stage gold label, independent from a final human certification.",
+  "properties": {
+    "adjudication_ref": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Adjudication Ref"
+    },
+    "artifact_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Artifact Sha256",
+      "type": "string"
+    },
+    "criteria": {
+      "items": {
+        "$ref": "#/$defs/GoldCriterionLabel"
+      },
+      "minItems": 1,
+      "title": "Criteria",
+      "type": "array"
+    },
+    "expected_recommendation": {
+      "$ref": "#/$defs/AgentRecommendation"
+    },
+    "label_id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+      "title": "Label Id",
+      "type": "string"
+    },
+    "label_status": {
+      "$ref": "#/$defs/GoldLabelStatus"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Notes"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "reviewer_refs": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Reviewer Refs",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "axcalib.gold-case-label/v1alpha1",
+      "default": "axcalib.gold-case-label/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "snapshot_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Snapshot Sha256",
+      "type": "string"
+    },
+    "split": {
+      "$ref": "#/$defs/BenchmarkSplit"
+    },
+    "stage": {
+      "$ref": "#/$defs/ReviewStage"
+    }
+  },
+  "required": [
+    "label_id",
+    "project_id",
+    "stage",
+    "split",
+    "snapshot_sha256",
+    "artifact_sha256",
+    "expected_recommendation",
+    "criteria",
+    "label_status",
+    "reviewer_refs"
+  ],
+  "title": "GoldCaseLabel",
+  "type": "object"
+}

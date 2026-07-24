@@ -2,17 +2,17 @@
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
 baseline: v0.3-p1-g4-library-standardized
-phase: P7 Interfaces
-gate: G4 Interfaces
-gate_status: interface_local_alpha_in_progress
-status: g4_library_standardized_operational_policy_blocked
+phase: P5 Evaluation
+gate: G3 Intelligence
+gate_status: quality_input_contract_verified_benchmark_blocked
+status: wp03_q2a_verified_q2b_blocked_owner_input
 current_work_package: WP-03 rubric and report quality benchmark
-active_slice: WP-03.Q2 owner-approved-rubric-gold-benchmark
+active_slice: WP-03.Q2b owner-approved-gold-execution
 active_slice_status: blocked_policy
 next_gate: G3 Intelligence quality baseline
 schedule_mode: dependency_only
 updated_at: 2026-07-24
-last_history_id: HIST-2026-07-24-005
+last_history_id: HIST-2026-07-24-007
 ---
 
 # AXCalib Project Execution Ledger
@@ -59,13 +59,13 @@ last_history_id: HIST-2026-07-24-005
 
 | 항목 | 현재 값 |
 |---|---|
-| 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
-| 현재 Work Package | **WP-00.Q1 standardized local Alpha 완료**; 다음 WP-03.Q2 공식 rubric/gold는 Owner 대기 |
-| Active Slice | **WP-03.Q2** (`blocked_policy`; Evaluation Owner의 rubric·gold fixture 승인 필요) |
-| 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/local Worker/OIDC signed reference evidence 확보 |
+| 현재 Phase | **P5 Evaluation**; P2 local Library MVP/Alpha와 G4 local interface checkpoint 유지 |
+| 현재 Work Package | **WP-03.Q2 rubric/report gold benchmark**; Q2a 입력계약 완료, Q2b Owner 자료 대기 |
+| Active Slice | **WP-03.Q2b** (`blocked_policy`; 공식 rubric/threshold/hidden test gold 필요) |
+| 현재 Gate | **G3 Intelligence reference verified / quality pending**; G4 local interface checkpoint도 유지 |
 | 다음 Gate | **G3 Intelligence quality baseline**; 공식 rubric/gold 필요. G4 운영 branch는 remote identity/upload/distributed evidence 대기 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 173 tests(118/34/21; integration 9/19/6 shards), EX catalog 16, 10 eval groups, clean core/interface wheel, validation 0/0, Ruff, Pyright 0/0 |
+| 최근 회귀 | 189 tests(131/37/21; integration 9/22/6 shards), EX catalog 13, 10 eval groups, Owner package 16 targeted, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API·remote identity/upload/distributed worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -433,13 +433,30 @@ Exit Evidence:
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `blocked_policy`; 2026-07-24 대기 전환 |
+| 상태 | `q2a_completed_q2b_blocked_owner_input`; 2026-07-24 Q2a 완료 |
 | 목적 | 공식 등록·완료 rubric과 사람 gold label로 report traceability, unsupported claim과 agreement를 평가 |
 | 선행조건 | Evaluation Owner가 rubric version/threshold, 승인된 비식별 fixture와 expected label을 제공 |
 | 금지 | example-only pass policy 또는 provider proxy 결과를 공식 품질 baseline으로 재사용하지 않음 |
 | 출력 | version/hash-bound gold dataset, report benchmark, defect analysis와 G3 quality 판정 |
 | 병행 운영 경로 | WP-06.I4.2 remote identity/assignment/upload는 Product/Security/Platform Owner 승인 대기 |
 | 목표 Gate | G3 Intelligence quality baseline; 현재 G4 local interface 상태를 자동 승격하지 않음 |
+
+Q2a Exit Evidence:
+
+- [x] 사람이 검토하는 승인 Markdown과 실행형 rubric YAML, gold JSONL, hash-bound manifest가 분리된다.
+- [x] draft/offline_reference와 approved benchmark를 구분하고 승인정보·threshold가 없으면 fail closed한다.
+- [x] 모든 case가 해당 stage rubric criterion을 정확히 한 번 포함하고 recommendation vocabulary를 지킨다.
+- [x] 공식 pass/fail은 manifest에 고정한 숨겨 둔 `test` split만 계산한다.
+- [x] gold package validator와 synthetic approved-package example이 network/model 없이 실행된다.
+- [x] 공식 label을 받기 전에는 quality pass/fail 또는 G3 quality 완료를 주장하지 않는다.
+- [x] Docling low-memory preflight와 SkillBoss provider-proxy 제한을 현재 실행 증거로 갱신한다.
+
+Q2b Unblock Input:
+
+- [ ] Evaluation Owner published registration/completion policy와 approval reference
+- [ ] 두 reviewer 독립 vote, adjudication과 stable locator를 가진 비식별 hidden test labels
+- [ ] 업무 위험에 따라 Owner가 승인한 metric threshold
+- [ ] exact on-prem Qwen 및 비교 model의 같은 snapshot/policy 기반 EvaluationReport
 
 ## 6. 일정·작업 Queue
 
@@ -452,7 +469,7 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 2 | P5 / WP-05 | Q1 Qwen provider-proxy capability | `partial_verified` | Q1 evidence, user-approved SkillBoss access | 2026-07-21 | 2026-07-21 | G3 evidence 일부 |
 | 3 | P5 / WP-05 | Q2 SkillBoss HTTP500 recovery | `verified_proxy` | Q1 proxy evidence, user-approved live diagnostics | 2026-07-22 | 2026-07-22 | G3 evidence 일부 |
 | 4 | P2 / WP-01 | R1.1/R1.2 Library MVP recovery | `verified_local_alpha` | Q2 provider compatibility, filesystem boundary | 2026-07-22 | 2026-07-22 | G2 local Alpha |
-| 5 | P5 / WP-03 | Q2 rubric/report gold benchmark | `planned` | Q1 gold evidence, Owner rubric | TBD | TBD | G3 quality |
+| 5 | P5 / WP-03 | Q2a Evaluation Owner input contract | `verified_local_contract` | Q1 gold evidence와 현재 policy schema | 2026-07-24 | 2026-07-24 | G3 quality 준비 |
 | 6 | P7 / CLI | project/education/runtime pipeline parity | `verified_alpha` | WP-01.R, stable pipeline result | 2026-07-22 | 2026-07-22 | G4 evidence 일부 |
 | 7 | P4 / WP-04 | embedding/Qdrant/rerank benchmark | `blocked_policy` | approved corpus와 labels | TBD | TBD | G3 quality |
 | 8 | P5-P6 / WP-05 | exact on-prem Qwen/panel/calibration | `blocked_endpoint_policy` | exact endpoint·gold label 승인 | TBD | TBD | G3 quality |
@@ -465,12 +482,14 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 15 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 | 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `github_live_verified_gitlab_pending` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
 | 17 | P0/P7 / WP-00.Q1 | Case read facade, GOAL alignment, Library/script usability와 EX-01~12 self-check | `completed_standardized_local_alpha` | I4 local checkpoint, current docs/tests | 2026-07-24 | 2026-07-24 | G2/G4 local standardization |
-| 18 | P5 / WP-03.Q2 | Owner-approved rubric/report gold benchmark | `blocked_policy` | official rubric, threshold, approved gold fixture | TBD | TBD | G3 quality |
+| 18 | P5 / WP-03.Q2b | Owner-approved rubric/report gold benchmark | `blocked_policy` | published rubric, threshold, hidden test gold와 exact-model reports | TBD | TBD | G3 quality |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-24 | WP-03.Q2a Owner gold input contract | draft validator, synthetic approved loader/test split, split full tests, offline eval, Ruff/Pyright/schema/validate, SVG render review | 16 targeted; full 189(131/37/21), integration 9/22/6, eval 10, Ruff, Pyright 0/0, validate 0/0 | 입력·metric 계산 local contract; 공식 rubric/gold/exact-model 품질 아님 |
+| 2026-07-24 | Docling/SkillBoss 현재 진단 | `prep.ps1 docling` resource preflight; SkillBoss dynamic catalog와 합성 Qwen3.5 Plus JSON | Docling 1,368MB<2,048MB `BLOCKED_RESOURCE`; Plus live smoke 성공 | 현재 Docling parse와 exact 397B 미실행; provider proxy connectivity만 |
 | 2026-07-24 | WP-00.Q1 Library standardization closeout | Case/examples/catalog, split test/eval, clean wheel, Ruff/Pyright/schema/Wiki/validate | 173 tests(118/34/21), integration shards 9/19/6, EX node 16, eval 10, Pyright 0/0, validate 0/0 | local standardized Alpha; Docling parser/live model/official rubric·retrieval·운영 품질 미실행 |
 | 2026-07-24 | I4 GitHub main + Wiki delivery | main/Wiki remote SHA, Actions run 30050877129 jobs/check annotations, public page GET | main `7052530`, run/jobs 2/2 success, annotations 0/0, Wiki `49b1fbc`, pages 4/4 HTTP 200 | GitHub delivery만 검증; 사내 GitLab runner/credential/live publish 미검증 |
 | 2026-07-24 | WP-06.I4.0-1 identity decision + local OIDC/JWKS reference | identity targeted, split full test/eval, Ruff/Pyright/validate, clean core/identity wheel, Wiki contract, SVG visual review | identity 24, full 160 (108/31/21), 10 eval groups, Ruff, new format 3/3, Pyright 0/0, validate 0/0, Wiki targeted 9 + CI 1, clean wheels | local synthetic signed token/key만 검증; 실제 IdP·rotation·revocation·assignment·upload·deployment 미검증 |
@@ -566,6 +585,16 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
     짧은 bounded retry를 추가하고 synthetic lock unit과 실제 local bare-Wiki integration을
     재실행해 통과했다. clean interface wheel 첫 진단의 잘못된 import/CLI option과 조기 종료 pipe는
     명령 작성 오류로 분리해 올바른 공개 경로·option으로 재검증했다.
+18. Q2a Docling 재실행은 설치 오류가 아니라 가용 물리 메모리 1,368MB가 안전 기준 2,048MB보다
+    낮아 parser import 전에 `BLOCKED_RESOURCE`로 종료됐다. 이전 supplied image-only PPTX 계약은
+    Docling 2.113.0, 16 page/0 text이며, 현재 parser run은 메모리 확보 뒤 격리 명령으로 남는다.
+19. SkillBoss authentication/catalog/Qwen3.5 Plus synthetic JSON 호출은 성공했다. 설치 npm CLI와
+    public latest는 0.1.4인데 표시 version은 source hard-code 0.1.0이고, server update metadata는
+    current unknown/latest 1.1.0 및 공개 저장소에 없는 updater를 지시한다. `account`도 HTTP 404다.
+    이는 upstream 배포 결함이며 제품/on-prem은 계속 canonical `OPENAI_*` 계약만 사용한다.
+20. Q2a는 hidden test split guard까지 local contract로 종료했다. 실제 threshold와 정답은 구현자가
+    만들지 않으므로 Q2b/G3 quality는 Evaluation Owner 승인자료와 exact-model report 전까지
+    `blocked_policy`다.
 
 ## 9. 작업 이력
 
@@ -1269,6 +1298,56 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
   assignment와 immutable upload policy를 승인하기 전 구현하지 않는다.
 - 관련 근거: [Q1 report](docs/evaluation/wp00-q1-library-standardization-report.md), ADR-029,
   D-042, R-037/R-045/R-047와 module plan 1.10.
+
+### HIST-2026-07-24-006
+
+- Phase / WP / Gate: P5 / WP-03.Q2a / G3 Intelligence quality input contract
+- 상태: `active_offline_contract_official_benchmark_blocked`
+- 작업: Evaluation Owner가 제공해야 할 자료를 단일 Markdown이 아니라 사람이 승인하는 Markdown,
+  실행형 review-policy YAML, criterion gold-label JSONL과 hash-bound manifest로 분리하는 입력계약을
+  착수했다. 같은 slice에서 draft/approved guard, synthetic package validation, Docling 저메모리
+  preflight와 SkillBoss Qwen provider-proxy 상태를 갱신한다.
+- 변경 파일: 착수 시점에는 `PROJECT_STATE.md`의 Active Slice, Q2a Exit Evidence, queue와 이력을
+  갱신했다.
+- 검증: 현재 policy registry, EvaluationReport, evidence gold, Q1/Qwen/SkillBoss 리포트를 대조했다.
+  SkillBoss npm CLI는 실제 최신 0.1.4이고 공개 skill pack은 설치 SHA와 동일하지만, 서버가
+  skills latest 1.1.0/current unknown을 반환하며 공개 updater가 없는 배포 불일치를 확인했다.
+  비식별 합성 Qwen3.5 Plus JSON smoke는 성공했다.
+- 특이사항: exact `Qwen3.5-397B-A17B`는 SkillBoss catalog에 없고 Plus/Flash alias만 있다. 공식
+  benchmark threshold와 정답 label은 구현자가 만들지 않으며 Evaluation Owner 승인 전 quality
+  pass/fail을 계산하지 않는다.
+- 미검증: owner-approved rubric/labels, exact on-prem Qwen, 현재 저메모리 상태의 Docling parse,
+  multi-reviewer agreement와 실제 benchmark quality.
+- 다음 작업: typed gold package, 복사용 template, validator와 synthetic example을 구현하고
+  resource-safe Docling/SkillBoss 진단을 검증한 뒤 Q2a를 종료한다.
+- 관련 근거: 5.13 Q2a Exit Evidence, ADR-016/019,
+  [Q1 report](docs/evaluation/wp00-q1-library-standardization-report.md)와
+  [SkillBoss recovery report](docs/evaluation/wp05-q2-skillboss-http500-recovery-report.md).
+
+### HIST-2026-07-24-007
+
+- Phase / WP / Gate: P5 / WP-03.Q2a → Q2b / G3 Intelligence quality input contract
+- 상태: `q2a_completed_q2b_blocked_owner_input`
+- 작업: Evaluation Owner 입력을 승인 Markdown, published review-policy YAML, adjudicated gold JSONL과
+  hash manifest로 분리했다. schema/loader/validator/runner와 EX-13을 추가하고, 공식 approved
+  benchmark는 숨겨 둔 test split의 registration/completion label만 평가하도록 fail closed했다.
+- 변경 파일: `src/axcalib/calibration/gold_benchmark.py`, 두 pipeline script, 4-file template,
+  generated schema 4종, unit/integration test, ADR-030, WP-03 report, 기준문서·diagram·Wiki·handoff.
+- 검증: draft validator와 synthetic approved package 16 targeted 통과. 분할 전체 test
+  189(unit 131, integration 37=9/22/6, contract 21), offline eval 10 groups, Ruff lint와 변경 Python
+  format, Pyright 0 errors/0 warnings, generated schema check와 workspace validate 0/0을 통과했다.
+  workflow SVG는 Edge headless PNG로 렌더링해 clipping/status 표현을 육안 확인했다.
+- 특이사항: Docling 2.113.0은 현재 1,368MB 가용 메모리가 2,048MB guard보다 낮아 실제 parse 전에
+  `BLOCKED_RESOURCE`로 종료했다. SkillBoss Qwen3.5 Plus 합성 JSON live smoke는 성공했지만 exact
+  397B는 catalog에 없고 account/update metadata 결함은 공급자 수정이 필요하다.
+- 미검증: Evaluation Owner 공식 rubric/threshold/hidden test labels, exact on-prem
+  `Qwen3.5-397B-A17B` registration/completion report, 현재-run Docling parse, multi-model/
+  retrieval/운영 인증 품질.
+- 다음 작업: Owner package를 받으면 `WP-03.Q2b owner-approved-gold-execution`에서 승인 hash와
+  leakage를 확인하고 exact-model EvaluationReport를 test split에 비교한다. 그 전에는 G3 quality
+  pass/fail을 만들지 않는다.
+- 관련 근거: [WP-03.Q2a report](docs/evaluation/wp03-q2a-evaluation-owner-input-contract-report.md),
+  [ADR-030](docs/adr/ADR-030-evaluation-owner-gold-benchmark-package.md), D-043, R-048/R-049.
 
 ## 10. 단계 종료 업데이트 템플릿
 

@@ -262,8 +262,9 @@ extensions
 | FR-057 | Project read and decision replay | owner/admin project GET은 URI·자유서술을 redaction하고 두 HITL decision은 principal·resource·stage·revision·payload에 고정된 성공 결과만 idempotent replay | Must |
 | FR-058 | Durable queued execution | exact delivery grant는 inline/queued를 분리하고 queued request를 typed/hash-bound envelope로 보존해 202·authorized poll/cancel·lease reclaim·bounded retry·terminal replay를 같은 Library executor로 제공 | Must |
 | FR-059 | Portable Wiki distribution | 사용자 매뉴얼·실습·코드/프로젝트 설명과 개발 원장을 main `wiki/` 단일 원본으로 관리하고 GitHub/GitLab Wiki에 manifest·검증·opt-in publish로 동일 배포 | Must |
-| FR-060 | Provider-neutral identity validation | optional identity adapter는 RFC 9068 access token의 fixed asymmetric algorithm, exact issuer/audience/type/time, issuer-bound JWK와 allowlisted role/scope/organization mapping을 검증하고 invalid/provider failure를 401/503으로 구분 | Must |
-| FR-061 | Goal-aligned usability self-check | 전체 Target/WP/Gate와 script를 code/test/example/pending에 추적하고 최소 facade, thin adapter, 정상·오류·경계 example matrix와 clean packaging을 반복 검증 | Must |
+| FR-060 | Owner-approved semantic gold | 승인 Markdown, published rubric YAML, adjudicated project-stage JSONL과 manifest hash를 분리하고 threshold 부재·criterion drift·single-review label·hidden test split 부재를 공식 benchmark에서 fail-closed; agreement·locator·위험한 긍정·unsupported claim을 측정 | Must |
+| FR-061 | Provider-neutral identity validation | optional identity adapter는 RFC 9068 access token의 fixed asymmetric algorithm, exact issuer/audience/type/time, issuer-bound JWK와 allowlisted role/scope/organization mapping을 검증하고 invalid/provider failure를 401/503으로 구분 | Must |
+| FR-062 | Goal-aligned usability self-check | 전체 Target/WP/Gate와 script를 code/test/example/pending에 추적하고 최소 facade, thin adapter, 정상·오류·경계 example matrix와 clean packaging을 반복 검증 | Must |
 
 ## 9. 등록심의와 완료평가 공통 Pipeline
 
@@ -868,8 +869,9 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 31. project 안전 조회와 관리자 decision 응답 유실 복구 | FR-057, ADR-025, API threat model, WP-06.I2c report | In-process read/replay contract verified; distributed idempotency/approved remote identity pending |
 | 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/remote identity pending |
 | 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | GitHub live push/render verified; GitLab runner/credential/live push pending |
-| 34. 공급자 중립 OIDC/JWKS identity 검증 | FR-060, ADR-028, identity/upload decision packet, WP-06.I4 report | Local signed positive/negative contract verified; actual issuer/remote rotation/revocation pending |
-| 35. GOAL 정렬·단순성·다양한 example 자가점검 | FR-061, Case read facade, WP-00.Q1 report, EX-01~12 catalog | Local standardized Alpha evidence implemented; 공식 rubric/model/retrieval/운영 품질은 pending |
+| 34. Evaluation Owner rubric·gold 입력과 공식 품질평가 | FR-060, ADR-030, WP-03.Q2a report, owner package schema | Draft template/validator/metric contract implemented; official labels·threshold와 exact-model report pending |
+| 35. 공급자 중립 OIDC/JWKS identity 검증 | FR-061, ADR-028, identity/upload decision packet, WP-06.I4 report | Local signed positive/negative contract verified; actual issuer/remote rotation/revocation pending |
+| 36. GOAL 정렬·단순성·다양한 example 자가점검 | FR-062, Case read facade, WP-00.Q1 report, EX-01~13 catalog | Local standardized Alpha evidence implemented; 공식 rubric/model/retrieval/운영 품질은 pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 

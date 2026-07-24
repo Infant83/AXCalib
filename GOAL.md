@@ -342,6 +342,11 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 - registration/completion report renderer
 - Agent recommendation과 administrator decision 분리
 - Markdown checklist loader/version validation
+- Evaluation Owner 승인 Markdown + published rubric YAML + hidden test split의 adjudicated gold JSONL +
+  hash manifest
+- criterion/recommendation agreement, evidence locator precision/recall, insufficient-evidence recall
+- 위험한 `pass`/`accept`, unsupported claim과 pre-adjudication reviewer agreement metric
+- Owner threshold·두 reviewer adjudication이 없으면 공식 quality pass/fail을 만들지 않는 guard
 
 ### WP-04 Historical Cases
 

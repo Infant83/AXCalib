@@ -20,8 +20,9 @@ rubric이나 실제 학습자 인증이 아니다.
 
 ## 문제 상황별 자가점검
 
-`catalog.yaml`은 EX-01~EX-12를 정상, 사람 대기, 반려, stale, 알림, retrieval, model, identity,
-worker, 교육 context, batch 실패로 나눈 실행 원장이다. 각 항목은 다음을 포함한다.
+`catalog.yaml`은 EX-01~EX-13을 정상, 사람 대기, 반려, stale, 알림, retrieval, model, identity,
+worker, 교육 context, batch 실패와 Evaluation Owner gold package 검증으로 나눈 실행 원장이다.
+각 항목은 다음을 포함한다.
 
 - persona와 synthetic fixture
 - 그대로 실행할 PowerShell 명령

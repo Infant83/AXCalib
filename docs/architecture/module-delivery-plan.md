@@ -3,7 +3,7 @@ document_type: module_delivery_plan
 project: AXCalib
 baseline: v0.3-p1-g4-library-standardized
 updated_at: 2026-07-24
-status: library_case_cli_resource_api_worker_identity_local_contract_verified
+status: library_case_cli_resource_api_worker_identity_and_gold_input_contract_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -22,8 +22,8 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 | M02 | state/approval domain | offline_reference | WP-01 | M01 | 승인된 remote identity/assignment와 producer transaction |
 | M03 | `axcalib.ingest` | contract_verified | WP-02 | ArtifactRef/schema | general composed-slide renderer/OCR/VLM + multi-template coverage |
 | M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + real embedding/Qdrant contract |
-| M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | exact Qwen registration/completion + Owner-approved semantic gold benchmark |
-| M06 | `axcalib.calibration` | not_started | WP-05/06 | M05 | disagreement/agreement metric report |
+| M05 | `axcalib.evaluation` | offline_reference_owner_input_ready | WP-03/05 | M01, M03, M04 | exact Qwen registration/completion + Owner-approved semantic gold execution |
+| M06 | `axcalib.calibration` | contract_reference | WP-03/05/06 | M05 | approved human labels로 agreement/threshold report |
 | M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | PDF/report authorization과 approved golden corpus |
 | M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | producer transaction + GitLab/email adapter |
 | M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
@@ -177,11 +177,26 @@ Evidence가 남아 있다.
 - Agent recommendation, immutable criterion report, human decision/adjustment와 effective assessment를
   분리해 표현하고 기본 출력에서 storage URI·path·상세 사람 메타데이터를 제외
 - actual proposal PPTX와 synthetic completion evidence를 사용한 readable pass lifecycle 예제와
-  EX-01~EX-12 정상/대기/반려/stale/validation/retry catalog
+  EX-01~EX-13 정상/대기/반려/stale/validation/retry/Owner-package catalog
 - GOAL/WP/Gate trace, public API·script inventory, usability/code/security defect log를
   `docs/evaluation/wp00-q1-library-standardization-report.md`에 기록
 - 품질 경계: local standardized Alpha다. 공식 rubric/model/retrieval quality, remote authorization,
   PDF와 운영 Web/API report delivery를 완료한 것으로 보지 않음
+
+### 1.11 2026-07-24 WP-03.Q2a Evaluation Owner input-contract evidence
+
+- `src/axcalib/calibration/gold_benchmark.py`: policy/labels/approval/manifest hash guard와 metric report
+- `docs/evaluation/templates/evaluation-owner-package/`: 복사 가능한 draft 4-file package
+- `scripts/pipelines/validate_evaluation_owner_package.py`: draft/approved mode와 hash 계산
+- `scripts/pipelines/run_gold_benchmark.py`: immutable EvaluationReport를 stable locator로 비교
+- 공식 `approved`는 published policy, Owner threshold, 숨겨 둔 test split의 양 Gate,
+  두 reviewer vote와 adjudication 필수
+- metric: assessment/recommendation, locator, insufficient/risk flag, human agreement,
+  dangerous positive와 unsupported claim
+- Docling은 2.113.0 설치 확인 후 가용 1,368MB에서 2,048MB preflight로 fail-fast했고, SkillBoss
+  Qwen3.5 Plus synthetic JSON smoke는 성공했다.
+- 품질 경계: 입력·계산 contract만 local 검증했다. Owner-approved label/threshold, exact on-prem
+  Qwen report와 공식 G3 quality 판정은 미완료다.
 
 ## 2. 공통 납품 단위
 
@@ -270,8 +285,8 @@ Evidence가 남아 있다.
 - 입력: 독립 model findings와 human labels
 - 출력: criterion 분포, disagreement flags, calibration metrics
 - 의존성: M05와 승인된 evaluation dataset
-- 첫 slice: deterministic mock panel의 차이 리포트
-- 검증: model ordering 독립성, missing panel result, boundary case
+- 첫 slice: Owner package hash/approval guard와 gold report metric contract
+- 검증: draft pass/fail 금지, policy/label drift, criterion 완전성, dangerous-positive와 unsupported claim
 - 완료증거: agreement/confusion/ECE 또는 승인된 대체 metric report
 
 ### M07 — Reports (`src/axcalib/reports`)

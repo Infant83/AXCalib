@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "BenchmarkStatus": {
+      "description": "Lifecycle of a semantic benchmark package.",
+      "enum": [
+        "draft",
+        "offline_reference",
+        "approved",
+        "retired"
+      ],
+      "title": "BenchmarkStatus",
+      "type": "string"
+    },
+    "OwnerDecision": {
+      "description": "Explicit package decision retained in the approval Markdown.",
+      "enum": [
+        "pending",
+        "approve",
+        "reject"
+      ],
+      "title": "OwnerDecision",
+      "type": "string"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/evaluation-owner-approval/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Structured frontmatter extracted from the owner approval Markdown.",
+  "properties": {
+    "approval_ref": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approval Ref"
+    },
+    "approved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approved At"
+    },
+    "benchmark_id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+      "title": "Benchmark Id",
+      "type": "string"
+    },
+    "benchmark_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+      "title": "Benchmark Version",
+      "type": "string"
+    },
+    "data_classification": {
+      "enum": [
+        "synthetic",
+        "deidentified",
+        "internal_restricted"
+      ],
+      "title": "Data Classification",
+      "type": "string"
+    },
+    "decision": {
+      "$ref": "#/$defs/OwnerDecision"
+    },
+    "external_model_allowed": {
+      "title": "External Model Allowed",
+      "type": "boolean"
+    },
+    "labels_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Labels Sha256",
+      "type": "string"
+    },
+    "owner_ref": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Owner Ref",
+      "type": "string"
+    },
+    "policy_id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+      "title": "Policy Id",
+      "type": "string"
+    },
+    "policy_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Policy Sha256",
+      "type": "string"
+    },
+    "policy_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "axcalib.evaluation-owner-approval/v1alpha1",
+      "default": "axcalib.evaluation-owner-approval/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/BenchmarkStatus"
+    }
+  },
+  "required": [
+    "benchmark_id",
+    "benchmark_version",
+    "status",
+    "decision",
+    "owner_ref",
+    "policy_id",
+    "policy_version",
+    "policy_sha256",
+    "labels_sha256",
+    "data_classification",
+    "external_model_allowed"
+  ],
+  "title": "EvaluationOwnerApproval",
+  "type": "object"
+}

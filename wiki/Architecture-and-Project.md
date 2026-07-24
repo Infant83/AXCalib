@@ -65,6 +65,21 @@ enrollment를 조용히 이동시키지 않는다.
 Project milestone에는 같은 program version, enrollment, learner context의 Dossier만 연결한다.
 Project 완료 수용은 교육 milestone의 근거이지 과정 전체 인증의 자동 결정이 아니다.
 
+## Evaluation Owner gold benchmark
+
+공식 Agent 품질평가는 다음 네 파일을 하나의 hash-bound package로 다룬다.
+
+```text
+OWNER_APPROVAL.md
+review-policy.yaml
+gold-labels.jsonl
+benchmark-manifest.yaml
+```
+
+사람이 읽고 승인하는 책임, 실행 가능한 criterion, 두 평가자의 adjudicated 정답과 immutable hash를
+분리한다. `approved` package만 공식 pass/fail을 만들 수 있으며, 그 경우에도 숨겨 둔 `test` split의
+registration/completion label만 계산한다. 결과는 Agent 초안 품질이지 관리자 최종 인증결정이 아니다.
+
 ## 아키텍처 확인 순서
 
 메인 저장소에서 다음 문서를 기준으로 삼는다.

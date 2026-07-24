@@ -68,13 +68,26 @@ uv run --no-sync python scripts/wiki/sync_wiki.py validate
 code/test/example/pending 상태에 연결하고, project-id-bound `Case` status/summary facade와 모든
 working script의 단순성·domain 복제 여부를 확인했다. actual proposal PPTX의 readable pass 예제와
 등록 반려, mentor guard, stale, notification 실패, retrieval unavailable, malformed model output,
-OIDC 오류, Worker retry, 교육 context 불일치를 포함한 EX-01~EX-12 catalog를 분리했다.
+OIDC 오류, Worker retry, 교육 context 불일치와 Owner gold package를 포함한 EX-01~EX-13 catalog를
+분리했다.
 
 초보자 문서에는 최소 등록심의와 two-gate 예제만 먼저 보이고, 오류·운영 예제는 별도 catalog로
 분리해 첫 인터페이스를 복잡하게 만들지 않는다.
 
 이는 local standardized Alpha 증거다. 공식 rubric·모델·retrieval 품질과 운영 identity/upload/
 distributed worker는 각각의 Owner 승인과 후속 Gate가 필요하다.
+
+## WP-03.Q2 Evaluation Owner 입력
+
+공식 품질평가는 Markdown 한 파일이 아니라 다음 패키지를 받는다.
+
+- `OWNER_APPROVAL.md`: 적용범위, 데이터 등급, threshold와 사람 승인
+- `review-policy.yaml`: registration/completion criterion
+- `gold-labels.jsonl`: 두 reviewer vote, adjudication과 stable locator
+- `benchmark-manifest.yaml`: policy/labels/approval hash
+
+draft template과 validator는 구현됐지만 Owner 승인자료가 없으면 공식 pass/fail을 만들지 않는다.
+현재 Active Slice와 필요한 입력은 [개발 실행 원장](Development-Ledger)을 따른다.
 
 ## 현재 진행상태 읽기
 

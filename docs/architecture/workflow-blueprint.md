@@ -3,7 +3,7 @@ document_type: workflow_blueprint
 project: AXCalib
 baseline: v0.3-p1-g4-case-read-alpha
 updated_at: 2026-07-24
-status: library_case_cli_resource_api_worker_local_alpha_exact_model_pending
+status: library_case_cli_resource_api_worker_and_gold_input_local_contract_exact_model_pending
 ---
 
 # AXCalib Workflow Blueprint
@@ -328,6 +328,30 @@ flowchart LR
 token header는 key URL이나 허용 algorithm을 결정하지 않는다. raw token과 전체 claim은 dossier,
 checkpoint, audit와 response에 저장하지 않는다. 현재 key provider는 local static fixture이며 실제
 issuer/discovery/JWKS cache·rotation·revocation과 교육 배정 source는 decision packet 승인 뒤 구현한다.
+
+### 0.10 WP-03.Q2 Evaluation Owner gold quality input
+
+```mermaid
+flowchart LR
+    OWNER["Owner approval.md"] --> MANIFEST["benchmark manifest\nversion + hashes + thresholds"]
+    POLICY["published review-policy.yaml"] --> MANIFEST
+    LABELS["hidden test gold-labels.jsonl\n2 reviewers + adjudication"] --> MANIFEST
+    REPORTS["test split registration/completion\nEvaluationReport JSON"] --> COMPARE["calibration benchmark"]
+    MANIFEST --> COMPARE
+    COMPARE --> METRICS["agreement · locator · insufficient\nrisk flag · dangerous positive · unsupported"]
+    METRICS --> QGATE{{"G3 quality review"}}
+
+    classDef verified fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef pending fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
+    class MANIFEST,COMPARE,METRICS verified;
+    class OWNER,POLICY,LABELS,REPORTS,QGATE pending;
+```
+
+manifest/loader/metric 계산은 local contract로 구현됐지만 그림의 Owner/policy/labels/report 입력은
+아직 공식 자료가 아니다. approved manifest는 `evaluation_split: test`를 강제하고 그 split의 두
+Gate만 계산한다. draft는 hash와 criterion 구조만 확인할 수 있고 `approved`가 아니면
+quality pass/fail을 반환하지 않는다. G3 quality Gate는 Owner가 실제 비식별 양 Gate label과
+threshold, exact-model report를 승인한 뒤에만 판정한다.
 
 ## 1. 전체 계층
 

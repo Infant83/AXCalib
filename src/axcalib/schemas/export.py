@@ -7,6 +7,12 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from axcalib.calibration import (
+    EvaluationOwnerApproval,
+    GoldBenchmarkManifest,
+    GoldBenchmarkQualityReport,
+    GoldCaseLabel,
+)
 from axcalib.dossier import atomic_write_text
 from axcalib.schemas.case import CaseStatus, CaseSummary
 from axcalib.schemas.domain import ProjectDossier
@@ -38,6 +44,26 @@ ARTIFACTS: tuple[tuple[str, type[BaseModel], str], ...] = (
         "axcalib.case-summary.v1alpha1.schema.json",
         CaseSummary,
         "https://axcalib.local/schemas/case-summary/v1alpha1",
+    ),
+    (
+        "axcalib.gold-benchmark-manifest.v1alpha1.schema.json",
+        GoldBenchmarkManifest,
+        "https://axcalib.local/schemas/gold-benchmark-manifest/v1alpha1",
+    ),
+    (
+        "axcalib.gold-case-label.v1alpha1.schema.json",
+        GoldCaseLabel,
+        "https://axcalib.local/schemas/gold-case-label/v1alpha1",
+    ),
+    (
+        "axcalib.evaluation-owner-approval.v1alpha1.schema.json",
+        EvaluationOwnerApproval,
+        "https://axcalib.local/schemas/evaluation-owner-approval/v1alpha1",
+    ),
+    (
+        "axcalib.gold-benchmark-report.v1alpha1.schema.json",
+        GoldBenchmarkQualityReport,
+        "https://axcalib.local/schemas/gold-benchmark-report/v1alpha1",
     ),
 )
 

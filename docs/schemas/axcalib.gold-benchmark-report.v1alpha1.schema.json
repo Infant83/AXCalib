@@ -1,0 +1,271 @@
+{
+  "$defs": {
+    "BenchmarkSplit": {
+      "description": "Data split controlled by the Evaluation Owner.",
+      "enum": [
+        "development",
+        "validation",
+        "test"
+      ],
+      "title": "BenchmarkSplit",
+      "type": "string"
+    },
+    "BenchmarkStatus": {
+      "description": "Lifecycle of a semantic benchmark package.",
+      "enum": [
+        "draft",
+        "offline_reference",
+        "approved",
+        "retired"
+      ],
+      "title": "BenchmarkStatus",
+      "type": "string"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/gold-benchmark-report/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Deterministic comparison against approved human labels.",
+  "properties": {
+    "asserting_prediction_count": {
+      "minimum": 0,
+      "title": "Asserting Prediction Count",
+      "type": "integer"
+    },
+    "benchmark_id": {
+      "title": "Benchmark Id",
+      "type": "string"
+    },
+    "benchmark_split": {
+      "$ref": "#/$defs/BenchmarkSplit"
+    },
+    "benchmark_status": {
+      "$ref": "#/$defs/BenchmarkStatus"
+    },
+    "benchmark_version": {
+      "title": "Benchmark Version",
+      "type": "string"
+    },
+    "case_count": {
+      "minimum": 1,
+      "title": "Case Count",
+      "type": "integer"
+    },
+    "completion_case_count": {
+      "minimum": 0,
+      "title": "Completion Case Count",
+      "type": "integer"
+    },
+    "criterion_assessment_accuracy": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Criterion Assessment Accuracy",
+      "type": "number"
+    },
+    "criterion_count": {
+      "minimum": 1,
+      "title": "Criterion Count",
+      "type": "integer"
+    },
+    "dangerous_positive_count": {
+      "minimum": 0,
+      "title": "Dangerous Positive Count",
+      "type": "integer"
+    },
+    "dangerous_positive_rate": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Dangerous Positive Rate",
+      "type": "number"
+    },
+    "evidence_locator_precision": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Evidence Locator Precision",
+      "type": "number"
+    },
+    "evidence_locator_recall": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Evidence Locator Recall",
+      "type": "number"
+    },
+    "expected_insufficient_evidence_count": {
+      "minimum": 0,
+      "title": "Expected Insufficient Evidence Count",
+      "type": "integer"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "gold_evidence_locator_count": {
+      "minimum": 0,
+      "title": "Gold Evidence Locator Count",
+      "type": "integer"
+    },
+    "human_pre_adjudication_agreement": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Human Pre Adjudication Agreement",
+      "type": "number"
+    },
+    "human_vote_pair_count": {
+      "minimum": 0,
+      "title": "Human Vote Pair Count",
+      "type": "integer"
+    },
+    "insufficient_evidence_recall": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Insufficient Evidence Recall",
+      "type": "number"
+    },
+    "live_model_report_count": {
+      "minimum": 0,
+      "title": "Live Model Report Count",
+      "type": "integer"
+    },
+    "manifest_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Manifest Sha256",
+      "type": "string"
+    },
+    "models": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Models",
+      "type": "array"
+    },
+    "negative_case_count": {
+      "minimum": 0,
+      "title": "Negative Case Count",
+      "type": "integer"
+    },
+    "official_quality_decision": {
+      "title": "Official Quality Decision",
+      "type": "boolean"
+    },
+    "passed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Passed"
+    },
+    "policy_id": {
+      "title": "Policy Id",
+      "type": "string"
+    },
+    "policy_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Policy Sha256",
+      "type": "string"
+    },
+    "policy_version": {
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "predicted_evidence_locator_count": {
+      "minimum": 0,
+      "title": "Predicted Evidence Locator Count",
+      "type": "integer"
+    },
+    "quality_claim": {
+      "title": "Quality Claim",
+      "type": "string"
+    },
+    "recommendation_accuracy": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Recommendation Accuracy",
+      "type": "number"
+    },
+    "registration_case_count": {
+      "minimum": 0,
+      "title": "Registration Case Count",
+      "type": "integer"
+    },
+    "required_risk_flag_count": {
+      "minimum": 0,
+      "title": "Required Risk Flag Count",
+      "type": "integer"
+    },
+    "required_risk_flag_recall": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Required Risk Flag Recall",
+      "type": "number"
+    },
+    "schema_version": {
+      "const": "axcalib.gold-benchmark-report/v1alpha1",
+      "default": "axcalib.gold-benchmark-report/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "threshold_checks": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "title": "Threshold Checks",
+      "type": "object"
+    },
+    "unsupported_claim_count": {
+      "minimum": 0,
+      "title": "Unsupported Claim Count",
+      "type": "integer"
+    },
+    "unsupported_claim_rate": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Unsupported Claim Rate",
+      "type": "number"
+    }
+  },
+  "required": [
+    "benchmark_id",
+    "benchmark_version",
+    "benchmark_status",
+    "benchmark_split",
+    "manifest_sha256",
+    "policy_id",
+    "policy_version",
+    "policy_sha256",
+    "case_count",
+    "registration_case_count",
+    "completion_case_count",
+    "criterion_count",
+    "gold_evidence_locator_count",
+    "predicted_evidence_locator_count",
+    "expected_insufficient_evidence_count",
+    "required_risk_flag_count",
+    "human_vote_pair_count",
+    "negative_case_count",
+    "asserting_prediction_count",
+    "criterion_assessment_accuracy",
+    "recommendation_accuracy",
+    "evidence_locator_precision",
+    "evidence_locator_recall",
+    "insufficient_evidence_recall",
+    "required_risk_flag_recall",
+    "human_pre_adjudication_agreement",
+    "dangerous_positive_count",
+    "dangerous_positive_rate",
+    "unsupported_claim_count",
+    "unsupported_claim_rate",
+    "live_model_report_count",
+    "threshold_checks",
+    "official_quality_decision",
+    "passed",
+    "quality_claim"
+  ],
+  "title": "GoldBenchmarkQualityReport",
+  "type": "object"
+}
