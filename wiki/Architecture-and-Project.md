@@ -17,6 +17,14 @@ CLI / API / Worker / Web adapters
 Core Library는 FastAPI, 특정 프론트엔드, 특정 LLM, Deep Agents 또는 특정 Vector DB에 의존하지 않는다.
 외부 시스템은 Protocol이나 adapter 뒤에 둔다.
 
+## Dossier와 Case
+
+Dossier는 한 프로젝트의 canonical 기록철이고 `Case`는 그 기록철을 project ID로 다시 읽는
+가벼운 live handle이다. `case.get_current_status()`는 현재 단계와 다음 유효 action을,
+`case.get_summary()`는 등록·수행·완료 결과와 사람 결정을 object/JSON/Markdown으로 보여 준다.
+각 호출은 최신 revision과 immutable report hash를 확인한다. `Case` 자체가 별도 상태를 저장하거나
+Agent 결과를 사람 결정으로 바꾸지는 않는다.
+
 HTTP identity도 같은 원칙을 따른다. optional `identity` adapter가 issuer-bound JWK snapshot을
 검증해 `ApiPrincipal`을 만들고, Library state machine은 그 뒤에도 관리자 HITL과 revision guard를
 다시 확인한다. 현재는 local signed reference이며 remote discovery/rotation과 실제 assignment는
@@ -27,6 +35,7 @@ HTTP identity도 같은 원칙을 따른다. optional `identity` adapter가 issu
 | 경로 | 역할 |
 |---|---|
 | `src/axcalib/` | 배포되는 Python Library |
+| `src/axcalib/case.py` | project-id-bound current status/summary read facade |
 | `src/axcalib/pipelines/` | 독립 업무 목적의 typed local Pipeline |
 | `src/axcalib/runtime/` | 실행, checkpoint, batch, queue와 transaction recovery |
 | `apps/api`, `apps/worker`, `apps/web` | Library를 소비하는 delivery adapter |

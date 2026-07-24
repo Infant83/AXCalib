@@ -5,6 +5,15 @@
 - 목적: “기능 수”가 아니라 신뢰성, 안전성, 직관성과 재사용 가능성을 기준으로 Library를 표준화
 - 범위 경계: 이 계획 자체는 기능 완료 또는 운영 품질 증거가 아니다.
 
+## 실행 상태
+
+- 2026-07-24: `WP-00.Q1` local closeout 완료
+- 결과: `Case` read facade, GOAL/script trace, EX-01~EX-12 machine-readable catalog와 회귀 추가
+- 판정 근거: `docs/evaluation/wp00-q1-library-standardization-report.md`
+- 검증: 173 offline tests, 10 eval groups, clean core/interface wheel, Wiki/schema/static parity
+- 경계: local/synthetic 표준화이며 실제 rubric·on-prem Qwen·Vector DB·운영 identity/upload 품질은
+  계속 pending/no-go
+
 ## 1. 감사 질문
 
 1. GOAL의 Target/WP/Gate 수용기준이 코드, test, example, 미완료 표기 중 하나에 연결되는가?

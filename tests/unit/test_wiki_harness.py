@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
+import harness.wiki as wiki_module
 from harness.wiki import (
     DEPLOYED_MANIFEST_NAME,
     export_wiki,
@@ -12,6 +14,30 @@ from harness.wiki import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_atomic_wiki_write_retries_transient_windows_lock(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    target = tmp_path / "Home.md"
+    real_replace = os.replace
+    attempts = 0
+
+    def flaky_replace(source: Path, destination: Path) -> None:
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise PermissionError("synthetic transient Windows lock")
+        real_replace(source, destination)
+
+    monkeypatch.setattr(wiki_module.os, "replace", flaky_replace)
+    monkeypatch.setattr(wiki_module.time, "sleep", lambda _seconds: None)
+
+    wiki_module._atomic_write_text(target, "safe\n")
+
+    assert attempts == 3
+    assert target.read_text(encoding="utf-8") == "safe\n"
 
 
 def _copy_wiki_contract(tmp_path: Path) -> Path:

@@ -7,7 +7,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-from harness.prep import ROOT, _project_ledger_errors, validate_workspace
+from harness.prep import (
+    DEFAULT_TEST_SEQUENCE,
+    ROOT,
+    TEST_GROUPS,
+    _project_ledger_errors,
+    validate_workspace,
+)
 
 READ_ONLY_SURFACES = [
     ROOT / "PROJECT_STATE.md",
@@ -65,3 +71,16 @@ def test_project_ledger_rejects_a_stale_history_pointer(tmp_path: Path) -> None:
     errors = _project_ledger_errors(ledger)
 
     assert "PROJECT_STATE.md: last_history_id must match the final history entry" in errors
+
+
+def test_low_memory_integration_shards_cover_every_integration_file_once() -> None:
+    shard_names = ("integration-core", "integration-eval", "integration-ops")
+    configured = [item for name in shard_names for item in TEST_GROUPS[name]]
+    discovered = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "tests" / "integration").glob("test_*.py")
+    )
+
+    assert sorted(configured) == discovered
+    assert len(configured) == len(set(configured))
+    assert DEFAULT_TEST_SEQUENCE == ("unit", *shard_names, "contract")

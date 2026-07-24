@@ -6,7 +6,7 @@ baseline: v0.3-p1
 created_at: 2026-07-12
 updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g4_identity_local_reference_quality_pending
+status: g4_library_standardized_quality_operational_pending
 ---
 
 # AXCalib Goal과 구현 Target
@@ -111,6 +111,14 @@ upload는 계속 Owner 승인 대기다.
 Node.js 24 workflow automatic publish도 완료했다. 사내 GitLab remote·runner·credential과 실제
 화면 publication은 플랫폼 Owner 작업으로 남는다.
 
+2026-07-24 WP-00.Q1에서는 `register_case()`가 project_id에 결속된 live `Case`를 반환하도록
+표준화하고 `get_current_status()`와 `get_summary()`의 typed object/JSON/Markdown projection을
+추가했다. 출력은 매 호출마다 최신 dossier revision을 읽고, immutable report의 identity와
+transaction journal SHA-256을 확인하며, Agent 제안과 사람 결정을 분리한다. 실제 제안 PPTX와
+synthetic 완료 증거로 registration/completion HITL 중간 상태와 최종 결과를 읽을 수 있는 예제,
+EX-01~EX-12 self-check catalog와 GOAL/WP/Gate audit report를 연결했다. 이는 local standardized
+Alpha evidence이며 공식 rubric·모델·retrieval·운영 품질을 승격하지 않는다.
+
 2026-07-21 `WP-02.Q1`에서는 제공 PPTX의 16/16 slide를 제한형 embedded-image renderer로
 재현하고, 13개 reviewed locator와 12개 reference field를 source/sidecar hash에 고정한 품질
 baseline을 추가했다. 이 결과는 해당 fixture의 provenance·coverage·traceability 계약만 검증하며,
@@ -148,7 +156,8 @@ dossier 생성
 - storage: local filesystem
 - output: updated dossier, immutable snapshot, structured JSON, Markdown report
 - interface: Python API, Typer CLI와 in-process FastAPI project/runtime Alpha
-- public facade: `AXCalib().evaluate/aevaluate`, expert `from_toml(...)`
+- public facade: live `Case`의 `get_current_status/get_summary`, `AXCalib().evaluate/aevaluate`,
+  expert `from_toml(...)`
 - pipeline kernel: typed context/result/status/registry와 sync/async parity
 - working scripts: dossier freeze, 등록심의, 완료평가, two-gate synthetic entrypoint
 - education composition: immutable program, enrollment goal generation, manual/score/project milestone,
@@ -276,6 +285,7 @@ Vector DB/embedding, gold label 품질, on-prem Qwen endpoint 또는 model calib
 - product brief, 5분 quickstart, 권한 SVG, 6컷 tutorial과 development readiness audit
 - minimal/expert TOML, runtime JSON Schema와 OpenAPI pre-implementation artifact
 - platform-neutral `wiki/` source, PROJECT_STATE mirror, GitHub/GitLab export parity와 opt-in CI
+- `Case` live read facade, readable actual-PPT lifecycle example와 EX-01~EX-12 self-check catalog
 
 ### WP-01 Dossier와 상태기계
 
@@ -522,23 +532,27 @@ profiles:
 - 리포트는 유사점과 차이점, score, source locator, 적용 한계를 함께 표시한다.
 - historical outcome을 새 과제의 label로 복사하지 않는다.
 
-## 12. 계획된 공개 인터페이스
+## 12. 공개 인터페이스
 
 ### Python
 
 ~~~python
-from axcalib import AXCalib, Dossier
+from axcalib import AXCalib
 
-client = AXCalib.from_profile("onprem")
-dossier = Dossier.load("AXC-<uuid>.axc.yaml")
+client = AXCalib.from_toml("config/axcalib.toml", workspace="output/review")
+case = client.register_case("proposal.pptx", title="검토할 과제")
+client.submit_registration(case.project_id)
+registration = client.evaluate(case.project_id, stage="registration")
 
-registration = client.evaluate_registration(dossier, mode="panel")
-completion = await client.aevaluate_completion(dossier, mode="adjudicated")
+print(case.get_current_status(format="md"))
+print(case.get_summary(format="json", verbose=True))
 ~~~
 
-`AXCalib`은 편의 facade다. 내부에서는 allowlisted pipeline/workflow registry에 위임한다. 세부
-조합이 필요한 library 사용자는 `runtime.pipelines.<name>.run/arun`과
-`runtime.workflows.start/resume`을 사용하되 동일 request/result schema를 공유한다.
+`Case`는 dossier의 대체 저장소가 아니라 project_id에 결속된 read facade다. 각 호출은 최신
+dossier revision을 다시 읽으며 `case.dossier`로 현재 raw snapshot을 명시적으로 얻을 수 있다.
+`AXCalib`은 write/evaluation 편의 facade이고 내부에서는 allowlisted pipeline/workflow registry에
+위임한다. 세부 조합이 필요한 사용자는 고급 service/pipeline API를 사용하되 동일 request/result
+schema와 상태기계 불변조건을 공유한다.
 
 ### CLI
 
@@ -686,6 +700,7 @@ P0 이후 다음 결정이 필요하다.
 - [x] strict JSONL batch, Alpha Typer CLI와 clean-wheel actual-PPTX quickstart
 - [x] single-host durable 202 queue, restart/reclaim/retry/cancel과 one-job Worker local contract
 - [x] GitHub/GitLab 공통 Wiki 원본, 개발원장 mirror, export/parity와 opt-in CI contract
+- [x] project-id-bound Case status/summary facade, readable actual-PPT lifecycle와 EX-01~EX-12 audit catalog
 - [ ] Product/Evaluation Owner의 rubric·운영 baseline 정식 sign-off
 
 ## 17. 기술 근거

@@ -1,0 +1,126 @@
+schema_version: axcalib.example-catalog/v1alpha1
+default_mode: synthetic_offline
+examples:
+  - id: EX-01
+    title: 최소 등록심의와 사람 대기
+    persona: project_submitter
+    fixture: tests/sources/oled_qc_project_outline.pptx
+    command: >-
+      uv run --no-sync python examples/library_mvp_alpha_quickstart.py
+      --workspace output/examples/ex01
+    expected: registration_hitl_pending; Agent 초안만 존재하고 자동 승인은 없음
+    evidence: tests/integration/test_pptx_two_gate_pipeline.py::test_workflow_stops_at_registration_hitl_without_a_decision
+    cleanup: 새 workspace를 사용하거나 output/examples/ex01을 사용자가 직접 보관·정리
+  - id: EX-02
+    title: 실제 제안 PPT 기반 통과·수용 lifecycle과 읽기 요약
+    persona: education_program_reviewer
+    fixture: tests/sources/oled_qc_project_outline.pptx + synthetic completion PPTX
+    command: >-
+      uv run --no-sync python examples/case_lifecycle/run_readable_pass.py
+      --workspace output/examples/ex02 --project-id ex02-readable-pass
+    expected: completion_accepted; 등록/완료 Agent 제안과 관리자 결정을 Markdown/JSON으로 분리
+    evidence: tests/integration/test_case_readable_example.py::test_readable_pass_example_connects_agent_and_human_results
+    cleanup: 같은 project ID를 덮어쓰지 않으므로 새 workspace 또는 project ID 사용
+  - id: EX-03
+    title: 등록 반려와 수행 진입 차단
+    persona: administrator
+    fixture: tests/sources/oled_qc_project_outline.pptx
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_case_facade.py::test_rejected_registration_is_terminal_and_cannot_start_execution -q
+    expected: registration_rejected terminal; start_execution 거부
+    evidence: tests/unit/test_case_facade.py::test_rejected_registration_is_terminal_and_cannot_start_execution
+    cleanup: pytest tmp_path가 자동 격리
+  - id: EX-04
+    title: 선택 mentor와 배정 후 승인 guard
+    persona: mentor
+    fixture: synthetic workflow record
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_two_gate_workflow.py::test_assigned_mentor_must_approve_completion_submission -q
+    expected: mentor 배정 시 owner 승인은 거부되고 mentor 승인만 완료 등록
+    evidence: tests/unit/test_two_gate_workflow.py::test_assigned_mentor_must_approve_completion_submission
+    cleanup: in-memory record
+  - id: EX-05
+    title: stale revision과 snapshot 충돌
+    persona: concurrent_project_editor
+    fixture: synthetic dossier
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_dossier_pipelines.py::test_initialize_and_revision_aware_freeze -q
+    expected: stale result; 새 snapshot이나 자동 병합 없음
+    evidence: tests/unit/test_dossier_pipelines.py::test_initialize_and_revision_aware_freeze
+    cleanup: pytest tmp_path가 자동 격리
+  - id: EX-06
+    title: 관리자 알림 실패 시 HITL 전이 차단
+    persona: workflow_operator
+    fixture: failing notification adapter
+    command: >-
+      uv run --no-sync pytest
+      tests/integration/test_pptx_two_gate_pipeline.py::test_notification_failure_keeps_registration_out_of_hitl_pending -q
+    expected: notification 오류; registration_hitl_pending으로 승격되지 않음
+    evidence: tests/integration/test_pptx_two_gate_pipeline.py::test_notification_failure_keeps_registration_out_of_hitl_pending
+    cleanup: pytest tmp_path가 자동 격리
+  - id: EX-07
+    title: retrieval 없는 양수 similarity portion
+    persona: evaluation_owner
+    fixture: NullRetriever
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_retrieval_and_similarity.py::test_positive_similarity_portion_requires_retrieval_adapter -q
+    expected: policy error; 다른 항목으로 가중치를 재분배하지 않음
+    evidence: tests/unit/test_retrieval_and_similarity.py::test_positive_similarity_portion_requires_retrieval_adapter
+    cleanup: in-memory policy
+  - id: EX-08
+    title: 잘못된 model locator와 근거 없는 부정 판정
+    persona: model_integrator
+    fixture: fake OpenAI-compatible endpoint
+    command: >-
+      uv run --no-sync pytest
+      tests/integration/test_model_gateway.py::test_model_cannot_cite_an_unavailable_slide
+      tests/integration/test_model_gateway.py::test_model_not_met_without_source_is_downgraded_and_flagged -q
+    expected: 존재하지 않는 locator 거부; 근거 없는 부정 판정은 insufficient evidence로 하향
+    evidence: tests/integration/test_model_gateway.py
+    cleanup: local fake server와 pytest tmp_path가 자동 격리
+  - id: EX-09
+    title: OIDC 정상·변조·만료·issuer/role/scope 오류
+    persona: security_operator
+    fixture: local signed RSA access token
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_oidc_identity.py::test_oidc_verifier_rejects_expired_tampered_and_wrong_key_tokens
+      tests/contract/test_oidc_api_contract.py -q
+    expected: 허용된 token만 principal; invalid 401과 key provider 503 구분
+    evidence: tests/unit/test_oidc_identity.py + tests/contract/test_oidc_api_contract.py
+    cleanup: local synthetic key/token만 사용
+  - id: EX-10
+    title: queued worker retry·restart·terminal replay
+    persona: worker_operator
+    fixture: local durable job envelope
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_local_worker.py::test_queue_prepares_without_running_and_worker_restart_replays_once
+      tests/unit/test_local_worker.py::test_queue_retries_only_retryable_failures_with_a_bound -q
+    expected: retryable만 제한 재시도; terminal/result replay는 side effect 중복 없음
+    evidence: tests/unit/test_local_worker.py
+    cleanup: pytest tmp_path가 자동 격리
+  - id: EX-11
+    title: 교육 program/enrollment/project exact-context
+    persona: education_planner
+    fixture: immutable program + supplied project PPTX
+    command: >-
+      uv run --no-sync pytest
+      tests/contract/test_education_api_contract.py::test_project_binding_rechecks_education_and_organization_context -q
+    expected: version/hash/learner/milestone/organization 불일치 연결 거부
+    evidence: tests/contract/test_education_api_contract.py::test_project_binding_rechecks_education_and_organization_context
+    cleanup: pytest tmp_path가 자동 격리
+  - id: EX-12
+    title: batch 일부 실패와 resume
+    persona: batch_operator
+    fixture: strict JSONL + deterministic pipeline
+    command: >-
+      uv run --no-sync pytest
+      tests/unit/test_pipeline_execution.py::test_batch_keeps_partial_failure_and_replays_completed_items -q
+    expected: 항목별 terminal/retryable/succeeded 유지; 성공 항목 재실행 없음
+    evidence: tests/unit/test_pipeline_execution.py::test_batch_keeps_partial_failure_and_replays_completed_items
+    cleanup: pytest tmp_path가 자동 격리

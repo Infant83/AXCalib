@@ -1,18 +1,18 @@
 ---
 document_type: project_execution_ledger
 ledger_version: axcalib.project-ledger/v1
-baseline: v0.3-p1-g4-identity-reference
+baseline: v0.3-p1-g4-library-standardized
 phase: P7 Interfaces
 gate: G4 Interfaces
-gate_status: interface_identity_reference_in_progress
-status: g4_local_identity_verified_operational_policy_blocked
-current_work_package: WP-00 quality and usability audit
-active_slice: WP-00.Q1 goal-alignment-usability-example-audit
-active_slice_status: ready
-next_gate: G4 approved remote identity-upload-distributed evidence
+gate_status: interface_local_alpha_in_progress
+status: g4_library_standardized_operational_policy_blocked
+current_work_package: WP-03 rubric and report quality benchmark
+active_slice: WP-03.Q2 owner-approved-rubric-gold-benchmark
+active_slice_status: blocked_policy
+next_gate: G3 Intelligence quality baseline
 schedule_mode: dependency_only
 updated_at: 2026-07-24
-last_history_id: HIST-2026-07-24-003
+last_history_id: HIST-2026-07-24-005
 ---
 
 # AXCalib Project Execution Ledger
@@ -60,12 +60,12 @@ last_history_id: HIST-2026-07-24-003
 | 항목 | 현재 값 |
 |---|---|
 | 현재 Phase | **P7 Interfaces**; P2 local Library MVP/Alpha checkpoint 완료 |
-| 현재 Work Package | **WP-00.Q1 quality/usability audit ready**; WP-06.I4 local identity reference 완료 |
-| Active Slice | **WP-00.Q1** (`ready`; GOAL trace, public API/script 단순성, EX-01~12 self-check) |
+| 현재 Work Package | **WP-00.Q1 standardized local Alpha 완료**; 다음 WP-03.Q2 공식 rubric/gold는 Owner 대기 |
+| Active Slice | **WP-03.Q2** (`blocked_policy`; Evaluation Owner의 rubric·gold fixture 승인 필요) |
 | 현재 Gate | **G4 Interfaces in progress**; CLI/batch/resource API/local Worker/OIDC signed reference evidence 확보 |
-| 다음 Gate | **G4 Interfaces**; approved remote identity/assignment, immutable upload와 distributed execution evidence 필요 |
+| 다음 Gate | **G3 Intelligence quality baseline**; 공식 rubric/gold 필요. G4 운영 branch는 remote identity/upload/distributed evidence 대기 |
 | 일정 방식 | dependency-only; calendar baseline은 Owner·공수 확정 후 추가 |
-| 최근 회귀 | 160 tests(108/31/21), identity targeted 24, 10 eval groups, Wiki targeted 9 + CI 1, clean core/identity wheel, validation 0/0, Ruff, Pyright 0/0 |
+| 최근 회귀 | 173 tests(118/34/21; integration 9/19/6 shards), EX catalog 16, 10 eval groups, clean core/interface wheel, validation 0/0, Ruff, Pyright 0/0 |
 | 현재 경계 | exact on-prem Qwen registration/completion·실제 rubric/gold·Vector DB·full API·remote identity/upload/distributed worker/Web·운영 인증 미완료 |
 
 AXCalib는 실제 제안 PPTX의 등록심의·수행·완료평가 two-gate slice와 교육 프로그램 progression을
@@ -91,6 +91,7 @@ gantt
     P0 Planning baseline                 :done, p0, 2026-07-12, 3d
     G0 Alignment baseline               :milestone, g0, 2026-07-15, 0d
     WP-00 Harness                       :done, wp00, 2026-07-13, 4d
+    WP-00.Q1 Library standardization    :done, wp00q1, 2026-07-24, 1d
     G1 Harness local verification       :milestone, g1, 2026-07-16, 0d
 
     section P2 Domain
@@ -126,7 +127,7 @@ gantt
 | Phase | 관련 WP/Slice | 현재 상태 | Exit Gate / 남은 핵심 증거 |
 |---|---|---|---|
 | P0 Planning | baseline 문서·정책 | `offline_reference` | G0 Owner/use-case 공식 sign-off 남음 |
-| P1 Harness | WP-00 | `verified` | G1 local validate/test/eval 통과 |
+| P1 Harness | WP-00, WP-00.Q1 | `verified` | G1 local validate/test/eval과 Case/example standardization 통과 |
 | P2 Domain | WP-01, WP-01E, R1 | `verified_local_alpha` | project/education recovery와 maintenance 완료; producer/distributed transaction 남음 |
 | P3 Evidence | WP-02, Q1 | `contract_verified` | 제한형 actual-PPT render/locator/coverage 완료; general VLM 남음 |
 | P4 Retrieval | WP-04 | `offline_reference` | labeled corpus와 embedding/Qdrant benchmark |
@@ -142,7 +143,7 @@ gantt
 |---|---|---|---|
 | G0 Alignment | `reference_ready` | 제품명·철학·T1·설계 기준 정렬 | Product/Evaluation Owner와 첫 공식 use case |
 | G1 Harness | `verified_local` | `prep` 명령, 문서·schema·test/eval 하네스 | 운영 CI 정책은 별도 |
-| G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
+| G2 Domain MVP | `verified_local_alpha` | dossier/snapshot/two-gate, Case read projection, project/education journal, checkpoint, maintenance | producer/database/distributed transaction은 운영 hardening으로 유지 |
 | G3 Intelligence | `reference_verified_quality_pending` | Docling, restricted render 16/16, gold locator 13/13, lexical/fake dense, structured evaluator, Qwen Plus/GPT-4o proxy registration | exact Qwen registration/completion, general VLM, official semantic gold, Qdrant/calibration |
 | G4 Interfaces | `in_progress` | Typer CLI, executor/batch, principal-bound resource API, project read/replay, queued 202/local Worker/OpenAPI, local signed OIDC/JWKS validation | approved remote issuer/JWKS/RBAC·assignment, immutable upload, distributed worker/heartbeat와 SSE |
 | G5 Web Review | `blocked_policy` | UX/architecture 문서만 존재 | FE stack, RBAC, API와 reviewer E2E |
@@ -406,13 +407,13 @@ Exit Evidence:
 증거로 사용하지 않는다. GitHub 최초 Home, live push/render와 repository enable variable은
 검증했다. 사내 GitLab remote/runner/credential은 플랫폼 Owner가 승인한 뒤 별도로 opt-in 한다.
 
-### 5.12 다음 Active Slice — WP-00.Q1 Goal Alignment, Usability and Example Audit
+### 5.12 Active Slice — WP-00.Q1 Goal Alignment, Usability and Example Audit
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | `ready` |
+| 상태 | `completed_standardized_local_alpha`; 2026-07-24 종료 |
 | 목적 | 현재까지의 Target/WP/Gate·코드·script를 GOAL에 추적하고 Library 단순성·안전성·유용성을 다양한 example로 자가검증 |
-| 대상 | public facade, Dossier/pipeline/result/error, scripts/CLI/API/worker, package extra, README/Wiki |
+| 대상 | `Case.get_current_status/get_summary` read facade, Dossier/pipeline/result/error, scripts/CLI/API/worker, package extra, README/Wiki |
 | 입력 | `docs/readiness/library-standardization-and-example-plan.md` EX-01~EX-12 |
 | 출력 | GOAL trace matrix, script inventory, usability/code/security review, executable example catalog와 defect log |
 | 안전 경계 | synthetic/offline 기본; 실제 endpoint/data/계정/upload 없음 |
@@ -420,12 +421,25 @@ Exit Evidence:
 
 Exit Evidence:
 
-- [ ] T1, WP-00~08와 G0~G8 각 항목이 code/test/example/pending 중 하나에 연결된다.
-- [ ] 첫 사용자 경로와 expert/deployment 경로가 분리되고 public API의 중복·모호한 명칭을 기록한다.
-- [ ] 모든 working script가 Library application service를 호출하며 domain 판정/retry를 복제하지 않는다.
-- [ ] EX-01~EX-12가 정상, 사람 대기, 반려, stale, dependency/validation/retry failure를 예상 상태로 검증한다.
-- [ ] clean core/cli/api/identity/docling extra와 문서 예제의 실행 가능성·secret/경계 표기를 확인한다.
-- [ ] defect 수정 뒤 전체 split test/eval/static/validate와 Wiki를 갱신한다.
+- [x] T1, WP-00~08와 G0~G8 각 항목이 code/test/example/pending 중 하나에 연결된다.
+- [x] 첫 사용자 경로와 expert/deployment 경로가 분리되고 public API의 중복·모호한 명칭을 기록한다.
+- [x] 모든 working script가 Library application service를 호출하며 domain 판정/retry를 복제하지 않는다.
+- [x] EX-01~EX-12가 정상, 사람 대기, 반려, stale, dependency/validation/retry failure를 예상 상태로 검증한다.
+- [x] clean core/cli/api/identity wheel과 Docling extra metadata/격리 정책, 문서 예제의 실행 가능성·
+  secret/경계 표기를 확인한다. Docling parser 자체는 저메모리 원칙에 따라 이번 closeout에서 재실행하지 않았다.
+- [x] defect 수정 뒤 전체 split test/eval/static/validate와 Wiki를 갱신한다.
+
+### 5.13 Active Slice — WP-03.Q2 Owner-approved Rubric and Gold Benchmark
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | `blocked_policy`; 2026-07-24 대기 전환 |
+| 목적 | 공식 등록·완료 rubric과 사람 gold label로 report traceability, unsupported claim과 agreement를 평가 |
+| 선행조건 | Evaluation Owner가 rubric version/threshold, 승인된 비식별 fixture와 expected label을 제공 |
+| 금지 | example-only pass policy 또는 provider proxy 결과를 공식 품질 baseline으로 재사용하지 않음 |
+| 출력 | version/hash-bound gold dataset, report benchmark, defect analysis와 G3 quality 판정 |
+| 병행 운영 경로 | WP-06.I4.2 remote identity/assignment/upload는 Product/Security/Platform Owner 승인 대기 |
+| 목표 Gate | G3 Intelligence quality baseline; 현재 G4 local interface 상태를 자동 승격하지 않음 |
 
 ## 6. 일정·작업 Queue
 
@@ -450,12 +464,14 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 | 14 | P7 / WP-06 | identity/upload decision packet + local OIDC/JWKS contract | `verified_local_reference` | 실제 운영값은 Product/Security/Platform Owner 결정 | 2026-07-24 | 2026-07-24 | G4 evidence 일부 |
 | 15 | P8-P9 | Web/Pilot | `blocked_policy` | G4, FE/RBAC/data 승인 | TBD | TBD | G5-G7 |
 | 16 | P0 / WP-00.D2 | portable GitHub/GitLab Wiki publication harness | `github_live_verified_gitlab_pending` | platform-neutral docs source | 2026-07-23 | 2026-07-23 | documentation control |
-| 17 | P0/P7 / WP-00.Q1 | GOAL alignment, Library/script usability와 EX-01~12 self-check | `ready` | I4 local checkpoint, current docs/tests | TBD | TBD | G2/G4 local standardization |
+| 17 | P0/P7 / WP-00.Q1 | Case read facade, GOAL alignment, Library/script usability와 EX-01~12 self-check | `completed_standardized_local_alpha` | I4 local checkpoint, current docs/tests | 2026-07-24 | 2026-07-24 | G2/G4 local standardization |
+| 18 | P5 / WP-03.Q2 | Owner-approved rubric/report gold benchmark | `blocked_policy` | official rubric, threshold, approved gold fixture | TBD | TBD | G3 quality |
 
 ## 7. 최근 검증 증거
 
 | 날짜 | 범위 | 명령/증거 | 결과 | 품질 주장 경계 |
 |---|---|---|---|---|
+| 2026-07-24 | WP-00.Q1 Library standardization closeout | Case/examples/catalog, split test/eval, clean wheel, Ruff/Pyright/schema/Wiki/validate | 173 tests(118/34/21), integration shards 9/19/6, EX node 16, eval 10, Pyright 0/0, validate 0/0 | local standardized Alpha; Docling parser/live model/official rubric·retrieval·운영 품질 미실행 |
 | 2026-07-24 | I4 GitHub main + Wiki delivery | main/Wiki remote SHA, Actions run 30050877129 jobs/check annotations, public page GET | main `7052530`, run/jobs 2/2 success, annotations 0/0, Wiki `49b1fbc`, pages 4/4 HTTP 200 | GitHub delivery만 검증; 사내 GitLab runner/credential/live publish 미검증 |
 | 2026-07-24 | WP-06.I4.0-1 identity decision + local OIDC/JWKS reference | identity targeted, split full test/eval, Ruff/Pyright/validate, clean core/identity wheel, Wiki contract, SVG visual review | identity 24, full 160 (108/31/21), 10 eval groups, Ruff, new format 3/3, Pyright 0/0, validate 0/0, Wiki targeted 9 + CI 1, clean wheels | local synthetic signed token/key만 검증; 실제 IdP·rotation·revocation·assignment·upload·deployment 미검증 |
 | 2026-07-23 | WP-00.D2 portable dual-Wiki harness | Wiki validate/export/parity, local bare publish, split full test/eval, Ruff/Pyright/validate, CI YAML parse | Wiki targeted 6/6, parity 1/1, full 136 (86/31/19), 10 eval groups, Ruff, Pyright 0/0, validate 0/0 | local source/export only; GitHub initial Home와 GitLab runner/credential/live push 미검증 |
@@ -539,6 +555,17 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
     일괄 정리하지 않은 기존 51개 파일의 drift를 보고하지만 새 Python 3개는 통과했다. direct
     Pyright가 처음 base Conda path를 읽은 문제는 `pyproject.toml`에 workspace `.venv`를 고정해
     0/0으로 복구했다. 실제 issuer/JWKS/계정/token/upload 또는 원문 데이터는 사용하지 않았다.
+15. Q1의 첫 monolithic integration 실행은 assertion 실패가 아니라 도구 64초 timeout으로 종료됐고
+    닫힌 stdout에서 `OSError 22`가 발생했다. 같은 명령을 반복하지 않고
+    `integration-core/eval/ops` shard를 하네스에 추가해 9/19/6을 각각 통과했다.
+16. incomplete editable install 상태에서 actual-PPT 예제와 transaction working script가
+    `ModuleNotFoundError`를 냈다. checkout script의 `src` bootstrap을 통일하고 모든 pipeline script의
+    import 순서를 회귀했다. 최소 quickstart의 local absolute URI도 `report_id`와 safe Case view로
+    교체했다.
+17. Wiki integration은 Windows transient lock으로 atomic replace가 1회 실패했다. write/copy에
+    짧은 bounded retry를 추가하고 synthetic lock unit과 실제 local bare-Wiki integration을
+    재실행해 통과했다. clean interface wheel 첫 진단의 잘못된 import/CLI option과 조기 종료 pipe는
+    명령 작성 오류로 분리해 올바른 공개 경로·option으로 재검증했다.
 
 ## 9. 작업 이력
 
@@ -1188,6 +1215,60 @@ calendar 일정은 담당자·공수·승인일이 정해진 뒤 baseline으로 
 - 관련 근거: [Actions run 30050877129](https://github.com/Infant83/AXCalib/actions/runs/30050877129),
   GitHub main `7052530`, GitHub Wiki `49b1fbc`와
   [Wiki 운영 안내](docs/operations/wiki-publication.md).
+
+### HIST-2026-07-24-004
+
+- Phase / WP / Gate: P0/P7 / WP-00.Q1 / G2-G4 local standardization evidence
+- 상태: `active_case_read_facade_and_example_audit`
+- 작업: dossier를 project_id 기반으로 계속 다시 읽는 `Case` 핸들과
+  `get_current_status/get_summary`의 object/JSON/Markdown 출력을 첫 하위 slice로 착수했다. 기존
+  immutable Agent report와 별도 사람 결정·criterion 보정을 합쳐 보이되 원본 report를 덮어쓰지
+  않는 계약으로 제한한다. 이후 같은 slice에서 GOAL trace, script/API 단순성, EX-01~EX-12
+  정상·오류·경계 self-check를 이어간다.
+- 변경 파일: 착수 시점에는 `PROJECT_STATE.md`의 Active Slice, queue와 append-only 이력만 갱신했다.
+- 검증: README/WORK_SPEC/GOAL/DESIGN, 현재 facade/report/dossier/state/API와 `register_case` 사용처를
+  대조했다. 새 workflow나 상태전이 없이 read projection과 renderer를 추가하는 중간 규모 변경으로
+  산정했다.
+- 특이사항: `ReportRenderer`는 단일 불변 평가초안 renderer로 유지한다. `register_case`의 Alpha
+  사용자 반환형은 `Case`로 정리하고 raw dossier snapshot은 `create_project`와 `case.dossier`로
+  명시한다. remote API에는 자유서술·경로·권한 정보를 그대로 노출하지 않는다.
+- 미검증: 구현, targeted/full test, example repeat, packaging, Wiki와 diagram drift.
+- 다음 작업: typed Case projection과 순수 Markdown renderer를 구현하고 호환·무결성·사람 보정
+  회귀를 통과시킨 뒤 Q1 전체 추적·예제 감사를 완료한다.
+- 관련 근거: 5.12 Exit Evidence와
+  [Library 표준화 계획](docs/readiness/library-standardization-and-example-plan.md).
+
+### HIST-2026-07-24-005
+
+- Phase / WP / Gate: P0/P7 / WP-00.Q1 / G2-G4 local standardization evidence
+- 상태: `completed_standardized_local_alpha`
+- 작업: `register_case`가 project-id-bound live `Case`를 반환하도록 정리하고 최신 dossier와
+  immutable report를 연결하는 status/summary object·JSON·Markdown, 사람 보정 분리와 report
+  transaction-hash guard를 구현했다. actual proposal + synthetic completion readable lifecycle,
+  EX-01~12 catalog, GOAL/WP/Gate·script·security audit, Case schema를 추가했다. checkout script
+  bootstrap, safe quickstart output, integration shard와 Wiki atomic retry 결함도 같은 slice에서 닫았다.
+- 변경 파일: `src/axcalib/case.py`, `schemas/case.py`, `reports/case.py`, client/project transaction/API
+  adapter, Case tests/examples/catalog, generated schema, Q1 report/ADR-029, GOAL/WORK_SPEC/DESIGN/README,
+  workflow blueprint/module/SVG, harness/Wiki/manual/hand-off/memory-bank와 이 원장.
+- 검증: unit 118, integration 34(core 9/eval 19/ops 6), contract 21로 총 173 passed,
+  EX representative 16, 10 eval groups, actual-PPT quickstart/HITL과 pass→approve·accept→accept readable
+  example 통과. clean core wheel에서 optional dependency 유입 0과 actual-PPT Case를, clean
+  cli/api/identity wheel에서 import/OpenAPI 3.1/installed CLI를 확인했다. Ruff all, 변경 Python format,
+  Pyright 0/0, schema parity, `prep validate` 0/0, Wiki validate 0, GitHub/GitLab 17-file export와 CI
+  parity 1을 통과했다.
+- 특이사항: monolithic integration은 assertion이 아니라 64초 외부 timeout과 closed-stdout
+  `OSError 22`로 종료돼 세 shard로 대체했다. transaction script의 incomplete editable import와
+  Wiki transient Windows lock을 재현·수정했다. clean interface 첫 진단의 잘못된 import/option/
+  조기 종료 pipe는 명령 오류로 분리한 뒤 올바른 공개 경로로 재검증했다.
+- 미검증: Docling parser current-run, live model, exact on-prem `Qwen3.5-397B-A17B`, 공식 rubric/gold,
+  embedding/Qdrant, remote IdP/upload/assignment, distributed Worker, API/Web Case authorization,
+  PDF와 실제 사내 GitLab publication. Docling은 wheel extra metadata만 확인하고 저메모리 별도
+  contract 원칙을 유지했다.
+- 다음 작업: Active Slice `WP-03.Q2 owner-approved-rubric-gold-benchmark`는 Evaluation Owner 자료
+  제공까지 `blocked_policy`다. 운영 경로 WP-06.I4.2도 Product/Security/Platform Owner가 identity,
+  assignment와 immutable upload policy를 승인하기 전 구현하지 않는다.
+- 관련 근거: [Q1 report](docs/evaluation/wp00-q1-library-standardization-report.md), ADR-029,
+  D-042, R-037/R-045/R-047와 module plan 1.10.
 
 ## 10. 단계 종료 업데이트 템플릿
 

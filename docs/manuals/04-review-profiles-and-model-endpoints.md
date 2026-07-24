@@ -19,7 +19,8 @@ axcalib.submit_registration(case.project_id)
 draft = axcalib.evaluate(case.project_id, "registration")
 ```
 
-`create_project(...)`는 호환 alias이고, 사용자 관점에서는 `register_case(...)`가 권장 명칭이다.
+`register_case(...)`는 최신 revision을 읽는 `Case`를 반환하는 권장 명칭이다. raw dossier snapshot이
+필요한 기존 코드만 `create_project(...)` 또는 `case.dossier`를 명시적으로 사용한다.
 기본 프로필은 synthetic/offline reference이므로 공식 합격선이나 AX 인증기준으로 사용하지 않는다.
 
 ## 사업별 기준 주입

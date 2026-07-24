@@ -1,0 +1,70 @@
+schema_version: axcalib.review-policy-pack/v1alpha1
+policy_id: example.education-project
+version: 1.0.0
+status: offline_reference
+owner: example:education-planner
+description: >-
+  Supplied proposal PPTX and synthetic completion PPTX lifecycle demonstration only.
+  This reduced policy is not an approved AX certification rubric.
+registration:
+  stage: registration
+  rubric_id: example.education-project.registration
+  rubric_version: 1.0.0
+  checklist_refs:
+    - docs/rubrics/registration_checklist.md
+  criteria:
+    - criterion_id: REG-DEMO-PROBLEM-GOAL
+      title: 문제와 교육 프로젝트 목표
+      required_tags: [problem, goal]
+      follow_up: 문제와 목표의 연결을 보완해 주십시오.
+      critical: true
+      blocking_recommendation: reject
+    - criterion_id: REG-DEMO-SCOPE-METHOD
+      title: 범위와 방법
+      required_tags: [scope, method]
+      follow_up: 범위와 수행 방법을 보완해 주십시오.
+    - criterion_id: REG-DEMO-PLAN
+      title: 로드맵과 검증계획
+      required_tags: [roadmap, validation_plan]
+      follow_up: 단계별 검증계획을 보완해 주십시오.
+    - criterion_id: REG-DEMO-RISK
+      title: 위험과 한계
+      required_tags: [risk, limitation]
+      follow_up: 위험과 한계를 보완해 주십시오.
+  all_met_recommendation: pass
+  gap_recommendation: needs_changes
+completion:
+  stage: completion
+  rubric_id: example.education-project.completion
+  rubric_version: 1.0.0
+  checklist_refs:
+    - docs/rubrics/completion_checklist.md
+  criteria:
+    - criterion_id: COM-DEMO-DELIVERABLE
+      title: 완료 산출물과 결과
+      required_tags: [deliverable, result]
+      follow_up: 산출물과 결과 근거를 보완해 주십시오.
+      critical: true
+      blocking_recommendation: not_accept
+    - criterion_id: COM-DEMO-KPI
+      title: 정량 결과
+      required_tags: [result, quantitative_target]
+      follow_up: 정량 결과의 측정 근거를 보완해 주십시오.
+      critical: true
+      blocking_recommendation: not_accept
+    - criterion_id: COM-DEMO-REPRODUCIBILITY
+      title: 수행 재현성
+      required_tags: [result, reproducibility]
+      follow_up: 재현 절차를 보완해 주십시오.
+      critical: true
+      blocking_recommendation: not_accept
+    - criterion_id: COM-DEMO-CHANGE
+      title: 등록안 대비 변경
+      required_tags: [change]
+      follow_up: 등록안 대비 변경을 보완해 주십시오.
+    - criterion_id: COM-DEMO-RISK
+      title: 남은 위험과 한계
+      required_tags: [risk, limitation]
+      follow_up: 남은 위험과 한계를 보완해 주십시오.
+  all_met_recommendation: accept
+  gap_recommendation: needs_changes

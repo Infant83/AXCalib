@@ -1,9 +1,9 @@
 ---
 document_type: module_delivery_plan
 project: AXCalib
-baseline: v0.3-p1-g4-identity-reference
+baseline: v0.3-p1-g4-library-standardized
 updated_at: 2026-07-24
-status: library_cli_resource_api_worker_identity_local_contract_verified
+status: library_case_cli_resource_api_worker_identity_local_contract_verified
 ---
 
 # AXCalib Module별 상세 작업계획
@@ -24,7 +24,7 @@ Evidence로 예측 가능성을 확보한다. P/WP/G Gantt, Active Slice, 일정
 | M04 | `axcalib.retrieval` | offline_reference | WP-04 | M03 normalized chunk contract | labeled set + real embedding/Qdrant contract |
 | M05 | `axcalib.evaluation` | offline_reference | WP-03/05 | M01, M03, M04 | exact Qwen registration/completion + Owner-approved semantic gold benchmark |
 | M06 | `axcalib.calibration` | not_started | WP-05/06 | M05 | disagreement/agreement metric report |
-| M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | golden/redaction/content-hash contract |
+| M07 | `axcalib.reports` | offline_reference | WP-03 | M05 | PDF/report authorization과 approved golden corpus |
 | M08 | review/notification/audit | offline_reference | WP-01/03 | M02, M07 | producer transaction + GitLab/email adapter |
 | M09 | workflow + education composition | offline_reference | WP-01E/06 | M00~M08 | durable checkpoint/resume + rollout policy |
 | M10 | `axcalib.runtime` | contract_verified | WP-01/05/06 | config, M01/M02/M08 | distributed queue/heartbeat + exact on-prem capability/allowlist |
@@ -166,6 +166,23 @@ Evidence가 남아 있다.
 - 품질 경계: local static signed fixture다. remote discovery/JWKS fetch/cache/rotation/revocation,
   authoritative education assignment와 운영 configuration은 미구현
 
+### 1.10 2026-07-24 WP-00.Q1 Case/readability standardization evidence
+
+- `AXCalib.register_case()`는 project-id-bound live `Case`를 반환하고 raw snapshot 호환 경로는
+  `create_project()`와 `case.dossier`로 명시적으로 분리
+- `Case.get_current_status/get_summary`와 async parity는 최신 dossier revision을 매번 읽고
+  typed object, JSON, Markdown을 같은 의미로 제공
+- referenced report의 project/stage/report/snapshot/policy/artifact identity와 active 또는 archived
+  committed transaction SHA-256 불일치를 fail-closed
+- Agent recommendation, immutable criterion report, human decision/adjustment와 effective assessment를
+  분리해 표현하고 기본 출력에서 storage URI·path·상세 사람 메타데이터를 제외
+- actual proposal PPTX와 synthetic completion evidence를 사용한 readable pass lifecycle 예제와
+  EX-01~EX-12 정상/대기/반려/stale/validation/retry catalog
+- GOAL/WP/Gate trace, public API·script inventory, usability/code/security defect log를
+  `docs/evaluation/wp00-q1-library-standardization-report.md`에 기록
+- 품질 경계: local standardized Alpha다. 공식 rubric/model/retrieval quality, remote authorization,
+  PDF와 운영 Web/API report delivery를 완료한 것으로 보지 않음
+
 ## 2. 공통 납품 단위
 
 모든 module은 아래 산출물을 같은 change set에서 제공한다.
@@ -259,13 +276,15 @@ Evidence가 남아 있다.
 
 ### M07 — Reports (`src/axcalib/reports`)
 
-- 책임: typed result를 Markdown/JSON 및 향후 PDF로 렌더링
-- 입력: evaluation result, run manifest, review/audit references
-- 출력: content-hashed report artifact
+- 책임: typed result와 Case read projection을 Markdown/JSON 및 향후 PDF로 렌더링
+- 입력: evaluation result, latest dossier, run manifest, review/audit references
+- 출력: content-hashed report artifact 또는 immutable report를 참조하는 safe read view
 - 의존성: M05; renderer는 decision을 계산하지 않음
 - 첫 slice: deterministic registration report Markdown/JSON
-- 검증: required sections, evidence links, redaction, stable JSON schema
-- 완료증거: golden/snapshot test와 report hash
+- 검증: required sections, evidence links, redaction, stable schema, report identity/transaction hash
+- 현재 완료증거: registration/completion report와 Case object/JSON/Markdown, 사람 adjustment,
+  report tamper 및 archived transaction anchor 회귀
+- 남은 완료증거: Owner-approved golden corpus, PDF, resource-authorized API/Web delivery
 
 ### M08 — Review / Notification / Audit
 

@@ -1,0 +1,468 @@
+{
+  "$defs": {
+    "AgentRecommendation": {
+      "description": "Non-binding evaluator recommendation.",
+      "enum": [
+        "pass",
+        "needs_changes",
+        "reject",
+        "accept",
+        "not_accept"
+      ],
+      "title": "AgentRecommendation",
+      "type": "string"
+    },
+    "Assessment": {
+      "description": "One criterion assessment without a final certification decision.",
+      "enum": [
+        "met",
+        "partially_met",
+        "not_met",
+        "insufficient_evidence",
+        "not_applicable"
+      ],
+      "title": "Assessment",
+      "type": "string"
+    },
+    "AssessmentCount": {
+      "additionalProperties": false,
+      "description": "Count for one criterion assessment category.",
+      "properties": {
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "count": {
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "assessment",
+        "count"
+      ],
+      "title": "AssessmentCount",
+      "type": "object"
+    },
+    "CaseEvidenceView": {
+      "additionalProperties": false,
+      "description": "Evidence locator with storage paths removed from the read projection.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "excerpt": {
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "locator": {
+          "title": "Locator",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "locator",
+        "excerpt",
+        "source"
+      ],
+      "title": "CaseEvidenceView",
+      "type": "object"
+    },
+    "CaseLifecycleStage": {
+      "description": "Human-facing lifecycle section containing the current project status.",
+      "enum": [
+        "registration",
+        "execution",
+        "completion"
+      ],
+      "title": "CaseLifecycleStage",
+      "type": "string"
+    },
+    "CaseNextAction": {
+      "additionalProperties": false,
+      "description": "One domain-valid next action without claiming caller authorization.",
+      "properties": {
+        "action_id": {
+          "title": "Action Id",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "required_role": {
+          "title": "Required Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action_id",
+        "required_role",
+        "description"
+      ],
+      "title": "CaseNextAction",
+      "type": "object"
+    },
+    "CriterionReviewView": {
+      "additionalProperties": false,
+      "description": "Agent assessment and any explicit human correction for one criterion.",
+      "properties": {
+        "adjustment_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Adjustment Reason"
+        },
+        "agent_assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "criterion_id": {
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "effective_assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "evidence_refs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CaseEvidenceView"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "human_adjusted": {
+          "default": false,
+          "title": "Human Adjusted",
+          "type": "boolean"
+        },
+        "observation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "criterion_id",
+        "title",
+        "agent_assessment",
+        "effective_assessment"
+      ],
+      "title": "CriterionReviewView",
+      "type": "object"
+    },
+    "GateReviewView": {
+      "additionalProperties": false,
+      "description": "Current read projection for one registration or completion review gate.",
+      "properties": {
+        "adjusted_criterion_count": {
+          "default": 0,
+          "title": "Adjusted Criterion Count",
+          "type": "integer"
+        },
+        "agent_assessments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AssessmentCount"
+          },
+          "title": "Agent Assessments",
+          "type": "array"
+        },
+        "agent_recommendation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentRecommendation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "agent_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Summary"
+        },
+        "criteria": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CriterionReviewView"
+          },
+          "title": "Criteria",
+          "type": "array"
+        },
+        "effective_assessments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AssessmentCount"
+          },
+          "title": "Effective Assessments",
+          "type": "array"
+        },
+        "human_decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HumanDecisionView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "report_base_revision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Base Revision"
+        },
+        "report_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Id"
+        },
+        "snapshot_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshot Id"
+        },
+        "stage": {
+          "$ref": "#/$defs/ReviewStage"
+        }
+      },
+      "required": [
+        "stage"
+      ],
+      "title": "GateReviewView",
+      "type": "object"
+    },
+    "HumanDecisionView": {
+      "additionalProperties": false,
+      "description": "Human decision kept visibly separate from the Agent recommendation.",
+      "properties": {
+        "actor_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actor Id"
+        },
+        "adjustment_count": {
+          "title": "Adjustment Count",
+          "type": "integer"
+        },
+        "authority_context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Context"
+        },
+        "command": {
+          "title": "Command",
+          "type": "string"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "rationale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rationale"
+        }
+      },
+      "required": [
+        "command",
+        "decided_at",
+        "adjustment_count"
+      ],
+      "title": "HumanDecisionView",
+      "type": "object"
+    },
+    "ProjectStatus": {
+      "enum": [
+        "draft",
+        "registration_ready",
+        "registration_under_review",
+        "registration_hitl_pending",
+        "registration_approved",
+        "registration_rejected",
+        "in_progress",
+        "completion_ready",
+        "completion_approval_pending",
+        "completion_registered",
+        "completion_under_review",
+        "completion_hitl_pending",
+        "completion_accepted",
+        "completion_not_accepted"
+      ],
+      "title": "ProjectStatus",
+      "type": "string"
+    },
+    "ReviewStage": {
+      "description": "The two evaluation gates.",
+      "enum": [
+        "registration",
+        "completion"
+      ],
+      "title": "ReviewStage",
+      "type": "string"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/case-status/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Small operational answer to \"where is this case now?\".",
+  "properties": {
+    "display_id": {
+      "title": "Display Id",
+      "type": "string"
+    },
+    "dossier_status": {
+      "$ref": "#/$defs/ProjectStatus"
+    },
+    "latest_review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GateReviewView"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "lifecycle_stage": {
+      "$ref": "#/$defs/CaseLifecycleStage"
+    },
+    "next_actions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CaseNextAction"
+      },
+      "title": "Next Actions",
+      "type": "array"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "axcalib.case-status/v1alpha1",
+      "default": "axcalib.case-status/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "terminal": {
+      "title": "Terminal",
+      "type": "boolean"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "waiting_for": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Waiting For"
+    }
+  },
+  "required": [
+    "project_id",
+    "display_id",
+    "title",
+    "revision",
+    "dossier_status",
+    "lifecycle_stage",
+    "terminal",
+    "updated_at"
+  ],
+  "title": "CaseStatus",
+  "type": "object"
+}

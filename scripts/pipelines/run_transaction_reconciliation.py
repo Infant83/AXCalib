@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from axcalib import AXCalib
-from axcalib.schemas import PipelineStatus
+ROOT = Path(__file__).resolve().parents[2]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from axcalib import AXCalib  # noqa: E402
+from axcalib.schemas import PipelineStatus  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:

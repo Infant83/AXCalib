@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
@@ -415,12 +416,26 @@ def validate_wiki(root: Path) -> list[str]:
     return errors
 
 
+def _replace_with_bounded_retry(source: Path, target: Path) -> None:
+    """Replace once, tolerating only short transient Windows file locks."""
+
+    attempts = 6
+    for attempt in range(attempts):
+        try:
+            os.replace(source, target)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.05 * (2**attempt))
+
+
 def _atomic_write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
     try:
         temporary.write_text(content, encoding="utf-8", newline="\n")
-        os.replace(temporary, path)
+        _replace_with_bounded_retry(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -430,7 +445,7 @@ def _atomic_copy(source: Path, destination: Path) -> None:
     temporary = destination.with_name(f".{destination.name}.tmp-{os.getpid()}")
     try:
         shutil.copyfile(source, temporary)
-        os.replace(temporary, destination)
+        _replace_with_bounded_retry(temporary, destination)
     finally:
         temporary.unlink(missing_ok=True)
 

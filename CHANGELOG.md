@@ -42,6 +42,13 @@
 - RS256/PS256/ES256, exact issuer/audience/type/time/JTI, issuer-bound key와 role/scope/org
   positive/negative contract
 - GOAL 추적, 공개 API 단순성, script 감사와 EX-01~EX-12를 정의한 Library 표준화/example 계획
+- project_id로 최신 dossier를 다시 읽는 `Case`와 sync/async
+  `get_current_status/get_summary` object·JSON·Markdown projection
+- Agent assessment, 사람 decision/criterion adjustment와 effective assessment를 분리한 lifecycle 요약
+- actual proposal PPTX와 synthetic completion PPTX의 example-only pass/accept 읽기 예제
+- persona·fixture·명령·기대 상태·cleanup을 가진 EX-01~EX-12 machine-readable catalog
+- Case status/summary Draft 2020-12 JSON Schema artifact와 drift validation
+- 60초 제한 환경을 위한 `integration-core`, `integration-eval`, `integration-ops` restartable shard
 
 ### 변경
 
@@ -73,6 +80,15 @@
   `jku/x5u/x5c`, unknown/ambiguous authority mapping을 fail closed한다.
 - Pyright가 workspace `.venv`의 optional dependency를 같은 방식으로 해석하도록 실행환경을
   `pyproject.toml`에 고정한다.
+- `register_case(...)`는 live `Case`를 반환하고 raw initial `ProjectDossier` 호환은
+  `create_project(...)`, 최신 raw record는 `case.dossier`로 분리한다.
+- Case report read는 reports root/size/schema/identity/evidence와 active·archived committed
+  transaction SHA-256을 검증하며 기본 projection에서 local URI, storage path와 사람 상세를
+  redaction하고 Markdown의 HTML·image/link control을 escape한다.
+- checkout working script와 사용자 예제는 incomplete editable install에도 `src`를 먼저
+  bootstrap하고, 최소 quickstart 출력은 local dossier/report path 대신 `report_id`를 사용한다.
+- Wiki atomic export는 Windows transient file lock을 bounded retry하고 마지막 실패는 그대로
+  보고한다.
 
 ### 현재 검증
 

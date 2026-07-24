@@ -547,7 +547,7 @@ def create_project_router(
             )
         actor_role = "project_owner" if principal.role is ApiRole.PROJECT_OWNER else "administrator"
         try:
-            dossier = await asyncio.to_thread(
+            case = await asyncio.to_thread(
                 client.register_case,
                 proposal_path,
                 title=request.title,
@@ -562,7 +562,7 @@ def create_project_router(
                     request.sidecar.sha256 if request.sidecar is not None else None
                 ),
             )
-            return _project_registration_view(dossier, replayed=False)
+            return _project_registration_view(case.dossier, replayed=False)
         except (DossierAlreadyExistsError, TransactionBlockedError):
             try:
                 existing = client.service.dossiers.load(project_id)

@@ -7,7 +7,7 @@ workspace: C:/Users/angpa/myProjects/Daily_Work/AXCalib
 created_at: 2026-07-12
 updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g4_identity_local_reference_quality_pending
+status: g4_library_standardized_quality_operational_pending
 baseline: v0.3
 harness_status: executable_offline_harness; g3_reference_verified; t1_partial
 git_status: repository_initialized; main_tracks_origin_main
@@ -869,7 +869,7 @@ live model은 기본 명령에서 제외되며 사용자 승인 하에 비식별
 | 32. long job 202와 재시작 가능한 Worker | FR-058, ADR-026, runtime OpenAPI, WP-06.I3 report | Single-host durable queue/claim/retry/poll contract verified; distributed broker/heartbeat/remote identity pending |
 | 33. GitHub와 사내 GitLab의 동일 Wiki 매뉴얼·개발이력 | FR-059, ADR-027, Wiki runbook, WP-00.D2 report | GitHub live push/render verified; GitLab runner/credential/live push pending |
 | 34. 공급자 중립 OIDC/JWKS identity 검증 | FR-060, ADR-028, identity/upload decision packet, WP-06.I4 report | Local signed positive/negative contract verified; actual issuer/remote rotation/revocation pending |
-| 35. GOAL 정렬·단순성·다양한 example 자가점검 | FR-061, Library standardization/example plan | Planned after WP-06.I4 checkpoint; trace matrix와 catalog 미실행 |
+| 35. GOAL 정렬·단순성·다양한 example 자가점검 | FR-061, Case read facade, WP-00.Q1 report, EX-01~12 catalog | Local standardized Alpha evidence implemented; 공식 rubric/model/retrieval/운영 품질은 pending |
 
 Specified는 구현 완료가 아니라 요구와 수용 방향이 문서에 정의됐다는 뜻이다.
 

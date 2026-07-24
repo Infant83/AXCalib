@@ -13,7 +13,23 @@ uv run --no-sync python examples/library_mvp_alpha_quickstart.py `
 결과에서 `waiting_human`, report URI, allowed command를 확인한다. 이 예제가 가장 작은 Library Alpha
 smoke다.
 
-## Recipe 2: 교육 프로그램과 프로젝트 lifecycle
+## Recipe 2: 실제 제안 PPT의 읽을 수 있는 통과·수용 예제
+
+```powershell
+uv run --no-sync python examples/case_lifecycle/run_readable_pass.py `
+  --workspace output/example-readable-pass `
+  --project-id example-readable-pass-001
+```
+
+등록심의 HITL 대기, 완료평가 HITL 대기와 최종 lifecycle summary를 Markdown/JSON으로 만든다.
+실제 제안 PPTX와 synthetic 완료 PPTX를 사용하지만 기준은 해당 정보 흐름용 축소
+`offline_reference`다. 공식 AX rubric, 실제 학습자 평가나 운영 인증 결과가 아니다.
+
+`examples/catalog.yaml`에는 EX-01~EX-12의 persona, fixture, 명령, 기대 상태/실패와 cleanup이 있다.
+첫 사용자는 Recipe 1/2만 보고, stale·알림·retrieval·model·identity·worker·batch 경계는 필요할 때
+catalog에서 실행한다.
+
+## Recipe 3: 교육 프로그램과 프로젝트 lifecycle
 
 ```powershell
 uv run --no-sync python examples/education_project_lifecycle/run_full_lifecycle.py `
@@ -25,7 +41,7 @@ uv run --no-sync python examples/education_project_lifecycle/run_full_lifecycle.
 보여 준다. 과정 기획자가 바꿀 수 있는 것은 allowlisted requirement/condition/Pipeline ID이며 임의 Python
 import나 사람 Gate 우회는 허용하지 않는다.
 
-## Recipe 3: 실제 제공 PPTX의 two-gate working script
+## Recipe 4: 실제 제공 PPTX의 two-gate working script
 
 ```powershell
 uv run --no-sync python scripts/pipelines/run_two_gate_pptx.py --help
@@ -34,7 +50,7 @@ uv run --no-sync python scripts/pipelines/run_two_gate_pptx.py --help
 옵션을 먼저 확인하고 별도 `output/` workspace에서 실행한다. working script는 파일 입력과 Library 호출만
 담당하며 상태전이·판정·retry 규칙을 복사하지 않는다.
 
-## Recipe 4: 긴 작업을 local Worker로 처리
+## Recipe 5: 긴 작업을 local Worker로 처리
 
 Producer와 Worker가 같은 workspace를 사용해야 한다.
 
@@ -58,18 +74,20 @@ uv run --no-sync python scripts/pipelines/run_local_worker_once.py --help
 현재 queue는 single-host filesystem Alpha다. 여러 서버가 같은 디렉터리를 공유하는 distributed queue로
 간주하지 않는다.
 
-## Recipe 5: 분리 검증으로 재개 가능하게 실행
+## Recipe 6: 분리 검증으로 재개 가능하게 실행
 
 ```powershell
 .\prep.ps1 test unit
-.\prep.ps1 test integration
+.\prep.ps1 test integration-core
+.\prep.ps1 test integration-eval
+.\prep.ps1 test integration-ops
 .\prep.ps1 test contract
 ```
 
 중간에 프로세스가 종료되면 실패한 그룹만 다시 실행한다. memory-heavy Docling은 `.\prep.ps1 docling`로
 분리한다.
 
-## Recipe 6: Wiki를 두 플랫폼 형식으로 미리보기
+## Recipe 7: Wiki를 두 플랫폼 형식으로 미리보기
 
 ```powershell
 uv run --no-sync python scripts/wiki/sync_wiki.py validate
@@ -82,7 +100,7 @@ uv run --no-sync python scripts/wiki/sync_wiki.py export `
 원격 전송은 일어나지 않는다. 실제 publication 규칙은 [문서 운영 규칙](Documentation-Governance)을
 따른다.
 
-## Recipe 7: OIDC/JWKS local signed contract
+## Recipe 8: OIDC/JWKS local signed contract
 
 실제 사내 IdP를 호출하지 않고 ephemeral RSA/EC key와 synthetic claim으로 valid/invalid 경계를
 검증한다.

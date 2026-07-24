@@ -21,7 +21,7 @@ uv run --no-sync python examples/library_mvp_alpha_quickstart.py `
 예제는 다음 순서로 동작한다.
 
 1. `AXCalib(workspace)` 인스턴스를 만든다.
-2. `register_case(...)`로 PPTX와 sidecar를 한 Project Dossier에 등록한다.
+2. `register_case(...)`로 PPTX와 sidecar를 한 Project Dossier에 등록하고 live `Case` 핸들을 받는다.
 3. `submit_registration(...)`으로 등록심의 제출 revision을 고정한다.
 4. `evaluate(..., "registration")`으로 평가초안과 report를 생성한다.
 5. `registration_hitl_pending`에서 멈추고 관리자 결정을 기다린다.
@@ -32,22 +32,25 @@ uv run --no-sync python examples/library_mvp_alpha_quickstart.py `
 from axcalib import AXCalib
 
 ax = AXCalib("output/my-first-case")
-dossier = ax.register_case(
+case = ax.register_case(
     "tests/sources/oled_qc_project_outline.pptx",
     title="OLED QC 등록심의 예제",
     sidecar_path="tests/sources/oled_qc_project_outline.axcalib.json",
     project_id="wiki-demo-001",
 )
-ax.submit_registration(dossier.project_id)
-draft = ax.evaluate(dossier.project_id, "registration")
+ax.submit_registration(case.project_id)
+draft = ax.evaluate(case.project_id, "registration")
 
 print(draft.status)
 print(draft.dossier_status)
-print(draft.report_markdown_uri)
+print(draft.report_id)
+print(case.get_current_status(format="md"))
 ```
 
-관리자 결정 없이 승인 상태로 넘어가지 않는 것이 정상이다. `report_markdown_uri`는 평가초안이지
-최종 인증서가 아니다.
+관리자 결정 없이 승인 상태로 넘어가지 않는 것이 정상이다. `report_id`가 가리키는 것은 평가초안이지
+최종 인증서가 아니다. 사용자용 출력에는 로컬 report 경로를 직접 노출하지 않고, 이후에도 같은
+`case`에서 `get_current_status()`와 `get_summary()`를 호출해 project_id 기반 최신 dossier와 별도
+사람 결정을 확인한다.
 
 ## 4. 기본 검증
 
@@ -56,7 +59,9 @@ print(draft.report_markdown_uri)
 ```powershell
 .\prep.ps1 validate
 .\prep.ps1 test unit
-.\prep.ps1 test integration
+.\prep.ps1 test integration-core
+.\prep.ps1 test integration-eval
+.\prep.ps1 test integration-ops
 .\prep.ps1 test contract
 .\prep.ps1 eval
 ```

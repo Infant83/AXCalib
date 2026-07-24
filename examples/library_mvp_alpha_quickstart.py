@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import uuid
 from pathlib import Path
 
-from axcalib import AXCalib
-
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from axcalib import AXCalib  # noqa: E402
+
 DEFAULT_PPTX = ROOT / "tests" / "sources" / "oled_qc_project_outline.pptx"
-DEFAULT_SIDECAR = (
-    ROOT / "tests" / "sources" / "oled_qc_project_outline.axcalib.json"
-)
+DEFAULT_SIDECAR = ROOT / "tests" / "sources" / "oled_qc_project_outline.axcalib.json"
 
 
 def run(
@@ -26,23 +29,22 @@ def run(
     """Register, submit, and evaluate one proposal without making a human decision."""
 
     ax = AXCalib(workspace)
-    dossier = ax.register_case(
+    case = ax.register_case(
         proposal,
         title="OLED QC 프로젝트 등록심의 Alpha 예제",
         sidecar_path=sidecar,
         project_id=project_id,
     )
-    submitted = ax.submit_registration(dossier.project_id)
-    draft = ax.evaluate(dossier.project_id, "registration")
+    submitted = ax.submit_registration(case.project_id)
+    draft = ax.evaluate(case.project_id, "registration")
     return {
         "schema_version": "axcalib.quickstart-result/v1alpha1",
-        "project_id": dossier.project_id,
-        "dossier_uri": draft.dossier_uri,
+        "project_id": case.project_id,
+        "current_status": json.loads(case.get_current_status(format="json")),
         "dossier_revision": draft.dossier_revision,
         "status": draft.dossier_status.value,
         "pipeline_status": draft.status.value,
-        "report_json_uri": draft.report_json_uri,
-        "report_markdown_uri": draft.report_markdown_uri,
+        "report_id": draft.report_id,
         "allowed_commands": list(draft.allowed_commands),
         "human_boundary": (
             "Agent 초안만 생성됐습니다. 관리자가 approve 또는 reject를 결정해야 합니다."

@@ -1,9 +1,9 @@
 ---
 document_type: workflow_blueprint
 project: AXCalib
-baseline: v0.3-p1-g4-durable-worker-alpha
-updated_at: 2026-07-22
-status: library_cli_resource_api_durable_worker_local_alpha_exact_model_pending
+baseline: v0.3-p1-g4-case-read-alpha
+updated_at: 2026-07-24
+status: library_case_cli_resource_api_worker_local_alpha_exact_model_pending
 ---
 
 # AXCalib Workflow Blueprint
@@ -66,7 +66,31 @@ render 16/16, gold locator 13/13, reference field 12/12, criterion traceability 
 claim 0건을 회귀한다. 이 경로는 공식 rubric/VLM 의미 정확도를 주장하지 않는다. Vector DB,
 exact model, full evaluation API와 운영 adapter는 다음 범위다.
 
-### 0.1 현재 실행되는 교육 프로그램 → 프로젝트 인증 roll-up
+### 0.1 현재 실행되는 project-id-bound Case read projection
+
+```mermaid
+flowchart LR
+    CASE["register_case / open_case"] --> DOSSIER["latest dossier revision"]
+    DOSSIER --> REPORT["immutable report identity"]
+    REPORT --> TX["committed transaction SHA-256"]
+    TX --> JOIN["Agent recommendation + human decision"]
+    JOIN --> STATUS["get_current_status"]
+    JOIN --> SUMMARY["get_summary"]
+    STATUS --> FORMAT["typed object / JSON / Markdown"]
+    SUMMARY --> FORMAT
+
+    classDef verified fill:#EAF8F4,stroke:#1E8A75,color:#172033;
+    classDef guard fill:#FFF3E4,stroke:#B36B00,stroke-width:2px,color:#172033;
+    class CASE,DOSSIER,JOIN,STATUS,SUMMARY,FORMAT verified;
+    class REPORT,TX guard;
+```
+
+`Case`는 별도 workflow나 두 번째 기준정보가 아니다. 각 read마다 canonical dossier를 다시 읽고,
+참조 report가 dossier·snapshot·policy·artifact identity와 committed transaction hash에 결속됐을
+때만 Agent 초안과 사람 결정을 함께 보여 준다. 기본 view는 storage URI와 상세 사람 메타데이터를
+제외하며 `verbose=True`도 원문 전체나 secret을 추가하지 않는다.
+
+### 0.2 현재 실행되는 교육 프로그램 → 프로젝트 인증 roll-up
 
 ```mermaid
 flowchart LR
@@ -92,7 +116,7 @@ flowchart LR
 enrollment는 program/version/enrollment/milestone/learner context로 결합한다. 과정 완료도 local
 unverified administrator command이며 공식 credential이 아니다.
 
-### 0.2 Multimodal route qualification — proxy와 deployment 분리
+### 0.3 Multimodal route qualification — proxy와 deployment 분리
 
 ```mermaid
 flowchart LR
@@ -122,7 +146,7 @@ supplied-fixture registration, GPT-4o text/vision 대조는 통과했다. GLM 4.
 `Qwen3.5-397B-A17B` identity와 completion/gold 품질은 통과하지 않았으므로 READY node의 deployment
 의미로 승격하지 않는다. raw output와 `reasoning_content`는 저장하지 않는다.
 
-### 0.3 WP-06.I1 authenticated runtime API boundary
+### 0.4 WP-06.I1 authenticated runtime API boundary
 
 ```mermaid
 flowchart LR
@@ -151,7 +175,7 @@ generic route는 request가 선언한 사람 identity나 관리자 결정을 신
 `openapi.v1alpha1.json`은 전체 제품 target, `openapi.runtime.v1alpha1.json`은 실제 구현된 route의
 generated contract다.
 
-### 0.4 WP-06.I2a principal-bound project command boundary
+### 0.5 WP-06.I2a principal-bound project command boundary
 
 ```mermaid
 flowchart LR
@@ -179,7 +203,7 @@ HTTP request에는 actor나 local path가 없다. 같은 idempotency key의 repl
 review context와 principal-bound creation audit가 모두 같을 때만 성공한다. 실제 OIDC와 immutable
 staging service는 이 그림의 완료 범위가 아니다.
 
-### 0.5 WP-06.I2b principal-bound education resource boundary
+### 0.6 WP-06.I2b principal-bound education resource boundary
 
 ```mermaid
 flowchart LR
@@ -212,7 +236,7 @@ flowchart LR
 저장된 성공 결과를 replay하지만 다른 payload는 충돌한다. mentor/instructor assignment는 현재
 deployment가 검증해 넣는 resource scope이며 실제 IdP·배정 원장 통합은 운영 Gate다.
 
-### 0.6 WP-06.I2c project read and decision replay boundary
+### 0.7 WP-06.I2c project read and decision replay boundary
 
 ```mermaid
 flowchart LR
@@ -243,7 +267,7 @@ replay 전에 현재 principal authorization을 다시 확인한다. local resul
 중 유실된 경우를 복구하지만 domain commit과 result write 사이 process crash, multi-host serialization과
 retention은 보장하지 않는다. report/evidence content read도 이 safe GET 범위가 아니다.
 
-### 0.7 WP-06.I3 durable local 202 Worker boundary
+### 0.8 WP-06.I3 durable local 202 Worker boundary
 
 ```mermaid
 flowchart LR
@@ -277,7 +301,7 @@ result를 replay한다. retryable failure만 bounded backoff로 다시 queued된
 single-host filesystem Alpha이며 plaintext workspace retention, heartbeat, dead-letter, broker/database
 consensus와 실제 OIDC는 운영 adapter 범위다.
 
-### 0.8 WP-06.I4.1 provider-neutral OIDC/JWKS reference boundary
+### 0.9 WP-06.I4.1 provider-neutral OIDC/JWKS reference boundary
 
 ```mermaid
 flowchart LR

@@ -85,6 +85,16 @@ client.decide_completion(
 )
 ```
 
+마지막 결과는 report 파일 경로를 직접 조합하지 않고 같은 `Case`에서 읽는다.
+
+```python
+print(case.get_current_status(format="md"))
+print(case.get_summary(format="md", verbose=True))
+```
+
+기본 출력은 storage URI와 상세 사람 메타데이터를 숨긴다. `verbose=True`는 criterion별 Agent 판단,
+사람의 수정과 effective 판단을 함께 보여 주지만 두 값을 합쳐 원본 report를 덮어쓰지 않는다.
+
 ## 실패·재개 연습
 
 - 같은 idempotency key로 재시도해 중복 평가가 생기지 않는지 확인한다.

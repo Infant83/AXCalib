@@ -205,6 +205,26 @@ class LocalProjectService:
             idempotency_key=event_id,
         )
 
+    def expected_report_sha256(
+        self,
+        project_id: str,
+        report_id: str,
+        report_path: Path,
+    ) -> str | None:
+        """Read the committed transaction hash anchor for one report JSON file."""
+
+        resolved = report_path.resolve()
+        try:
+            relative = resolved.relative_to(self.workspace).as_posix()
+        except ValueError as error:
+            raise RuntimeError("report is outside the project workspace") from error
+        return self.transactions.expected_artifact_sha256(
+            project_id=project_id,
+            kind="report_json",
+            relative_path=relative,
+            expected_report_id=report_id,
+        )
+
     def submit_registration(self, project_id: str) -> PipelineResult:
         """Submit a draft to the registration-ready checkpoint."""
 

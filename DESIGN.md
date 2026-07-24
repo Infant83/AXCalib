@@ -5,7 +5,7 @@ baseline: v0.3-p1
 created_at: 2026-07-12
 updated_at: 2026-07-24
 timezone: Asia/Seoul
-status: g4_identity_local_reference_operational_policy_pending
+status: g4_library_standardized_operational_policy_pending
 ---
 
 # AXCalib Architecture와 App Design
@@ -26,6 +26,9 @@ embedding/Vector DB, panel/calibration, 운영 API/Web 설계는 여전히 Targe
 2026-07-24 WP-06.I4.0-1에는 운영값을 임의로 만들지 않는 identity/upload decision packet과
 provider-neutral OIDC/JWKS local signed reference가 추가됐다. 실제 issuer/discovery/key rotation,
 revocation, 교육 배정과 immutable upload는 계속 운영 정책·adapter 범위다.
+2026-07-24 WP-00.Q1에는 canonical dossier를 유지하면서 project_id에 결속된 live `Case` read
+facade가 추가됐다. status/summary는 최신 revision과 immutable report transaction hash를 확인한 뒤
+typed object, JSON 또는 Markdown으로 투영하며 Agent 제안과 사람 결정을 한 필드로 합치지 않는다.
 
 제품은 다음 네 층으로 분리한다.
 
@@ -360,6 +363,33 @@ read revision 7
 현재 revision이 달라지면 409/revision_conflict를 반환한다. 평가 run은 base_snapshot_hash를 가지며, 완료 후 현재 dossier가 같은 base revision일 때만 자동 적용할 수 있다. 그렇지 않으면 stale_result로 보관하고 사람이 비교·병합한다.
 
 사용자·멘토 기록은 append-first다. 잘못된 항목을 수정할 때 원 항목을 조용히 바꾸지 않고 supersedes 또는 correction_ref를 남긴다.
+
+### 5.5 Case read projection
+
+`Case`는 새 저장 모델이나 workflow가 아니라 canonical dossier와 immutable report를 읽는
+project-id-bound handle이다.
+
+```mermaid
+flowchart LR
+    CASE["Case(project_id)"] --> LOAD["latest dossier revision"]
+    LOAD --> HASH["report identity + committed SHA-256"]
+    HASH --> JOIN["Agent result + human decision"]
+    JOIN --> VIEW["CaseStatus / CaseSummary"]
+    VIEW --> OUT["object / JSON / Markdown"]
+```
+
+불변조건:
+
+- `get_current_status()`와 `get_summary()`는 호출할 때마다 repository에서 최신 revision을 읽는다.
+- report는 dossier의 report_id, stage, snapshot, policy, artifact와 transaction journal hash에
+  모두 결속되어야 한다. 불일치는 stale 표시로 축소하지 않고 integrity error로 실패한다.
+- 기본 projection은 artifact URI, 로컬 경로, decision rationale와 actor를 노출하지 않는다.
+  `verbose=True`는 같은 권한 경계 안의 Library 사용자가 criterion·사람 수정·audit reference를
+  확인하기 위한 상세 모드이며 원문 전체나 secret을 추가하지 않는다.
+- 사람 수정은 immutable Agent report를 덮어쓰지 않고 dossier의 decision adjustment와 effective
+  assessment로 합성한다.
+- `case.dossier`는 현재 raw snapshot을 명시적으로 요청하는 escape hatch다. 이전에 얻은 snapshot은
+  live object로 간주하지 않는다.
 
 ## 6. Lifecycle State Machine
 
@@ -788,13 +818,18 @@ NotificationPort의 우선 adapter는 다음과 같다.
 from axcalib import AXCalib
 
 client = AXCalib.from_toml("config/axcalib.toml", workspace="output/review")
-project = client.register_case("proposal.pptx", title="검토할 과제")
-client.submit_registration(project.project_id)
-result = client.evaluate(project.project_id, stage="registration")
+case = client.register_case("proposal.pptx", title="검토할 과제")
+client.submit_registration(case.project_id)
+result = client.evaluate(case.project_id, stage="registration")
+print(case.get_current_status(format="md"))
+print(case.get_summary(format="json", verbose=True))
 # async boundary에서는 위 evaluate 대신 await client.aevaluate(...)를 사용한다.
 ~~~
 
 - 기본 client는 network, GPU, DB를 암묵적으로 호출하지 않는 offline-safe profile이다.
+- `register_case`는 live `Case`를 반환한다. raw dossier snapshot이 필요한 compatibility code는
+  `create_project` 또는 `case.dossier`를 명시적으로 사용한다.
+- status/summary의 sync/async API는 동일한 schema와 error 의미를 가진다.
 - 현재 `from_toml`은 offline profile을 기본 조립한다. `live_model=True`이면 환경변수 기반
   OpenAI-compatible structured evaluator를, `enable_docling=True`이면 optional Docling adapter를
   추가한다. expert TOML의 임의 provider 조립과 운영 endpoint policy는 Target이다.
@@ -1458,6 +1493,9 @@ P1에서 다음 ADR을 만든다.
 11. ADR-011 Mandatory HITL approval notification (Accepted, 문서 생성)
 12. ADR-012 Stage retrieval and similarity portion (Accepted, 문서 생성)
 13. ADR-013 Composable local pipelines and total workflow (Accepted, 문서 생성)
+
+이후 구현 결정은 `docs/adr/`의 연속 기록으로 관리한다. WP-00.Q1의 live read facade와 raw
+dossier 경계는 ADR-029에 고정했다.
 
 ## 24. 검증 계획
 

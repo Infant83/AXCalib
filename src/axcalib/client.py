@@ -8,6 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from axcalib.case import Case
 from axcalib.evaluation import (
     EvidenceEvaluator,
     OfflineEvidenceEvaluator,
@@ -457,10 +458,10 @@ class AXCalib:
         actor_role: Literal["submitter", "project_owner", "administrator"] = "submitter",
         expected_proposal_sha256: str | None = None,
         expected_sidecar_sha256: str | None = None,
-    ) -> ProjectDossier:
-        """Register source evidence as one policy-bound AXCalib dossier."""
+    ) -> Case:
+        """Register source evidence and return a live project-id-bound case handle."""
 
-        return self.service.create_project(
+        dossier = self.service.create_project(
             Path(proposal_path),
             title=title,
             sidecar_path=Path(sidecar_path) if sidecar_path else None,
@@ -471,6 +472,17 @@ class AXCalib:
             actor_role=ActorRole(actor_role),
             expected_proposal_sha256=expected_proposal_sha256,
             expected_sidecar_sha256=expected_sidecar_sha256,
+        )
+        return self.open_case(dossier.project_id)
+
+    def open_case(self, project_id: str) -> Case:
+        """Open an existing case whose reads always use the latest dossier revision."""
+
+        return Case(
+            project_id,
+            load_dossier=self.service.dossiers.load,
+            reports_root=self.service.reports.root,
+            expected_report_sha256=self.service.expected_report_sha256,
         )
 
     def create_project(
@@ -487,17 +499,17 @@ class AXCalib:
         expected_proposal_sha256: str | None = None,
         expected_sidecar_sha256: str | None = None,
     ) -> ProjectDossier:
-        """Backward-compatible alias for :meth:`register_case`."""
+        """Create and return the initial raw dossier snapshot for compatibility."""
 
-        return self.register_case(
-            proposal_path,
+        return self.service.create_project(
+            Path(proposal_path),
             title=title,
-            sidecar_path=sidecar_path,
+            sidecar_path=Path(sidecar_path) if sidecar_path else None,
             project_id=project_id,
             review_profile=review_profile,
             review_context=review_context,
             actor_id=actor_id,
-            actor_role=actor_role,
+            actor_role=ActorRole(actor_role),
             expected_proposal_sha256=expected_proposal_sha256,
             expected_sidecar_sha256=expected_sidecar_sha256,
         )

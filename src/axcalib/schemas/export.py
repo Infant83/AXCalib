@@ -1,4 +1,4 @@
-"""Deterministic JSON Schema artifacts for dossier and education contracts."""
+"""Deterministic JSON Schema artifacts for persisted and public read contracts."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from axcalib.dossier import atomic_write_text
+from axcalib.schemas.case import CaseStatus, CaseSummary
 from axcalib.schemas.domain import ProjectDossier
 from axcalib.schemas.education import EducationEnrollment, EducationProgram
 
@@ -27,6 +28,16 @@ ARTIFACTS: tuple[tuple[str, type[BaseModel], str], ...] = (
         "axcalib.education-enrollment.v1alpha1.schema.json",
         EducationEnrollment,
         "https://axcalib.local/schemas/education-enrollment/v1alpha1",
+    ),
+    (
+        "axcalib.case-status.v1alpha1.schema.json",
+        CaseStatus,
+        "https://axcalib.local/schemas/case-status/v1alpha1",
+    ),
+    (
+        "axcalib.case-summary.v1alpha1.schema.json",
+        CaseSummary,
+        "https://axcalib.local/schemas/case-summary/v1alpha1",
     ),
 )
 

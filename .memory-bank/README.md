@@ -9,24 +9,28 @@
 4. `DECISIONS.md`, `RISK_REGISTER.md`, `CHANGELOG.md`
 5. 코드, 테스트와 evaluation 결과
 
-## Resume card - 2026-07-23
+## Resume card - 2026-07-24
 
 - 제품: AXCalib, AX Certification Agent Library
 - 핵심 경계: Agent는 심의 초안을 만들고 승인된 사람이 최종 결정한다.
-- 현재 위치: P7 / WP-06.I3 completed local Alpha / G4 Interfaces
+- 현재 위치: P7 / WP-00.Q1 standardized local Alpha / G4 Interfaces
 - 완료 checkpoint: R1.2 + WP-06.I1 runtime API + WP-06.I2a/I2b/I2c resource API/read-replay + I3 local Worker
 - 현재 checkpoint: WP-06.I4.0-1 identity/upload decision packet + local signed OIDC/JWKS reference
-- 다음 quality slice: WP-00.Q1 GOAL alignment, public API/script usability, example self-check matrix
+- 완료 quality slice: WP-00.Q1 GOAL alignment, project-id-bound Case read facade, public API/script
+  usability와 EX-01~12 example self-check matrix
+- 다음 개발 dependency: Owner-approved official rubric/gold 또는 remote identity/upload policy
 - 운영 dependency: approved remote identity/assignment/immutable upload boundary `blocked_policy`
 - 문서 전달: WP-00.D2 portable `wiki/` source, PROJECT_STATE mirror와 GitHub/GitLab export contract;
   GitHub Wiki live render와 Node.js 24 automatic publish/annotation 0 완료, 사내 GitLab은 대기
-- 최근 증거: 136 lightweight tests(unit 86/integration 31/contract 19), 10 eval groups,
-  Wiki targeted 6/6와 parity 1/1, Ruff check, Pyright 0/0, validation 0/0; 직전 Worker API 27/27
+- 최근 증거: 173 offline tests(unit 118/integration 34/contract 21), integration shards 9/19/6,
+  10 eval groups, clean core/interface wheel, Ruff, Pyright 0/0, validate 0/0과 Wiki dual-target parity
 - 최근 해결: SkillBoss proxy의 `json_object` HTTP 500 원인을 JSON keyword/schema contract로 복구
 - 최근 구현: project/education recovery, pipeline checkpoint/result hash/cancel, JSONL batch,
   non-destructive maintenance, Alpha CLI, fail-closed runtime API, principal-bound project register/HITL,
   education enrollment/milestone/completion, project safe GET/decision replay, queued 202/local job lease/retry/
   terminal replay Worker, portable dual-Wiki harness와 clean-wheel actual-PPTX quickstart
+- 최근 사용성 개선: `register_case()`가 live `Case`를 반환하고 status/summary를 object/JSON/Markdown으로
+  제공; actual proposal + synthetic completion readable lifecycle와 example catalog 추가
 - 중단 원인: Windows `os.kill(pid, 0)` self-termination; read-only Win32 query로 해결. Docling은 별도
   `prep.ps1 docling` contract로 분리
 - 모델 경계: Qwen3.5 Plus/GPT-4o provider proxy만 확인; exact `Qwen3.5-397B-A17B`는 미검증
@@ -35,8 +39,9 @@
   staged/program hash에 bind하고 project GET은 URI/free-text redacted. queued grant의 202/local Worker는
   구현됐고 local signed identity validation도 추가됐지만 actual issuer/remote JWKS rotation·revocation,
   실제 교육 배정, immutable upload와 distributed queue/heartbeat는 미구현
-- 다음 읽기: `../PROJECT_STATE.md` → `../docs/evaluation/wp06-i3-durable-local-worker-report.md` →
-  `../docs/evaluation/wp00-d2-portable-wiki-harness-report.md` → `../docs/HANDOFF.md` → `../CHANGELOG.md`
+- 다음 읽기: `../PROJECT_STATE.md` →
+  `../docs/evaluation/wp00-q1-library-standardization-report.md` →
+  `../examples/case_lifecycle/README.md` → `../docs/HANDOFF.md` → `../CHANGELOG.md`
 
 ## 재개 체크리스트
 

@@ -83,7 +83,7 @@
   <g>
     <rect x="245" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="325" y="451" class="box-title">Dossier</text>
-    <text x="325" y="474" class="box-note">freeze · project/edu reconcile</text>
+    <text x="325" y="474" class="box-note">freeze · reconcile · Case view</text>
     <rect x="420" y="421" width="160" height="76" rx="12" fill="#FFFFFF" stroke="#1E8A75"/>
     <text x="500" y="451" class="box-title">Evidence</text>
     <text x="500" y="474" class="box-note">render · gold · quality</text>
@@ -188,7 +188,7 @@
     <rect x="370" y="870" width="280" height="120" rx="16" fill="#EAF8F4" stroke="#1E8A75" filter="url(#shadow)"/>
     <text x="510" y="906" class="wave-title">Wave 1 · WP-01 / WP-01E</text>
     <text x="510" y="931" class="wave-note">Dossier + Education composition</text>
-    <text x="510" y="956" class="wave-note">Library MVP Alpha · local verified</text>
+    <text x="510" y="956" class="wave-note">Library + Case views · local verified</text>
 
     <path class="arrow" d="M 650 930 L 672 930"/>
     <rect x="680" y="870" width="280" height="120" rx="16" fill="#FFF3E4" stroke="#B36B00" stroke-width="2" filter="url(#shadow)"/>

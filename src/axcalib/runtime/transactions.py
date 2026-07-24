@@ -180,9 +180,7 @@ def _file_sha256(path: Path) -> str:
 
 
 def _dossier_sha256(dossier: ProjectDossier) -> str:
-    return hashlib.sha256(
-        canonical_json_bytes(dossier.model_dump(mode="json"))
-    ).hexdigest()
+    return hashlib.sha256(canonical_json_bytes(dossier.model_dump(mode="json"))).hexdigest()
 
 
 def _target_semantic_sha256(dossier: ProjectDossier, target_revision: int) -> str:
@@ -207,9 +205,7 @@ class TransactionJournal:
             if path.exists():
                 record = self._read_unlocked(path)
                 if record.plan != plan:
-                    raise TransactionConflictError(
-                        "transaction ID was reused for a different plan"
-                    )
+                    raise TransactionConflictError("transaction ID was reused for a different plan")
                 return record
             return self._append_unlocked(
                 path,
@@ -284,12 +280,15 @@ class TransactionJournal:
             "plan": plan.model_dump(mode="json") if plan else None,
         }
         event_sha256 = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
-        line = json.dumps(
-            {**payload, "event_sha256": event_sha256},
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ) + "\n"
+        line = (
+            json.dumps(
+                {**payload, "event_sha256": event_sha256},
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n"
+        )
         with path.open("a", encoding="utf-8", newline="\n") as stream:
             stream.write(line)
             stream.flush()
@@ -386,6 +385,48 @@ class ProjectTransactionCoordinator:
             expected_report_id=expected_report_id,
             expected_delivery_status=expected_delivery_status,
         )
+
+    def expected_artifact_sha256(
+        self,
+        *,
+        project_id: str,
+        kind: Literal["report_json", "report_markdown", "notification_outbox"],
+        relative_path: str,
+        expected_report_id: str | None = None,
+    ) -> str | None:
+        """Return one committed hash anchor from active or archived journals."""
+
+        normalized = TransactionArtifactRequirement.validate_relative_path(relative_path)
+        records = list(self.journal.records())
+        archive = self.workspace / "archive"
+        if archive.is_dir():
+            archive_root = archive.resolve()
+            parents: set[Path] = set()
+            for path in archive.rglob("transaction-*.jsonl"):
+                resolved = path.resolve()
+                if not resolved.is_relative_to(archive_root):
+                    raise TransactionIntegrityError(
+                        "archived transaction journal escapes the workspace archive"
+                    )
+                if resolved.parent.name == "transactions":
+                    parents.add(resolved.parent)
+            for parent in sorted(parents):
+                records.extend(TransactionJournal(parent).records())
+        matches = {
+            requirement.sha256
+            for record in records
+            if record.latest_status is TransactionStatus.COMMITTED
+            and record.plan.project_id == project_id
+            for requirement in record.plan.required_artifacts
+            if requirement.kind == kind
+            and requirement.relative_path == normalized
+            and (expected_report_id is None or requirement.expected_report_id == expected_report_id)
+        }
+        if len(matches) > 1:
+            raise TransactionIntegrityError(
+                "committed transaction journals disagree on an artifact hash"
+            )
+        return next(iter(matches), None)
 
     def execute_create(
         self,
@@ -493,8 +534,7 @@ class ProjectTransactionCoordinator:
         """Reconcile every journal safely; committed items remain no-ops."""
 
         return tuple(
-            self.reconcile(record.plan.transaction_id)
-            for record in self.journal.records()
+            self.reconcile(record.plan.transaction_id) for record in self.journal.records()
         )
 
     def _execute(self, plan: ProjectTransactionPlan) -> ProjectDossier:
@@ -579,9 +619,7 @@ class ProjectTransactionCoordinator:
                 try:
                     value = json.loads(path.read_text(encoding="utf-8"))
                 except (UnicodeDecodeError, json.JSONDecodeError) as error:
-                    raise TransactionBlockedError(
-                        f"invalid_{requirement.kind}"
-                    ) from error
+                    raise TransactionBlockedError(f"invalid_{requirement.kind}") from error
                 if not isinstance(value, dict):
                     raise TransactionBlockedError(f"invalid_{requirement.kind}")
                 if (
@@ -591,8 +629,7 @@ class ProjectTransactionCoordinator:
                     raise TransactionBlockedError("report_id_mismatch")
                 if (
                     requirement.expected_delivery_status is not None
-                    and value.get("delivery_status")
-                    != requirement.expected_delivery_status
+                    and value.get("delivery_status") != requirement.expected_delivery_status
                 ):
                     raise TransactionBlockedError("notification_not_recorded")
 

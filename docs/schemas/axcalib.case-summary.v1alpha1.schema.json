@@ -1,0 +1,727 @@
+{
+  "$defs": {
+    "AgentRecommendation": {
+      "description": "Non-binding evaluator recommendation.",
+      "enum": [
+        "pass",
+        "needs_changes",
+        "reject",
+        "accept",
+        "not_accept"
+      ],
+      "title": "AgentRecommendation",
+      "type": "string"
+    },
+    "Assessment": {
+      "description": "One criterion assessment without a final certification decision.",
+      "enum": [
+        "met",
+        "partially_met",
+        "not_met",
+        "insufficient_evidence",
+        "not_applicable"
+      ],
+      "title": "Assessment",
+      "type": "string"
+    },
+    "AssessmentCount": {
+      "additionalProperties": false,
+      "description": "Count for one criterion assessment category.",
+      "properties": {
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "count": {
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "assessment",
+        "count"
+      ],
+      "title": "AssessmentCount",
+      "type": "object"
+    },
+    "CaseArtifactView": {
+      "additionalProperties": false,
+      "description": "Artifact metadata without a local or remote storage URI.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "byte_size": {
+          "title": "Byte Size",
+          "type": "integer"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "role",
+        "media_type",
+        "sha256",
+        "byte_size"
+      ],
+      "title": "CaseArtifactView",
+      "type": "object"
+    },
+    "CaseEvidenceView": {
+      "additionalProperties": false,
+      "description": "Evidence locator with storage paths removed from the read projection.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "excerpt": {
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "locator": {
+          "title": "Locator",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "locator",
+        "excerpt",
+        "source"
+      ],
+      "title": "CaseEvidenceView",
+      "type": "object"
+    },
+    "CaseLifecycleStage": {
+      "description": "Human-facing lifecycle section containing the current project status.",
+      "enum": [
+        "registration",
+        "execution",
+        "completion"
+      ],
+      "title": "CaseLifecycleStage",
+      "type": "string"
+    },
+    "CaseNotificationView": {
+      "additionalProperties": false,
+      "description": "Approval-request delivery fact without notification payload content.",
+      "properties": {
+        "delivery_status": {
+          "title": "Delivery Status",
+          "type": "string"
+        },
+        "dossier_revision": {
+          "title": "Dossier Revision",
+          "type": "integer"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "report_id": {
+          "title": "Report Id",
+          "type": "string"
+        },
+        "required_role": {
+          "title": "Required Role",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/ReviewStage"
+        }
+      },
+      "required": [
+        "stage",
+        "event_type",
+        "required_role",
+        "report_id",
+        "dossier_revision",
+        "delivery_status",
+        "recorded_at"
+      ],
+      "title": "CaseNotificationView",
+      "type": "object"
+    },
+    "CriterionReviewView": {
+      "additionalProperties": false,
+      "description": "Agent assessment and any explicit human correction for one criterion.",
+      "properties": {
+        "adjustment_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Adjustment Reason"
+        },
+        "agent_assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "criterion_id": {
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "effective_assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "evidence_refs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CaseEvidenceView"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "human_adjusted": {
+          "default": false,
+          "title": "Human Adjusted",
+          "type": "boolean"
+        },
+        "observation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "criterion_id",
+        "title",
+        "agent_assessment",
+        "effective_assessment"
+      ],
+      "title": "CriterionReviewView",
+      "type": "object"
+    },
+    "ExecutionSummary": {
+      "additionalProperties": false,
+      "description": "Safe-by-default execution digest; note text is verbose-only.",
+      "properties": {
+        "completion_submitted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completion Submitted At"
+        },
+        "mentor_assigned": {
+          "default": false,
+          "title": "Mentor Assigned",
+          "type": "boolean"
+        },
+        "progress_note_count": {
+          "default": 0,
+          "title": "Progress Note Count",
+          "type": "integer"
+        },
+        "progress_notes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Progress Notes",
+          "type": "array"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        }
+      },
+      "title": "ExecutionSummary",
+      "type": "object"
+    },
+    "GateReviewView": {
+      "additionalProperties": false,
+      "description": "Current read projection for one registration or completion review gate.",
+      "properties": {
+        "adjusted_criterion_count": {
+          "default": 0,
+          "title": "Adjusted Criterion Count",
+          "type": "integer"
+        },
+        "agent_assessments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AssessmentCount"
+          },
+          "title": "Agent Assessments",
+          "type": "array"
+        },
+        "agent_recommendation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentRecommendation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "agent_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Summary"
+        },
+        "criteria": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CriterionReviewView"
+          },
+          "title": "Criteria",
+          "type": "array"
+        },
+        "effective_assessments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AssessmentCount"
+          },
+          "title": "Effective Assessments",
+          "type": "array"
+        },
+        "human_decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HumanDecisionView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "report_base_revision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Base Revision"
+        },
+        "report_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Id"
+        },
+        "snapshot_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshot Id"
+        },
+        "stage": {
+          "$ref": "#/$defs/ReviewStage"
+        }
+      },
+      "required": [
+        "stage"
+      ],
+      "title": "GateReviewView",
+      "type": "object"
+    },
+    "HumanDecisionView": {
+      "additionalProperties": false,
+      "description": "Human decision kept visibly separate from the Agent recommendation.",
+      "properties": {
+        "actor_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actor Id"
+        },
+        "adjustment_count": {
+          "title": "Adjustment Count",
+          "type": "integer"
+        },
+        "authority_context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Context"
+        },
+        "command": {
+          "title": "Command",
+          "type": "string"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "rationale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rationale"
+        }
+      },
+      "required": [
+        "command",
+        "decided_at",
+        "adjustment_count"
+      ],
+      "title": "HumanDecisionView",
+      "type": "object"
+    },
+    "ProjectStatus": {
+      "enum": [
+        "draft",
+        "registration_ready",
+        "registration_under_review",
+        "registration_hitl_pending",
+        "registration_approved",
+        "registration_rejected",
+        "in_progress",
+        "completion_ready",
+        "completion_approval_pending",
+        "completion_registered",
+        "completion_under_review",
+        "completion_hitl_pending",
+        "completion_accepted",
+        "completion_not_accepted"
+      ],
+      "title": "ProjectStatus",
+      "type": "string"
+    },
+    "ReviewContext": {
+      "additionalProperties": false,
+      "description": "Trusted case metadata retained for policy selection and later audit.",
+      "properties": {
+        "business_unit_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Business Unit Id"
+        },
+        "certification_level": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Certification Level"
+        },
+        "enrollment_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enrollment Id"
+        },
+        "learner_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Learner Ref"
+        },
+        "milestone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Milestone Id"
+        },
+        "program_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Program Id"
+        },
+        "program_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Program Version"
+        },
+        "proposer_org_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposer Org Id"
+        }
+      },
+      "title": "ReviewContext",
+      "type": "object"
+    },
+    "ReviewStage": {
+      "description": "The two evaluation gates.",
+      "enum": [
+        "registration",
+        "completion"
+      ],
+      "title": "ReviewStage",
+      "type": "string"
+    }
+  },
+  "$id": "https://axcalib.local/schemas/case-summary/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Lifecycle digest joining both immutable reports with human decisions.",
+  "properties": {
+    "artifact_count": {
+      "title": "Artifact Count",
+      "type": "integer"
+    },
+    "artifacts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CaseArtifactView"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "audit_event_count": {
+      "title": "Audit Event Count",
+      "type": "integer"
+    },
+    "audit_event_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Audit Event Ids",
+      "type": "array"
+    },
+    "completion": {
+      "$ref": "#/$defs/GateReviewView"
+    },
+    "display_id": {
+      "title": "Display Id",
+      "type": "string"
+    },
+    "dossier_status": {
+      "$ref": "#/$defs/ProjectStatus"
+    },
+    "execution": {
+      "$ref": "#/$defs/ExecutionSummary"
+    },
+    "lifecycle_stage": {
+      "$ref": "#/$defs/CaseLifecycleStage"
+    },
+    "notification_count": {
+      "title": "Notification Count",
+      "type": "integer"
+    },
+    "notifications": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CaseNotificationView"
+      },
+      "title": "Notifications",
+      "type": "array"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "registration": {
+      "$ref": "#/$defs/GateReviewView"
+    },
+    "review_context": {
+      "$ref": "#/$defs/ReviewContext"
+    },
+    "review_profile": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Profile"
+    },
+    "review_profile_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Profile Sha256"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "axcalib.case-summary/v1alpha1",
+      "default": "axcalib.case-summary/v1alpha1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "terminal": {
+      "title": "Terminal",
+      "type": "boolean"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "display_id",
+    "title",
+    "revision",
+    "dossier_status",
+    "lifecycle_stage",
+    "terminal",
+    "review_context",
+    "registration",
+    "execution",
+    "completion",
+    "artifact_count",
+    "notification_count",
+    "audit_event_count",
+    "updated_at"
+  ],
+  "title": "CaseSummary",
+  "type": "object"
+}

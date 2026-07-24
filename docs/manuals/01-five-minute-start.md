@@ -59,7 +59,24 @@ client.record_progress(
     project.project_id,
     note="첫 검증 실험의 입력과 환경을 고정했다.",
 )
+
+print(project.get_current_status(format="md"))
 ```
+
+`register_case(...)`의 반환값은 raw PPTX 객체가 아니라 project_id에 고정된 `Case` 핸들이다.
+`get_current_status()`는 최신 단계, 대기 대상, 다음 조치와 최근 Agent/사람 결과를 보여 주고,
+`get_summary()`는 등록심의·수행·완료평가를 하나로 연결한다.
+
+```python
+status = project.get_current_status()  # typed CaseStatus
+summary_json = project.get_summary(format="json")
+summary_md = project.get_summary(format="md", verbose=True)
+```
+
+각 호출은 최신 dossier revision을 다시 읽으므로 관리자 승인이나 criterion 보정 뒤에도 같은
+`project` 핸들을 계속 사용할 수 있다. Agent report 원본은 바뀌지 않는다. `verbose=True`는 local
+Library 출력에 criterion 근거와 사람 결정 사유를 포함하므로 remote API에서는 별도 권한·redaction
+정책을 적용해야 한다. raw dossier snapshot이 필요하면 `project.dossier`를 명시적으로 읽는다.
 
 비동기 평가는 같은 의미를 가진다.
 

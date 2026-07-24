@@ -59,6 +59,8 @@ REQUIRED_PATHS = (
     "docs/schemas/axcalib.dossier.v1alpha2.schema.json",
     "docs/schemas/axcalib.education-program.v1alpha1.schema.json",
     "docs/schemas/axcalib.education-enrollment.v1alpha1.schema.json",
+    "docs/schemas/axcalib.case-status.v1alpha1.schema.json",
+    "docs/schemas/axcalib.case-summary.v1alpha1.schema.json",
     "docs/api/README.md",
     "docs/api/openapi.v1alpha1.json",
     "docs/api/examples/registration-evaluation.request.json",
@@ -89,8 +91,10 @@ REQUIRED_PATHS = (
     "docs/adr/ADR-020-local-project-transaction-journal.md",
     "docs/adr/ADR-027-portable-github-gitlab-wiki-source.md",
     "docs/adr/ADR-028-provider-neutral-oidc-jwks-reference.md",
+    "docs/adr/ADR-029-project-case-read-facade.md",
     "docs/evaluation/wp00-d2-portable-wiki-harness-report.md",
     "docs/evaluation/wp06-i4-identity-jwks-reference-report.md",
+    "docs/evaluation/wp00-q1-library-standardization-report.md",
     "docs/architecture/README.md",
     "docs/architecture/composable-pipeline-plan.md",
     "docs/architecture/workflow-blueprint.md",
@@ -116,6 +120,8 @@ REQUIRED_PATHS = (
     "config/review_profiles/axcalib-default-v1.yaml",
     "src/axcalib/workflows/two_gate.py",
     "src/axcalib/client.py",
+    "src/axcalib/case.py",
+    "src/axcalib/reports/case.py",
     "src/axcalib/pipelines/project.py",
     "src/axcalib/pipelines/education.py",
     "src/axcalib/programs/service.py",
@@ -138,6 +144,8 @@ REQUIRED_PATHS = (
     "scripts/pipelines/probe_qwen35_capabilities.py",
     "examples/education_project_lifecycle/README.md",
     "examples/education_project_lifecycle/run_full_lifecycle.py",
+    "examples/case_lifecycle/run_readable_pass.py",
+    "examples/catalog.yaml",
     "fixtures/synthetic/education_project_lifecycle/program.yaml",
     "fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.pptx",
     "fixtures/synthetic/education_project_lifecycle/completion_report.synthetic.axcalib.json",
@@ -246,9 +254,9 @@ def _architecture_document_errors() -> list[str]:
         if token not in blueprint:
             errors.append(f"workflow-blueprint.md: missing required token {token}")
 
-    module_plan = (
-        ROOT / "docs" / "architecture" / "module-delivery-plan.md"
-    ).read_text(encoding="utf-8")
+    module_plan = (ROOT / "docs" / "architecture" / "module-delivery-plan.md").read_text(
+        encoding="utf-8"
+    )
     for index in range(14):
         module_id = f"M{index:02d}"
         if module_id not in module_plan:
@@ -284,11 +292,7 @@ def _architecture_document_errors() -> list[str]:
                 errors.append(f"workflow-at-a-glance.svg: missing required token {token}")
 
     ecosystem_path = (
-        ROOT
-        / "docs"
-        / "architecture"
-        / "diagrams"
-        / "axcalib-ecosystem-infographic.svg"
+        ROOT / "docs" / "architecture" / "diagrams" / "axcalib-ecosystem-infographic.svg"
     )
     try:
         ecosystem_root = ET.parse(ecosystem_path).getroot()
@@ -301,12 +305,8 @@ def _architecture_document_errors() -> list[str]:
         if title is None or not (title.text or "").strip():
             errors.append("axcalib-ecosystem-infographic.svg: accessible title is required")
         if description is None or not (description.text or "").strip():
-            errors.append(
-                "axcalib-ecosystem-infographic.svg: accessible description is required"
-            )
-        if ecosystem_root.get("role") != "img" or not ecosystem_root.get(
-            "aria-labelledby"
-        ):
+            errors.append("axcalib-ecosystem-infographic.svg: accessible description is required")
+        if ecosystem_root.get("role") != "img" or not ecosystem_root.get("aria-labelledby"):
             errors.append(
                 "axcalib-ecosystem-infographic.svg: role and aria-labelledby are required"
             )
@@ -327,26 +327,18 @@ def _architecture_document_errors() -> list[str]:
         if authority_root.get("role") != "img" or not authority_root.get("aria-labelledby"):
             errors.append("authority-model.svg: role and aria-labelledby are required")
 
-    deck_path = (
-        ROOT
-        / "docs"
-        / "presentations"
-        / "AXCalib_Workflow_Architecture_v0.3-p1.pptx"
-    )
+    deck_path = ROOT / "docs" / "presentations" / "AXCalib_Workflow_Architecture_v0.3-p1.pptx"
     try:
         with zipfile.ZipFile(deck_path) as deck:
             slide_parts = [
-                name
-                for name in deck.namelist()
-                if re.fullmatch(r"ppt/slides/slide\d+\.xml", name)
+                name for name in deck.namelist() if re.fullmatch(r"ppt/slides/slide\d+\.xml", name)
             ]
     except (OSError, zipfile.BadZipFile) as error:
         errors.append(f"architecture presentation: invalid PPTX package: {error}")
     else:
         if len(slide_parts) != 12:
             errors.append(
-                "architecture presentation: expected 12 slides, "
-                f"found {len(slide_parts)}"
+                f"architecture presentation: expected 12 slides, found {len(slide_parts)}"
             )
     return errors
 
@@ -433,9 +425,7 @@ def _project_ledger_errors(path: Path | None = None) -> list[str]:
 
 def _secret_errors() -> list[str]:
     errors: list[str] = []
-    assignment = re.compile(
-        r"(?i)(api[_-]?key|token|password|secret)\s*[=:]\s*[\"']?([^\s\"']+)"
-    )
+    assignment = re.compile(r"(?i)(api[_-]?key|token|password|secret)\s*[=:]\s*[\"']?([^\s\"']+)")
     allowed_prefixes = ("$", "${", "<", "AXCALIB_", "not_set", "none", "env")
     for path in [
         ROOT / "config" / "axcalib.toml",
@@ -485,8 +475,7 @@ def _json_schema_errors(
     expected_type = schema.get("type")
     if isinstance(expected_type, list):
         type_matches = any(
-            not _json_schema_errors(value, {"type": item}, root, location)
-            for item in expected_type
+            not _json_schema_errors(value, {"type": item}, root, location) for item in expected_type
         )
         if not type_matches:
             errors.append(f"{location}: expected one of types {expected_type}")
@@ -499,9 +488,7 @@ def _json_schema_errors(
         return [f"{location}: expected string"]
     elif expected_type == "boolean" and not isinstance(value, bool):
         return [f"{location}: expected boolean"]
-    elif expected_type == "integer" and (
-        not isinstance(value, int) or isinstance(value, bool)
-    ):
+    elif expected_type == "integer" and (not isinstance(value, int) or isinstance(value, bool)):
         return [f"{location}: expected integer"]
     elif expected_type == "number" and (
         not isinstance(value, (int, float)) or isinstance(value, bool)
@@ -521,9 +508,7 @@ def _json_schema_errors(
         for key, item in value.items():
             child_location = f"{location}.{key}"
             if key in properties:
-                errors.extend(
-                    _json_schema_errors(item, properties[key], root, child_location)
-                )
+                errors.extend(_json_schema_errors(item, properties[key], root, child_location))
             elif additional is False:
                 errors.append(f"{location}: unknown property {key}")
             elif isinstance(additional, dict):
@@ -540,9 +525,7 @@ def _json_schema_errors(
         item_schema = schema.get("items")
         if isinstance(item_schema, dict):
             for index, item in enumerate(value):
-                errors.extend(
-                    _json_schema_errors(item, item_schema, root, f"{location}[{index}]")
-                )
+                errors.extend(_json_schema_errors(item, item_schema, root, f"{location}[{index}]"))
 
     if isinstance(value, str):
         minimum_length = schema.get("minLength")
@@ -581,9 +564,7 @@ def _configuration_contract_errors() -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     schema = json.loads(
-        (ROOT / "docs" / "schemas" / "runtime-config.schema.json").read_text(
-            encoding="utf-8"
-        )
+        (ROOT / "docs" / "schemas" / "runtime-config.schema.json").read_text(encoding="utf-8")
     )
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         errors.append("runtime config schema must use JSON Schema Draft 2020-12")
@@ -653,13 +634,9 @@ def _configuration_contract_errors() -> tuple[list[str], list[str]]:
                     for message in policy.warnings()
                 )
                 if raw.get("stage") != stage:
-                    errors.append(
-                        f"{relative}: retrieval {retrieval_name} must be stage {stage}"
-                    )
+                    errors.append(f"{relative}: retrieval {retrieval_name} must be stage {stage}")
 
-    default = tomllib.loads(
-        (ROOT / "config" / "axcalib.toml").read_text(encoding="utf-8")
-    )
+    default = tomllib.loads((ROOT / "config" / "axcalib.toml").read_text(encoding="utf-8"))
     offline = default.get("profiles", {}).get("offline", {})
     recording = default.get("notifications", {}).get(offline.get("notification"), {})
     if recording.get("adapter") != "recording" or recording.get("enabled") is not True:
@@ -680,8 +657,8 @@ def _api_contract_errors() -> list[str]:
         errors.append("OpenAPI contract must use JSON Schema Draft 2020-12")
     if contract.get("security") != [{"bearerAuth": []}]:
         errors.append("OpenAPI contract must require bearerAuth globally")
-    security_scheme = contract.get("components", {}).get("securitySchemes", {}).get(
-        "bearerAuth", {}
+    security_scheme = (
+        contract.get("components", {}).get("securitySchemes", {}).get("bearerAuth", {})
     )
     if security_scheme.get("type") != "http" or security_scheme.get("scheme") != "bearer":
         errors.append("OpenAPI bearerAuth security scheme is incomplete")
@@ -770,9 +747,7 @@ def _readiness_contract_errors() -> list[str]:
 def _pptx_fixture_errors() -> list[str]:
     errors: list[str] = []
     source = ROOT / "tests" / "sources" / "oled_qc_project_outline.pptx"
-    sidecar_path = (
-        ROOT / "tests" / "sources" / "oled_qc_project_outline.axcalib.json"
-    )
+    sidecar_path = ROOT / "tests" / "sources" / "oled_qc_project_outline.axcalib.json"
     try:
         sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
@@ -803,9 +778,7 @@ def _review_policy_errors() -> list[str]:
     errors: list[str] = []
     registry = ReviewProfileRegistry.with_builtin_default()
     try:
-        loaded = registry.load_file(
-            ROOT / "config" / "review_profiles" / "axcalib-default-v1.yaml"
-        )
+        loaded = registry.load_file(ROOT / "config" / "review_profiles" / "axcalib-default-v1.yaml")
         resolved = registry.resolve(
             "axcalib.default@1.0.0",
             expected_sha256=loaded.ref.sha256,
@@ -819,21 +792,15 @@ def _review_policy_errors() -> list[str]:
             try:
                 candidate.relative_to(ROOT)
             except ValueError:
-                errors.append(
-                    f"review policy reference leaves workspace: {reference.reference_id}"
-                )
+                errors.append(f"review policy reference leaves workspace: {reference.reference_id}")
                 continue
             if not candidate.is_file():
-                errors.append(
-                    f"review policy reference is missing: {reference.reference_id}"
-                )
+                errors.append(f"review policy reference is missing: {reference.reference_id}")
                 continue
             if reference.sha256 is not None:
                 digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
                 if digest != reference.sha256:
-                    errors.append(
-                        f"review policy reference hash drift: {reference.reference_id}"
-                    )
+                    errors.append(f"review policy reference hash drift: {reference.reference_id}")
     return errors
 
 
@@ -841,9 +808,7 @@ def validate_workspace() -> tuple[list[str], list[str]]:
     """Return validation errors and warnings without changing the workspace."""
 
     errors = [
-        f"missing required path: {item}"
-        for item in REQUIRED_PATHS
-        if not (ROOT / item).exists()
+        f"missing required path: {item}" for item in REQUIRED_PATHS if not (ROOT / item).exists()
     ]
     warnings: list[str] = []
     if errors:
@@ -893,10 +858,7 @@ def show_status() -> int:
     print(f"  next gate: {state.get('next_gate', 'unknown')}")
     print(f"  schedule mode: {state.get('schedule_mode', 'unknown')}")
     print(f"  ledger history: {state.get('last_history_id', 'unknown')}")
-    print(
-        "  data/model mode: synthetic default; approved limited live proxy probes; "
-        "no Vector DB"
-    )
+    print("  data/model mode: synthetic default; approved limited live proxy probes; no Vector DB")
     print("  architecture control: required Mermaid views + 2 SVGs + M00-M13 module board")
     print("  documentation control: portable wiki/ source + GitHub/GitLab export contract")
     print(
@@ -943,19 +905,44 @@ def _run(command: list[str]) -> int:
     return subprocess.run(command, cwd=ROOT, env=env, check=False).returncode
 
 
+TEST_GROUPS: dict[str, list[str]] = {
+    "unit": ["tests/unit"],
+    "integration": ["tests/integration"],
+    "integration-core": [
+        "tests/integration/test_case_readable_example.py",
+        "tests/integration/test_cli_contract.py",
+        "tests/integration/test_education_project_lifecycle.py",
+        "tests/integration/test_harness_contract.py",
+    ],
+    "integration-eval": [
+        "tests/integration/test_model_gateway.py",
+        "tests/integration/test_pptx_two_gate_pipeline.py",
+        "tests/integration/test_qwen_capability_script.py",
+    ],
+    "integration-ops": [
+        "tests/integration/test_transaction_recovery_pipeline.py",
+        "tests/integration/test_wiki_script.py",
+        "tests/integration/test_worker_script.py",
+    ],
+    "contract": [
+        "tests/contract",
+        "--ignore",
+        "tests/contract/test_docling_adapter.py",
+    ],
+}
+DEFAULT_TEST_SEQUENCE = (
+    "unit",
+    "integration-core",
+    "integration-eval",
+    "integration-ops",
+    "contract",
+)
+
+
 def run_tests(group: str = "all") -> int:
     """Run lightweight tests in restartable, low-memory process groups."""
 
-    groups = {
-        "unit": ["tests/unit"],
-        "integration": ["tests/integration"],
-        "contract": [
-            "tests/contract",
-            "--ignore",
-            "tests/contract/test_docling_adapter.py",
-        ],
-    }
-    selected = tuple(groups) if group == "all" else (group,)
+    selected = DEFAULT_TEST_SEQUENCE if group == "all" else (group,)
     for name in selected:
         # Windows may leave an inaccessible global ``pytest-current`` junction behind.
         # A group/process-specific workspace path avoids global cleanup and lets an
@@ -968,7 +955,7 @@ def run_tests(group: str = "all") -> int:
                 sys.executable,
                 "-m",
                 "pytest",
-                *groups[name],
+                *TEST_GROUPS[name],
                 "-q",
                 "--basetemp",
                 str(base_temp),
@@ -1025,7 +1012,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "test_group",
         nargs="?",
-        choices=("all", "unit", "integration", "contract"),
+        choices=(
+            "all",
+            "unit",
+            "integration",
+            "integration-core",
+            "integration-eval",
+            "integration-ops",
+            "contract",
+        ),
         help="optional low-memory pytest group for the test command",
     )
     args = parser.parse_args(argv)

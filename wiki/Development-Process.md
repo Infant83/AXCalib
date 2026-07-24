@@ -33,10 +33,15 @@ AXCalib는 **P / WP / G** 세 축으로 개발을 관리한다.
 .\prep.ps1 next
 .\prep.ps1 validate
 .\prep.ps1 test unit
-.\prep.ps1 test integration
+.\prep.ps1 test integration-core
+.\prep.ps1 test integration-eval
+.\prep.ps1 test integration-ops
 .\prep.ps1 test contract
 .\prep.ps1 eval
 ```
+
+`test integration` 전체 alias는 일반 terminal 호환용이다. 실행 시간이 제한된 Agent 세션에서는 위
+세 shard를 각각 실행해 중단 시 해당 묶음만 재개한다.
 
 Wiki 계약은 `prep validate`에 포함되며 별도로 다음 명령도 제공한다.
 
@@ -57,16 +62,19 @@ uv run --no-sync python scripts/wiki/sync_wiki.py validate
 문서만 작성한 단계는 제품 기능 완료가 아니다. synthetic test는 실제 사내 데이터 품질이나 운영 보안을
 증명하지 않는다.
 
-## 다음 품질 감사
+## 완료한 품질 감사
 
-WP-06 identity reference checkpoint 뒤에는 `WP-00.Q1 goal-alignment-usability-example-audit`을
-진행한다. GOAL의 Target/WP/Gate를 code/test/example/pending 상태에 연결하고, public facade와 모든
-working script가 단순한지, domain 판단을 복제하지 않는지 확인한다. 등록 반려, mentor guard, stale,
-notification 실패, retrieval unavailable, malformed model output, OIDC 오류, Worker retry와 교육
-context 불일치까지 synthetic example matrix로 자가검증한다.
+`WP-00.Q1 goal-alignment-usability-example-audit`에서 GOAL의 Target/WP/Gate를
+code/test/example/pending 상태에 연결하고, project-id-bound `Case` status/summary facade와 모든
+working script의 단순성·domain 복제 여부를 확인했다. actual proposal PPTX의 readable pass 예제와
+등록 반려, mentor guard, stale, notification 실패, retrieval unavailable, malformed model output,
+OIDC 오류, Worker retry, 교육 context 불일치를 포함한 EX-01~EX-12 catalog를 분리했다.
 
 초보자 문서에는 최소 등록심의와 two-gate 예제만 먼저 보이고, 오류·운영 예제는 별도 catalog로
 분리해 첫 인터페이스를 복잡하게 만들지 않는다.
+
+이는 local standardized Alpha 증거다. 공식 rubric·모델·retrieval 품질과 운영 identity/upload/
+distributed worker는 각각의 Owner 승인과 후속 Gate가 필요하다.
 
 ## 현재 진행상태 읽기
 

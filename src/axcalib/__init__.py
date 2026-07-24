@@ -1,5 +1,6 @@
 """AXCalib public contracts and two-gate reference facade."""
 
+from axcalib.case import Case, CaseIntegrityError
 from axcalib.client import AXCalib
 from axcalib.notifications.base import NotificationEvent, RecordingNotifier
 from axcalib.policies import DEFAULT_REVIEW_PROFILE, ReviewProfileRegistry
@@ -9,6 +10,8 @@ from axcalib.workflows.two_gate import ActorRole, ProjectStatus, TwoGateWorkflow
 __all__ = [
     "AXCalib",
     "ActorRole",
+    "Case",
+    "CaseIntegrityError",
     "DEFAULT_REVIEW_PROFILE",
     "NotificationEvent",
     "ProjectStatus",
